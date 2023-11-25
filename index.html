@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" type="image/png" href="./assets/img/favicon.png">
+    <title>
+        Devgna loves Atreyee
+    </title>
+
+    <link id="pagestyle" href="./assets/css/soft-design-system-pro.min.css?v=1.0.9" rel="stylesheet">
+    <link href="./assets/css/calendar.css" rel="stylesheet">
+    <link href="./assets/css/modification.css" rel="stylesheet">
+</head>
+<body class="presentation-page">
+
+<header class="header-2">
+    <div class="page-header min-vh-50 relative">
+        <span class="mask bg-gradient-primary"></span>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-7 text-center mx-auto">
+                    <h1 class="text-white pt-3 mt-n5">❄️ Devgna ❤️ Atreyee 🌟</h1><br>
+                    <h3 class="text-white pt-3 mt-n2">Started from 1<sup>st</sup> March 2023 </h3>
+                </div>
+            </div>
+        </div>
+        <div class="position-absolute w-100 z-index-10 bottom-0">
+            <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="10 24 150 40" preserveAspectRatio="none" shape-rendering="auto">
+                <defs>
+                    <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"></path>
+                </defs>
+                <g class="moving-waves">
+                    <use xlink:href="#gentle-wave" x="48" y="-1" fill="rgba(255,255,255,0.40"></use>
+                    <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.35)"></use>
+                    <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.25)"></use>
+                    <use xlink:href="#gentle-wave" x="48" y="8" fill="rgba(255,255,255,0.20)"></use>
+                    <use xlink:href="#gentle-wave" x="48" y="13" fill="rgba(255,255,255,0.15)"></use>
+                    <use xlink:href="#gentle-wave" x="48" y="16" fill="rgba(255,255,255,0.95"></use>
+                </g>
+            </svg>
+        </div>
+    </div>
+</header>
+<section class="pt-3 pb-4" id="count-stats">
+                    <div class="col" style="text-align: center;">
+                            <h5 class="text-gradient text-primary">How long have we been in relationship?</h5>
+                            <h1 class="text-gradient text-primary"> <span id="state1"></span> DAYS</h1>
+                        </div>
+</section>
+<center><marquee><img src="20230817_212405_513.jpg" alt="" height="200px" width="250px" style="border-radius: 20%;"></marquee></center>
+<script src="./assets/js/core/bootstrap.min.js" type="text/javascript"></script>
+
+<script src="./assets/js/plugins/countup.min.js"></script>
+
+<script src="./assets/js/plugins/calendar/core.js"></script>
+<script src="./assets/js/plugins/calendar/daygrid.js"></script>
+<script src="./assets/js/plugins/calendar/interaction.js"></script>
+
+<script src="./assets/js/soft-design-system-pro.min.js?v=1.0.9" type="text/javascript"></script>
+
+<script src="./assets/js/sakura.js" type="text/javascript"></script>
+
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+
+    gtag('config', 'UA-46172202-12');
+</script>
+<script>
+</script>
+<script type="text/javascript">
+    // countto
+    const date1 = new Date("03/01/2023");
+    const date2 = new Date();
+    const Difference_In_Time = date2.getTime()-date1.getTime();
+    let Difference_In_Days = 0;
+    if (Difference_In_Time>0)
+        Difference_In_Days=Math.ceil(Difference_In_Time / (1000 * 3600 * 24));
+
+    if (document.getElementById('state1')) {
+        document.getElementById("state1").setAttribute("countTo",Difference_In_Days.toString());
+        document.getElementById("state1").innerHTML=Difference_In_Days.toString();
+        const countUp = new CountUp('state1', document.getElementById("state1").getAttribute("countTo"));
+        if (!countUp.error) {
+            countUp.start();
+        } else {
+            console.error(countUp.error);
+        }
+    }
+</script>
+
+</body>
+</html>
