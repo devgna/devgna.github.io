@@ -2,10 +2,6 @@
 	word-wrap: break-word;
 }
 
-#truth_words h5{
-	color: rgb(0, 32, 36);
-}
-
 .fc-view-container{
-	border-radius: 3.5rem;
+	border-radius: 10.5rem;
 }
