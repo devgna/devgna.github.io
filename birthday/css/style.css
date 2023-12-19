@@ -28,7 +28,7 @@ body {
 }
 
 #card-front, #card-inside {
-  width: 50%;
+  width: 40%;
   -webkit-box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.5);
           box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.5);
   position: absolute;
@@ -71,8 +71,8 @@ body {
 }
 
 #card-inside {
-  font-size: 1.06em;
-  line-height: 1.4;
+  font-size: 1em;
+  line-height: 1.2;
 font-family: 'Lobster';
   color: #331717;
   font-style: italic;
