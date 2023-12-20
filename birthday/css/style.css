@@ -31,8 +31,8 @@ body {
   width: 50%;
   -webkit-box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.5);
           box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.5);
-  position: center;
-  left: 50%;
+  position: absolute;
+  left: 30%;
 }
 
 #card-inside .wrap {
@@ -71,8 +71,8 @@ body {
 }
 
 #card-inside {
-  font-size: 1em;
-  line-height: 1.2;
+  font-size: 1.06em;
+  line-height: 1.4;
 font-family: 'Lobster';
   color: #331717;
   font-style: italic;
