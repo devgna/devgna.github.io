@@ -1,71 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>hello</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relationship Events</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
         body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: url('bg.gif') no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             height: 100vh;
-            margin: 0;
-            background: url('bg.gif') no-repeat center center fixed; 
-            -webkit-background-size: cover;
-            -moz-background-size: cover;
-            -o-background-size: cover;
-            background-size: cover;
-            font-family: 'Roboto', sans-serif;
-            padding-top: 20px;
         }
-        .button {
-            border: none;
-            color: white;
+
+        .container {
+            display: flex;
+            background-color: rgba(221, 221, 221, 0.333);
+            border-radius: 18px;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            padding: 30px;
+        }
+
+        .item {
+            flex: 1;
             text-align: center;
-            display: inline-block;
-            margin: 4px 2px;
-            transition-duration: 0.4s;
+            backdrop-filter: blur(3px);
+            background-color: rgba(255, 109, 109, 0.276);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px;
+            /* Added cursor pointer for clickable effect */
             cursor: pointer;
-            padding: 15px 32px;
-            text-decoration: none;
-            font-size: 16px;
+        }
+
+        .item h2 {
+            color: white;
+            
+        }
+
+        .content {
+            border-radius: 18px;
+            backdrop-filter: blur(24px);
+            margin-top: 10px;
+            height: 300px; /* Adjust the height as needed */
+            /* Added relative positioning for absolute image placement */
             position: relative;
-            overflow: hidden;
+            overflow: hidden; /* Added to prevent image overflow */
         }
-        .button:before {
-            content: "";
-            background: rgba(255,255,255,0.5);
+
+        /* Added CSS for image styling */
+        .content img {
+            /* Set image to cover container */
+            width: 100%;
+            height: 100%;
+            /* Added absolute positioning to place image within container */
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 500px;
-            height: 500px;
-            transform: translate(-50%, -50%) scale(0);
-            border-radius: 50%;
-            transition: 0.5s ease-in-out;
+            top: 0;
+            left: 0;
+            /* Maintain aspect ratio */
+            object-fit: cover;
         }
-        .button:hover:before {
-            transform: translate(-50%, -50%) scale(1);
-        }
-        .button1 {
-            background: linear-gradient(45deg, #008CBA, #3f87a6); 
-            border: 1px solid #008CBA;
-        }
-        .button1:hover {
-            box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
-        }
-        .button2 {
-            background: linear-gradient(45deg, #f44336, #8a2be2); 
-            border: 1px solid #f44336;
-        }
-        .button2:hover {
-            box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+
+        @media only screen and (max-width: 600px) {
+            .container {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <button class="button button1" onclick="window.location.href='./love/main.html'">Home</button>
-    <button class="button button2" onclick="window.location.href='./birthday/main.html'">Surprise !!</button>
+    <div class="container">
+        <!-- Wrap .item content with <a> tag for clickable effect -->
+        <a href="love/main.html" class="item">
+            <h2>Our Relationship</h2>
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="relationship_image.jpg" alt="Our Relationship">
+            </div>
+        </a>
+        <a href="birthday/main.html" class="item">
+            <h2>Happy Birthday Darling</h2>
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="birthday_image.jpg" alt="Happy Birthday Darling">
+            </div>
+        </a>
+        <a href="valentine-week/index.html" class="item">
+            <h2>Valentines Week</h2>
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="valentines_image.jpg" alt="Valentines Week">
+            </div>
+        </a>
+    </div>
 </body>
 </html>
-

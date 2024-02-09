@@ -1,15 +1,80 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" type="image/png" href="./assets/img/favicon.png">
-    <title>
-        Devgna loves Atreyee
-    </title>
+    <title>Devgna loves Atreyee</title>
 
     <link id="pagestyle" href="./assets/css/soft-design-system-pro.min.css?v=1.0.9" rel="stylesheet">
     <link href="./assets/css/calendar.css" rel="stylesheet">
     <link href="./assets/css/modification.css" rel="stylesheet">
+    <style>
+
+        .containerimg {
+            background: url('heart-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            background-color: rgba(221, 221, 221, 0.333);
+            border-radius: 18px;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 10px; /* Added padding for spacing */
+            overflow: hidden; /* Added overflow to hide image overflow */
+        }
+
+        .item {
+            text-align: center;
+            backdrop-filter: blur(3px);
+            background-color: rgba(255, 109, 109, 0.276);
+            border-radius: 15px;
+            padding: 10px;
+            /* Removed cursor pointer for clickable effect */
+        }
+
+        .item h2 {
+            color: white;
+            text-decoration: none; /* Removed underline */
+        }
+
+        .content {
+            border-radius: 18px;
+            backdrop-filter: blur(24px);
+            width: 100%; /* Adjusted width to fill container */
+            height: 100%; /* Adjusted height to fill container */
+            /* Added relative positioning for absolute image placement */
+            position: relative;
+            overflow: hidden; /* Added to prevent image overflow */
+        }
+
+        /* Added CSS for image styling */
+        .content img {
+            /* Set image to cover container */
+            width: 100%;
+            height: 100%;
+            /* Added absolute positioning to place image within container */
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* Maintain aspect ratio */
+            object-fit: cover;
+        }
+
+        /* Added CSS Grid layout for grid view */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjust minmax values as needed */
+            gap: 20px; /* Adjust gap between grid items */
+            padding: 20px; /* Added padding for spacing */
+        }
+
+        @media only screen and (max-width: 600px) {
+            .containerimg {
+                width: calc(50% - 20px); /* Adjusted width for smaller screens */
+            }
+        }
+    </style>
 </head>
 <body bgcolor="black">
 
@@ -30,34 +95,66 @@
                     <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"></path>
                 </defs>
                 <g class="moving-waves">
-                    <use xlink:href="#gentle-wave" x="48" y="-1" fill="rgba(255,255,255,0.40"></use>
+                    <use xlink:href="#gentle-wave" x="48" y="-1" fill="rgba(255,255,255,0.40)"></use>
                     <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.35)"></use>
                     <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.25)"></use>
                     <use xlink:href="#gentle-wave" x="48" y="8" fill="rgba(255,255,255,0.20)"></use>
                     <use xlink:href="#gentle-wave" x="48" y="13" fill="rgba(255,255,255,0.15)"></use>
-                    <use xlink:href="#gentle-wave" x="48" y="16" fill="rgba(255,255,255,0.95"></use>
+                    <use xlink:href="#gentle-wave" x="48" y="16" fill="rgba(255,255,255,0.95)"></use>
                 </g>
             </svg>
         </div>
     </div>
 </header>
+
 <section class="pt-3 pb-4" id="count-stats">
-                    <div class="col" style="text-align: center;">
-                            <h5 class="text-gradient text-primary">How long have we been in relationship?</h5>
-                            <h1 class="text-gradient text-primary"> <span id="state1"></span> DAYS</h1>
-                        </div>
+    <div class="col" style="text-align: center;">
+        <h5 class="text-gradient text-primary">How long have we been in relationship?</h5>
+        <h1 class="text-gradient text-primary"> <span id="state1"></span> DAYS</h1>
+    </div>
 </section>
-<center><marquee><img src="20230817_212405_513.jpg" alt="" height="200px" width="250px" style="border-radius: 20%;"></marquee></center>
+
+<!-- Added grid container for grid layout -->
+<div class="grid-container">
+    <div class="containerimg">
+        <!-- Wrap .item content with <a> tag for clickable effect -->
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="20230817_212405_513.jpg" alt="Our Relationship">
+            </div>
+    </div>
+
+    <div class="containerimg">
+        <!-- Wrap .item content with <a> tag for clickable effect -->
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="20230817_212405_513.jpg" alt="Our Relationship">
+            </div>
+    </div>
+
+    <div class="containerimg">
+        <!-- Wrap .item content with <a> tag for clickable effect -->
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="20230817_212405_513.jpg" alt="Our Relationship">
+            </div>
+    </div>
+
+    <div class="containerimg">
+        <!-- Wrap .item content with <a> tag for clickable effect -->
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="20230817_212405_513.jpg" alt="Our Relationship">
+            </div>
+    </div>
+</div>
+
 <script src="./assets/js/core/bootstrap.min.js" type="text/javascript"></script>
-
 <script src="./assets/js/plugins/countup.min.js"></script>
-
 <script src="./assets/js/plugins/calendar/core.js"></script>
 <script src="./assets/js/plugins/calendar/daygrid.js"></script>
 <script src="./assets/js/plugins/calendar/interaction.js"></script>
-
 <script src="./assets/js/soft-design-system-pro.min.js?v=1.0.9" type="text/javascript"></script>
-
 <script src="./assets/js/sakura.js" type="text/javascript"></script>
 
 <script>
@@ -70,20 +167,19 @@
 
     gtag('config', 'UA-46172202-12');
 </script>
-<script>
-</script>
+
 <script type="text/javascript">
     // countto
     const date1 = new Date("03/01/2023");
     const date2 = new Date();
-    const Difference_In_Time = date2.getTime()-date1.getTime();
+    const Difference_In_Time = date2.getTime() - date1.getTime();
     let Difference_In_Days = 0;
-    if (Difference_In_Time>0)
-        Difference_In_Days=Math.ceil(Difference_In_Time / (1000 * 3600 * 24));
+    if (Difference_In_Time > 0)
+        Difference_In_Days = Math.ceil(Difference_In_Time / (1000 * 3600 * 24));
 
     if (document.getElementById('state1')) {
-        document.getElementById("state1").setAttribute("countTo",Difference_In_Days.toString());
-        document.getElementById("state1").innerHTML=Difference_In_Days.toString();
+        document.getElementById("state1").setAttribute("countTo", Difference_In_Days.toString());
+        document.getElementById("state1").innerHTML = Difference_In_Days.toString();
         const countUp = new CountUp('state1', document.getElementById("state1").getAttribute("countTo"));
         if (!countUp.error) {
             countUp.start();

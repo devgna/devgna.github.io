@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relationship Events</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: url('heart-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            flex-wrap: wrap; /* Allow items to wrap to the next row */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Changed height to min-height */
+        }
+
+        .container {
+            display: flex;
+            background-color: rgba(221, 221, 221, 0.333);
+            border-radius: 18px;
+            justify-content: space-between;
+            align-items: center;
+            width: calc(33.33% - 20px); /* Adjusted width for gallery view */
+            margin: 10px; /* Added margin for spacing */
+            overflow: hidden; /* Added overflow to hide image overflow */
+            position: relative; /* Added relative positioning for absolute image placement */
+        }
+
+        .item {
+            flex: 1;
+            text-align: center;
+            backdrop-filter: blur(3px);
+            background-color: rgba(255, 109, 109, 0.276);
+            border-radius: 15px;
+            padding: 20px;
+            /* Removed cursor pointer for clickable effect */
+        }
+
+        .item h2 {
+            color: white;
+            text-decoration: none; /* Removed underline */
+        }
+
+        .content {
+            border-radius: 18px;
+            backdrop-filter: blur(24px);
+            margin-top: 10px;
+            height: 300px; /* Adjust the height as needed */
+            /* Added relative positioning for absolute image placement */
+            position: relative;
+            overflow: hidden; /* Added to prevent image overflow */
+        }
+
+        /* Added CSS for image styling */
+        .content img {
+            /* Set image to cover container */
+            width: 100%;
+            height: 100%;
+            /* Added absolute positioning to place image within container */
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* Maintain aspect ratio */
+            object-fit: cover;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: calc(50% - 20px); /* Adjusted width for smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Wrap .item content with <a> tag for clickable effect -->
+        <a href="roseday/index.html" class="item">
+            <h2>Rose Day</h2>
+            <div class="content">
+                <!-- Added image for content -->
+                <img src="rose.jpg" alt="Our Relationship">
+            </div>
+        </a>
+    </div>
+</body>
+</html>

@@ -19,20 +19,20 @@ body {
 }
 
 #card, #card-front, #card-inside {
-  height: 580px;
+  height: 480px;
 }
 
 .wrap {
-  padding: 1.5em 2.5em;
+  padding: 0.5em 1em;
   height: 100%;
 }
 
 #card-front, #card-inside {
-  width: 50%;
+  width: 49%;
   -webkit-box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.5);
           box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.5);
   position: absolute;
-  left: 30%;
+  left: 40%;
 }
 
 #card-inside .wrap {
@@ -42,7 +42,7 @@ body {
 }
 
 #card {
-  width: 960px;
+  width: 860px;
   margin: auto;
   -webkit-transform-style: preserve-3d;
           transform-style: preserve-3d;
@@ -131,7 +131,7 @@ p.signed {
 }
 
 #card-front button {
-  position: absolute;
+  position:fixed;
   bottom: 1em;
   right: -12px;
   background: #F44;
@@ -262,9 +262,9 @@ font-family: 'Lobster', cursive;
   position: absolute;
   top: -20px;
   left: 50%;
-  margin-left: -2.6px;
+  margin-left: -3px;
   width: 6.66666667px;
-  height: 18px;
+  height: 10px;
 }
 
 .fuego:nth-child(1) {
@@ -341,12 +341,12 @@ font-family: 'Lobster', cursive;
 .text {
   color: #8b6a60;
   font-family: 'Lobster', cursive;
-  font-weight: 300;
+  font-weight: 200;
   font-style: italic;
   text-align: center;
 }
 .text h1 {
-  font-size: 1.4em;
+  font-size: 1.2em;
 }
 
 .card-front_inside {
@@ -516,7 +516,7 @@ font-family: 'Lobster', cursive;
 
 .wishesFont{
   font-family: 'Indie Flower', cursive;
-  font-weight: 800;
+  font-weight: 400;
 }
 
 @-webkit-keyframes fade-in {
