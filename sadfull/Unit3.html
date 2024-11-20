@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unit 3: Introduction to Data flow diagrams and Prototype design</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #0056b3;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    ul, ol {
+      margin-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 2px solid #ddd;
+    }
+    blockquote {
+      margin: 20px 0;
+      padding: 10px 20px;
+      background: #f9f9f9;
+      border-left: 5px solid #ccc;
+      color: #555;
+    }
+    a {
+      color: #0056b3;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+      body {
+        font-size: 0.95em;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Unit 3: Introduction to Data flow diagrams and Prototype design</h1>
+
+<h3>1) System Design and Data Flow Diagrams (DFDs)</h3>
+<p>System design is the process of transforming user requirements into a structured system that can be coded and implemented. The <strong>System Requirements Specification (SRS)</strong> document defines what the system needs to do, while the design phase translates these requirements into more specific terms for implementation. System design represents a shift from understanding the problem to focusing on the solution, outlining how to fulfill the system’s functional requirements.</p>
+
+<h3>2) Data Flow Diagrams (DFD)</h3>
+<p>Data Flow Diagrams (DFDs) are a <strong>graphical tool</strong> used to represent the flow of data within a system, detailing where it is processed and how it moves through the system. DFDs help communicate the system’s functionality to users, designers, and analysts.</p>
+<p><strong>Key Features of DFD:</strong> 
+  - Developed by <strong>Larry Constantine</strong>. 
+  - Expresses how data flows between processes and external entities. 
+  - <strong>Graphical representation</strong> of system requirements. 
+  - Requires <strong>iterations</strong> to refine for accuracy and completeness.
+</p>
+<p><strong>DFD Notations:</strong>
+  <ol>
+    <li><strong>External Entities:</strong> External actors or systems interacting with the system. Examples: <strong>Supplier</strong>, <strong>Customer</strong>.</li>
+    <li><strong>Processes:</strong> Activities or functions that transform data from input to output. Examples: <strong>Calculate Pay</strong>, <strong>Reserve Product</strong>.</li>
+    <li><strong>Data Flows:</strong> Movement of data between processes, data stores, and external entities. Examples: <strong>Customer Information</strong>, <strong>Order Details</strong>.</li>
+    <li><strong>Data Stores:</strong> Locations where data is stored. Examples: <strong>Student Records</strong>, <strong>Order History</strong>.</li>
+  </ol>
+</p>
+<p><strong>Levels of DFD:</strong>
+  <ol>
+    <li><strong>Context-Level DFD:</strong> The highest-level DFD, showing the entire system as a <strong>single process</strong> and interactions with external entities.</li>
+    <li><strong>Level 1 DFD:</strong> Breaks down the context-level diagram into major processes or sub-systems and shows how they interact.</li>
+    <li><strong>Level 2 DFD:</strong> Further decomposes the Level 1 processes into more detailed processes or sub-processes.</li>
+  </ol>
+</p>
+
+<hr>
+
+<h3>3) Logical DFD vs Physical DFD</h3>
+<ul>
+  <li><strong>Logical DFD:</strong> Focuses on <strong>what</strong> the system does (business processes and data flows). It is <strong>independent of hardware</strong> and technology and represents the <strong>logical</strong> flow of data within the system.</li>
+  <li><strong>Physical DFD:</strong> Focuses on <strong>how</strong> the system is implemented, including <strong>hardware, software, and physical devices</strong>. It shows <strong>specific programs, devices, and people</strong> involved in the data flow and processes.</li>
+</ul>
+
+<table>
+  <colgroup>
+    <col style="width: 25%" />
+    <col style="width: 36%" />
+    <col style="width: 38%" />
+  </colgroup>
+  <thead>
+    <tr>
+      <th><strong>Aspect</strong></th>
+      <th><strong>Logical DFD</strong></th>
+      <th><strong>Physical DFD</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Focus</strong></td>
+      <td>Describes <strong>business functions</strong> (what the system does)</td>
+      <td>Describes <strong>system implementation</strong> (how it works)</td>
+    </tr>
+    <tr>
+      <td><strong>Processes</strong></td>
+      <td>Business activities or tasks</td>
+      <td>Programs, program modules, manual tasks</td>
+    </tr>
+    <tr>
+      <td><strong>Data Stores</strong></td>
+      <td>Abstract representation of data storage</td>
+      <td>Specific files, databases, or physical records</td>
+    </tr>
+    <tr>
+      <td><strong>Entities</strong></td>
+      <td>External systems or roles</td>
+      <td>Real-world devices, departments, people</td>
+    </tr>
+    <tr>
+      <td><strong>Purpose</strong></td>
+      <td>Represents business functionality</td>
+      <td>Represents the system’s actual operations</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h3>4) Prototype Design</h3>
+<p>A <strong>prototype</strong> is an early, working version of the system that is used to gather feedback from users. It is typically <strong>incomplete</strong>, focusing only on core features and <strong>intended to evolve</strong> into the final product. Prototyping helps clarify requirements and reduce uncertainty in system design.</p>
+<p><strong>Advantages of Prototyping:</strong>
+  <ul>
+    <li><strong>User Involvement:</strong> Users can provide feedback early in the development process.</li>
+    <li><strong>Cost-Effective:</strong> Problems are identified early, reducing development costs.</li>
+    <li><strong>Faster Feedback:</strong> Prototypes allow quick <strong>iterations</strong> and refinement based on user input.</li>
+    <li><strong>Reduced Risk of Missing Features:</strong> Helps ensure the final system has all necessary features.</li>
+  </ul>
+</p>
+<p><strong>Disadvantages of Prototyping:</strong>
+  <ul>
+    <li><strong>Insufficient Requirement Analysis:</strong> If the prototype is too rudimentary, key requirements might be overlooked.</li>
+    <li><strong>Misleading for Users:</strong> Users may <strong>mistake the prototype for the final system</strong>, leading to unrealistic expectations.</li>
+    <li><strong>Scope Creep:</strong> The continuous addition of features during the prototyping phase may expand the system beyond its initial scope.</li>
+  </ul>
+</p>
+
+<p><strong>Steps in Prototyping:</strong>
+  <ol>
+    <li><strong>Requirement Gathering:</strong> Collect basic requirements from users, focusing on core needs.</li>
+    <li><strong>Quick Design:</strong> Create an initial design that outlines the system’s basic structure.</li>
+    <li><strong>Build Prototype:</strong> Develop the working model with limited features.</li>
+    <li><strong>User Evaluation:</strong> Present the prototype to users for feedback on functionality and usability.</li>
+    <li><strong>Refine Prototype:</strong> Make iterative improvements based on feedback.</li>
+    <li><strong>Implementation:</strong> Once the prototype is refined, proceed to the full implementation of the final system.</li>
+  </ol>
+</p>
+
+<p><strong>Types of Prototypes:</strong>
+  <ul>
+    <li><strong>Throwaway Prototype:</strong> Built quickly, used for feedback, and then discarded after gathering information.</li>
+    <li><strong>Evolutionary Prototype:</strong> Continually refined and evolved into the final system.</li>
+  </ul>
+</p>
+
+<hr>
+
+<h3>5) Tools for Prototyping</h3>
+<ol>
+  <li><strong>Fourth Generation Languages (4GL):</strong> High-level programming languages that allow for quicker development. These tools focus more on the <strong>desired output</strong> than on the specifics of how tasks are performed (e.g., <strong>SQL</strong> for database queries, <strong>report generators</strong>).</li>
+  <li><strong>Application Generators:</strong> Tools that help create entire applications with high-level specifications. These tools can automatically generate the necessary code for common tasks.</li>
+  <li><strong>Screen Generators:</strong> Software that allows for the design of interactive user interfaces, including input validation and processing capabilities.</li>
+  <li><strong>Data Dictionary Systems:</strong> These systems store data definitions and descriptions for all data used within an organization, making it easier to manage and maintain data consistency across the system.</li>
+  <li><strong>Reusable Code Libraries:</strong> Collections of pre-written code that can be used across multiple applications, reducing the time spent writing common functionality.</li>
+</ol>
+
+<hr>
+
+<h3>6) Common Misconceptions About Prototyping</h3>
+<ol>
+  <li><strong>Prototyping is only for simple applications:</strong> Prototypes can be used for both small and large, complex systems to reduce uncertainty and ensure user needs are met.</li>
+  <li><strong>It’s a trivial activity:</strong> Building and testing a prototype requires careful planning and a structured approach, even if the prototype is temporary.</li>
+  <li><strong>Prototypes are for small projects only:</strong> Prototyping is valuable for both small and large projects, particularly when user input and feedback are crucial to success.</li>
+  <li><strong>Token user involvement:</strong> Prototypes are designed to engage users actively, not just for show. They help users interact with the system and provide real, actionable feedback.</li>
+</ol>
+
+</body>
+</html>
+

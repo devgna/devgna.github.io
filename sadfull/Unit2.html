@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unit 2: Classical Systems Development Methodology</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #0056b3;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    ul, ol {
+      margin-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 2px solid #ddd;
+    }
+    blockquote {
+      margin: 20px 0;
+      padding: 10px 20px;
+      background: #f9f9f9;
+      border-left: 5px solid #ccc;
+      color: #555;
+    }
+    a {
+      color: #0056b3;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+      body {
+        font-size: 0.95em;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Unit 2: Classical Systems Development Methodology</h1>
+
+<h3>1) System Development Life Cycle (SDLC)</h3>
+<p><strong>Definition:</strong> The <strong>System Development Life Cycle (SDLC)</strong> is a structured methodology used to develop information systems. It involves policies and procedures for developing or altering systems throughout their life cycle, aiming to create high-quality systems that meet customer expectations while being completed on time and within budget.</p>
+
+<h3>Phases of SDLC:</h3>
+<ol>
+  <li><strong>Feasibility Study/Planning:</strong>
+    <ul>
+      <li>Define the problem and objectives.</li>
+      <li>Assess the scope of the existing system and determine the objectives of the new system.</li>
+      <li>Prepare a project schedule.</li>
+      <li>Identify threats, constraints, integration, and security concerns. A feasibility report is produced at the end of this phase.</li>
+    </ul>
+  </li>
+  <li><strong>Analysis and Specification:</strong>
+    <ul>
+      <li>Gather, analyze, and validate system requirements.</li>
+      <li>Define the system requirements and create prototypes.</li>
+      <li>Prioritize requirements and analyze alternative solutions.</li>
+      <li>A Software Requirement Specification (SRS) document is prepared at the end of this phase.</li>
+    </ul>
+  </li>
+  <li><strong>System Design:</strong>
+    <ul>
+      <li>Design the system’s application, network, databases, user interfaces, and system interfaces.</li>
+      <li>Transform the SRS document into a logical structure, which contains specifications for implementation.</li>
+      <li>Prepare a design document, which includes training, contingency plans, and maintenance plans.</li>
+    </ul>
+  </li>
+  <li><strong>Implementation:</strong>
+    <ul>
+      <li>Convert the design into source code.</li>
+      <li>Integrate the system modules and test for errors.</li>
+      <li>Generate a test report, which includes error detection.</li>
+      <li>Deploy the system into the work environment.</li>
+    </ul>
+  </li>
+  <li><strong>Testing:</strong>
+    <ul>
+      <li>Conduct unit testing, integration testing, system testing, and acceptance testing.</li>
+      <li>Ensure the system meets all requirements.</li>
+      <li>Resolve any residual errors after the testing phase.</li>
+    </ul>
+  </li>
+  <li><strong>Deployment:</strong>
+    <ul>
+      <li>Deploy the software once it is verified.</li>
+      <li>If required, release the software with suggested enhancements.</li>
+      <li>Begin system maintenance after deployment.</li>
+    </ul>
+  </li>
+  <li><strong>Maintenance/Support:</strong>
+    <ul>
+      <li>Offer phone or on-site support for users after system installation.</li>
+      <li>Implement changes or new requirements after software deployment.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr>
+
+<h3>2) Information Gathering Techniques</h3>
+<p><strong>Purpose:</strong> To determine the information requirements of an organization and prepare a precise <strong>Software Requirement Specification (SRS)</strong> document.</p>
+<p><strong>Techniques:</strong></p>
+<ol>
+  <li><strong>Interviewing:</strong>
+    <ul>
+      <li><strong>Unstructured Interviews:</strong> Conducted with general topics in mind, allowing open-ended responses.</li>
+      <li><strong>Structured Interviews:</strong> Predefined set of questions with close-ended answers.</li>
+      <li><strong>Advantages:</strong> Good for qualitative information, helpful in discovering key problems, and reducing misunderstandings.</li>
+    </ul>
+  </li>
+  <li><strong>Questionnaires:</strong>
+    <ul>
+      <li><strong>Free-format Questionnaires:</strong> Respondents provide their answers freely.</li>
+      <li><strong>Fixed-format Questionnaires:</strong> Predefined response choices (multiple-choice, ranking, etc.).</li>
+      <li><strong>Advantages:</strong> Useful for gathering information from large groups, providing confidentiality, and collecting statistical data.</li>
+    </ul>
+  </li>
+  <li><strong>Review of Records, Procedures, and Forms:</strong>
+    <ul>
+      <li>Review existing records and procedures to understand system capabilities and document current operations.</li>
+    </ul>
+  </li>
+  <li><strong>Observation:</strong>
+    <ul>
+      <li>Observing the organization’s operations to understand the current system requirements and document the necessary changes.</li>
+      <li><strong>Advantages:</strong> Provides accurate data and is useful when authenticity or complexity of data is a concern.</li>
+    </ul>
+  </li>
+  <li><strong>Modern Methods:</strong>
+    <ul>
+      <li><strong>Joint Application Development (JAD):</strong> Intensive workshops with users, managers, and analysts to define system requirements.</li>
+      <li><strong>Prototyping:</strong> A working model of the system is created to collect user feedback and refine requirements.</li>
+      <li><strong>Group Support Systems (GSS):</strong> Tools for collaborative decision-making and gathering system requirements.</li>
+      <li><strong>CASE Tools:</strong> Tools used to support software engineering activities and ensure a structured approach to system development.</li>
+    </ul>
+  </li>
+</ol>
+
+<hr>
+
+<h3>3) Software Requirements Specification (SRS)</h3>
+<p><strong>Definition:</strong> An <strong>SRS</strong> is a document that describes the software system to be developed. It outlines the system’s functional and non-functional requirements and provides the basis for design, implementation, and testing. The SRS ensures that the development team understands the customer’s requirements.</p>
+
+<p><strong>Goals of an SRS:</strong></p>
+<ol>
+  <li><strong>Feedback to the Customer:</strong> It assures the customer that the development team understands the issues to be addressed.</li>
+  <li><strong>Breaking the Requirements Down:</strong> Writing the requirements in a structured manner helps organize the information and break down the problem into smaller components.</li>
+  <li><strong>Facilitating Other Documentation:</strong> The SRS serves as the foundation for other documents like the software design specification.</li>
+  <li><strong>Product Validation:</strong> It serves as a reference for testing and validating the system.</li>
+</ol>
+
+<p><strong>SRS Format:</strong></p>
+<ol>
+  <li><strong>General Description:</strong>
+    <ul>
+      <li>The product’s purpose, features, and benefits.</li>
+      <li>Description of the target user community.</li>
+    </ul>
+  </li>
+  <li><strong>Functional Requirements:</strong>
+    <ul>
+      <li>Describes the expected behavior of the system, detailing the inputs, outputs, and the system’s operations (e.g., calculations, data processing).</li>
+    </ul>
+  </li>
+  <li><strong>Interface Requirements:</strong>
+    <ul>
+      <li>Specifies how the software communicates with other systems or users, including communication protocols, data formats, etc.</li>
+    </ul>
+  </li>
+  <li><strong>Performance Requirements:</strong>
+    <ul>
+      <li>Describes how the system should perform under certain conditions, such as speed, memory usage, or error rates.</li>
+    </ul>
+  </li>
+  <li><strong>Non-Functional Attributes:</strong>
+    <ul>
+      <li>Includes attributes such as security, portability, reliability, and scalability.</li>
+    </ul>
+  </li>
+  <li><strong>Preliminary Schedule and Budget:</strong>
+    <ul>
+      <li>Outlines the initial project timeline and budget required for development.</li>
+    </ul>
+  </li>
+</ol>
+
+</body>
+</html>
+
