@@ -2,41 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Download Files</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { font-size: 24px; }
-    ul { list-style-type: none; padding: 0; }
-    li { margin: 8px 0; }
-  </style>
+  <title>Auto Download</title>
 </head>
 <body>
-  <h1>Download Files in This Directory</h1>
-  <ul id="file-list"></ul>
+  <p>If the download doesn't start automatically, <a id="download-link" href="exam.zip" download>click here</a>.</p>
 
   <script>
-    // This only works if your server returns a file list as HTML (like Apache or Python's http.server)
-    fetch(window.location.href)
-      .then(res => res.text())
-      .then(html => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const links = [...doc.querySelectorAll('a')];
-        const fileList = document.getElementById('file-list');
-
-        links.forEach(link => {
-          const href = link.getAttribute('href');
-          if (href && href !== '../' && !href.endsWith('/')) {
-            const li = document.createElement('li');
-            li.innerHTML = `<a href="${href}" download>${href}</a>`;
-            fileList.appendChild(li);
-          }
-        });
-      })
-      .catch(err => {
-        document.getElementById('file-list').innerText = "Failed to load file list. Make sure you're using a local server.";
-        console.error(err);
-      });
+    window.onload = function() {
+      const link = document.createElement('a');
+      link.href = 'exam.zip';
+      link.download = 'exam.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
   </script>
 </body>
 </html>
