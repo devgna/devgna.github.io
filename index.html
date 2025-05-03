@@ -10,170 +10,252 @@
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#f5f5f7" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    :root {
-      --primary-color: #000;
-      --secondary-color: #f9fafb;
-      --accent-color: #4CAF50; /* Comfy Green */
-      --highlight-color: #81C784;
-      --font-color: #1f2937;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
+    /* Base font scaling */
     html {
-      font-size: 100%;
+      font-size: clamp(14px, 1.2vw, 18px);
+    }
+
+    :root {
+      --primary: #2b3499;
+      --secondary: #ff6c22;
+      --accent: #ff9209;
+      --background: #f8f9ff;
+      --text: #2d3250;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
 
     body {
       margin: 0;
       padding: 0;
       font-family: 'Inter', sans-serif;
-      background-color: var(--secondary-color);
-      color: var(--font-color);
-      scroll-behavior: smooth;
-      font-size: 1rem;
-    }
-
-    @media screen and (max-width: 480px) {
-      html {
-        font-size: 90%;
-      }
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.6;
     }
 
     .container {
-      max-width: 960px;
+      max-width: 1000px;
       margin: 0 auto;
-      padding: 4vw 4vw;
+      padding: clamp(1rem, 5vw, 2rem);
     }
 
     h1 {
-      font-size: clamp(1.75rem, 5vw, 3rem);
-      font-weight: 700;
+      font-size: clamp(2rem, 6vw, 3.5rem);
       text-align: center;
-      margin-bottom: 20px;
-      color: var(--primary-color);
+      margin: clamp(1rem, 4vw, 2rem) 0;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      padding-bottom: clamp(0.5rem, 1vw, 1rem);
     }
 
-    h2 {
-      font-size: clamp(1.4rem, 4vw, 1.8rem);
-      font-weight: 600;
-      margin: 2.5vw 0 1vw;
-    }
-
-    ul {
-      padding-left: 20px;
-      line-height: 1.75;
-      font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: clamp(60px, 8vw, 120px);
+      height: clamp(2px, 0.5vw, 4px);
+      background: var(--accent);
+      border-radius: clamp(1px, 0.3vw, 2px);
     }
 
     .section {
-      background-color: #ffffff;
-      border-radius: 24px;
-      padding: 5vw;
-      margin-top: 6vw;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05);
+      background: white;
+      border-radius: clamp(1rem, 2vw, 2rem);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      margin: clamp(1.5rem, 4vw, 2.5rem) 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
+    }
+    .section:hover {
+      transform: translateY(-5px);
+    }
+
+    h2 {
+      font-size: clamp(1.3rem, 2vw, 1.6rem);
+      color: var(--primary);
+      margin-bottom: clamp(0.75rem, 2vw, 1rem);
+      display: flex;
+      align-items: center;
+      gap: clamp(0.5rem, 1vw, 0.75rem);
+      flex-wrap: wrap;
+    }
+
+    h2 i {
+      flex-shrink: 0;
+      min-width: clamp(2rem, 4vw, 2.4rem);
+      min-height: clamp(2rem, 4vw, 2.4rem);
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      border-radius: clamp(0.75rem, 2vw, 1rem);
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      padding: clamp(0.5rem, 1vw, 0.7rem);
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: clamp(0.75rem, 2vw, 1rem);
+    }
+
+    li {
+      background: #f8f9ff;
+      border-radius: clamp(0.5rem, 1vw, 1rem);
+      padding: clamp(0.5rem, 1vw, 1rem) clamp(1rem, 2vw, 1.5rem);
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(0.5rem, 1vw, 0.8rem);
+      position: relative;
+    }
+
+    li::before {
+      content: "•";
+      color: var(--accent);
+      font-weight: 700;
+      font-size: clamp(1.2em, 2vw, 1.3em);
+      line-height: 1;
+      position: relative;
+      top: clamp(1px, 1vw, 2px);
+    }
+
+    li ul {
+      margin-top: clamp(0.25rem, 1vw, 0.5rem);
+      margin-left: clamp(1rem, 2vw, 1.5rem);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.25rem, 1vw, 0.5rem);
     }
 
     .highlight {
-      color: var(--highlight-color);
+      color: var(--secondary);
+      font-weight: 700;
+    }
+
+    .price-tag {
+      background: var(--accent);
+      color: white;
+      padding: clamp(0.4rem, 1vw, 0.6rem) clamp(1rem, 2vw, 1.5rem);
+      border-radius: clamp(0.5rem, 1vw, 1rem);
+      display: inline-block;
+      margin: clamp(0.75rem, 2vw, 1rem) 0;
+      font-weight: 700;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+    }
+
+    .featured-badge {
+      position: absolute;
+      top: clamp(-0.5rem, -1vw, -10px);
+      right: clamp(-0.5rem, -1vw, -10px);
+      background: var(--secondary);
+      color: white;
+      padding: clamp(0.2rem, 1vw, 0.4rem) clamp(0.8rem, 2vw, 1.2rem);
+      transform: rotate(45deg);
+      font-size: clamp(0.7rem, 2vw, 0.9rem);
       font-weight: 600;
-      font-size: clamp(1rem, 3vw, 1.2rem);
+      border-radius: clamp(0.25rem, 1vw, 0.5rem);
+    }
+
+    .btn {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white !important;
+      padding: clamp(0.8rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2.5rem);
+      border-radius: clamp(0.75rem, 2vw, 1rem);
+      display: inline-flex;
+      align-items: center;
+      gap: clamp(0.4rem, 1vw, 0.5rem);
+      font-weight: 600;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      transition: all 0.3s ease;
+      text-decoration: none !important;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(43, 52, 153, 0.2);
+    }
+
+    .contact {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white;
+      border-radius: clamp(1rem, 2vw, 2rem);
+      padding: clamp(1.5rem, 3vw, 2rem);
+      text-align: center;
+    }
+    .contact a {
+      color: white !important;
+      text-decoration: underline !important;
     }
 
     .footer {
       text-align: center;
       color: #6b7280;
-      font-size: clamp(0.8rem, 2vw, 0.95rem);
-      margin-top: 60px;
+      margin-top: clamp(1rem, 3vw, 2rem);
+      font-size: clamp(0.8rem, 2.5vw, 0.9rem);
     }
 
-    .contact {
-      margin-top: 30px;
-      font-size: clamp(1rem, 2.5vw, 1.1rem);
-    }
-
-    a {
-      color: var(--accent-color);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .btn {
-      display: inline-block;
-      background-color: var(--accent-color);
-      color: white;
-      padding: clamp(0.8rem, 3vw, 1rem) clamp(1.5rem, 6vw, 2rem);
-      font-size: clamp(1rem, 2.5vw, 1.1rem);
-      font-weight: 600;
-      border-radius: 14px;
-      margin-top: 36px;
-      text-align: center;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 14px rgba(76, 175, 80, 0.25);
-    }
-
-    .btn:hover {
-      background-color: #388E3C;
-      transform: translateY(-2px);
-    }
-
-    .register-button {
-      text-align: center;
-    }
-
-    p.center-text {
-      text-align: center;
-      font-size: clamp(1rem, 3vw, 1.2rem);
-      margin-top: 0;
+    @media (max-width: 480px) {
+      h1 { font-size: clamp(1.8rem, 8vw, 2.5rem); }
+      .btn { padding: clamp(0.6rem, 3vw, 0.8rem) clamp(1rem, 5vw, 1.5rem); }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🌟 Ace Computer Science This Summer!</h1>
-    <p class="center-text">
-      📅 <strong>50-Day Full Syllabus Mastery Program</strong><br />
-      🗓️ <strong>13th May – 29th June</strong> | 🕒 Daily: 2–3 Hours
-    </p>
-    <p class="highlight center-text">🎓 Learn Java, Python, .NET & Projects — In Just 50 Days!</p>
-    <p class="highlight center-text">🏆 Get Ranked & Win: ChatGPT Premium!</p>
 
-    <div class="section" id="summer-batch">
-      <h2>🌞 SUMMER VACATION BATCH (Group Sessions)</h2>
+    <div class="section" style="position: relative;">
+      <div class="featured-badge">Early Bird!</div>
+      <h2><i class="fas fa-users"></i>SUMMER VACATION BATCH (Group Sessions)</h2>
+      <div class="price-tag">₹1800 Early Bird Offer</div>
       <ul>
-        <li>🔥 <span class="highlight">Included:</span></li>
-        <li>✅ Full Syllabus Coverage:</li>
-        <ul>
-          <li>☕ Java: OOP, Multithreading, Collections</li>
-          <li>🖥️ C#/.NET: Windows Forms, ASP.NET, WPF</li>
-          <li>🐍 Python: NumPy, Pandas, Django Web Apps</li>
-        </ul>
+        <li><span class="highlight">Included:</span></li>
+        <li>
+          <strong>Full Syllabus Coverage:</strong>
+          <ul>
+            <li>☕ Java: OOP, Multithreading, Collections</li>
+            <li>🖥️ C#/.NET: Windows Forms, ASP.NET, WPF</li>
+            <li>🐍 Python: NumPy, Pandas, Django Web Apps</li>
+          </ul>
+        </li>
         <li>🛠️ Build Real Projects</li>
-        <li>📆 <strong>Program Duration:</strong></li>
-        <ul>
-          <li>📅 Period : 13th May – 29th June (₹2000)</li>
-        </ul>
-        <li>🎉 <span class="highlight">Early Bird:</span> ₹1800 if booked before 13th May!</li>
+        <li>
+          <strong>Program Duration:</strong>
+          <ul>
+            <li>12th May – 1st July (₹2000)</li>
+          </ul>
+        </li>
+        <li><span class="highlight">Early Bird:</span> ₹1800 if booked before 13th May!</li>
         <li>📍 Mode: Online</li>
       </ul>
     </div>
 
-    <div class="section" id="post-vacation">
-      <h2>📘 POST-VACATION TUITIONS (Starts July)</h2>
+    <div class="section">
+      <h2><i class="fas fa-graduation-cap"></i>POST-VACATION TUITIONS (Starts July)</h2>
       <ul>
-        <li>👤 1-on-1 Sessions:
+        <li>
+          <strong>1-on-1 Sessions</strong>
           <ul>
             <li>₹1000/session or ₹4000/month (8 sessions)</li>
             <li>Flexible Timings: Weekends</li>
           </ul>
         </li>
-        <li>👥 Group Sessions:
+        <li>
+          <strong>Group Sessions:</strong>
           <ul>
             <li>₹500/session or ₹2000/month</li>
           </ul>
@@ -182,8 +264,8 @@
       </ul>
     </div>
 
-    <div class="section" id="why-choose">
-      <h2>🎯 Why Choose Us?</h2>
+    <div class="section">
+      <h2><i class="fas fa-trophy"></i>Why Choose Us?</h2>
       <ul>
         <li>💸 Learn more, pay less!</li>
         <li>👫 Peer-Based Learning with Leaderboards</li>
@@ -193,16 +275,18 @@
     </div>
 
     <div class="section contact">
-      <p>💳 <strong>Payment Options:</strong> UPI / Net Banking</p>
+      <p><strong>💳 Payment Options:</strong> UPI / Net Banking</p>
       <p>🔗 Share this with friends!</p>
-      <p>📱 <strong>Contact:</strong><br />
+      <p><strong>📱 Contact:</strong><br />
         ☎️ WhatsApp: <a href="https://wa.me/919510292044">+91 9510292044</a><br />
         📧 Email: <a href="mailto:vyasdevgna@gmail.com">vyasdevgna@gmail.com</a>
       </p>
     </div>
 
-    <div class="register-button">
-      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdCZReXxjz8FRbI3D1GyNVdPqrk8mrwZCzQK8Ga_pmjH8ccvw/viewform?usp=preview" class="btn" target="_blank">📝 Register Now</a>
+    <div style="text-align: center; margin: clamp(1.5rem, 4vw, 2rem) 0;">
+      <a href="https://forms.gle/hZ8nDL8Pon1GN7eC8" class="btn" target="_blank">
+        <i class="fas fa-rocket"></i> 📝 Register Now
+      </a>
     </div>
 
     <div class="footer">
