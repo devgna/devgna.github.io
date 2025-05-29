@@ -1,0 +1,273 @@
+{
+  "vaultName": "Research-HERMES",
+  "lastExport": 1748541519682,
+  "pluginVersion": "1.8.01",
+  "validBodyClasses": "publish css-settings-manager theme-dark show-inline-title show-ribbon is-focused",
+  "useCustomHeadContent": false,
+  "useCustomFavicon": false,
+  "files": [
+    "Conclusions.md",
+    "Discussion.md",
+    "HERMES_Evaluation.md",
+    "HERMES_Blueprint_Outline.md",
+    "HERMES_Context.md",
+    "HERMES_Introduction.md",
+    "HERMES_Paper_Specifications.md",
+    "HERMES Project Index.md",
+    "HERMES_Related_Work.md",
+    "HERMES_System_Design_Architecture.md",
+    "HERMES_AI_ML_Components_Canvas.canvas",
+    "HERMES_AllFiles_Canvas.canvas",
+    "HERMES_Evaluation_Canvas.canvas",
+    "HERMES_Implementation_Details_Canvas.canvas",
+    "HERMES_Paper_Structure_Canvas.canvas",
+    "HERMES_Security_Features_Canvas.canvas",
+    "HERMES_System_Overview_Canvas.canvas",
+    "HERMES_Implementation_Details.md",
+    "HERMES_Methodology.md",
+    "References.md",
+    "Results.md",
+    "lib/fonts/94f2f163d4b698242fef.otf",
+    "lib/fonts/72505e6a122c6acd5471.woff2",
+    "lib/fonts/2d5198822ab091ce4305.woff2",
+    "lib/fonts/c8ba52b05a9ef10f4758.woff2",
+    "lib/fonts/cb10ffd7684cd9836a05.woff2",
+    "lib/fonts/b5f0f109bc88052d4000.woff2",
+    "lib/fonts/cbe0ae49c52c920fd563.woff2",
+    "lib/fonts/535a6cf662596b3bd6a6.woff2",
+    "lib/fonts/70cc7ff27245e82ad414.ttf",
+    "lib/fonts/454577c22304619db035.ttf",
+    "lib/fonts/52ac8f3034507f1d9e53.ttf",
+    "lib/fonts/05b618077343fbbd92b7.ttf",
+    "lib/fonts/4bb6ac751d1c5478ff3a.woff2",
+    "lib/media/6155340132a851f6089e.svg"
+  ],
+  "mainDependencies": [
+    "lib/fonts/94f2f163d4b698242fef.otf",
+    "lib/fonts/72505e6a122c6acd5471.woff2",
+    "lib/fonts/2d5198822ab091ce4305.woff2",
+    "lib/fonts/c8ba52b05a9ef10f4758.woff2",
+    "lib/fonts/cb10ffd7684cd9836a05.woff2",
+    "lib/fonts/b5f0f109bc88052d4000.woff2",
+    "lib/fonts/cbe0ae49c52c920fd563.woff2",
+    "lib/fonts/535a6cf662596b3bd6a6.woff2",
+    "lib/fonts/70cc7ff27245e82ad414.ttf",
+    "lib/fonts/454577c22304619db035.ttf",
+    "lib/fonts/52ac8f3034507f1d9e53.ttf",
+    "lib/fonts/05b618077343fbbd92b7.ttf",
+    "lib/fonts/4bb6ac751d1c5478ff3a.woff2",
+    "lib/media/6155340132a851f6089e.svg"
+  ],
+  "fileInfo": {
+    "Conclusions.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 827,
+      "exportedPath": "Conclusions.html",
+      "dependencies": []
+    },
+    "Discussion.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1202,
+      "exportedPath": "Discussion.html",
+      "dependencies": []
+    },
+    "HERMES_Evaluation.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1162,
+      "exportedPath": "HERMES_Evaluation.html",
+      "dependencies": []
+    },
+    "HERMES_Blueprint_Outline.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 2051,
+      "exportedPath": "HERMES_Blueprint_Outline.html",
+      "dependencies": []
+    },
+    "HERMES_Context.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1645,
+      "exportedPath": "HERMES_Context.html",
+      "dependencies": []
+    },
+    "HERMES_Introduction.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1552,
+      "exportedPath": "HERMES_Introduction.html",
+      "dependencies": []
+    },
+    "HERMES_Paper_Specifications.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1384,
+      "exportedPath": "HERMES_Paper_Specifications.html",
+      "dependencies": []
+    },
+    "HERMES Project Index.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1378,
+      "exportedPath": "HERMES Project Index.html",
+      "dependencies": []
+    },
+    "HERMES_Related_Work.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1987,
+      "exportedPath": "HERMES_Related_Work.html",
+      "dependencies": []
+    },
+    "HERMES_System_Design_Architecture.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 3189,
+      "exportedPath": "HERMES_System_Design_Architecture.html",
+      "dependencies": []
+    },
+    "HERMES_AI_ML_Components_Canvas.canvas": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 2404,
+      "exportedPath": "HERMES_AI_ML_Components_Canvas.html",
+      "dependencies": []
+    },
+    "HERMES_AllFiles_Canvas.canvas": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 2726,
+      "exportedPath": "HERMES_AllFiles_Canvas.html",
+      "dependencies": []
+    },
+    "HERMES_Evaluation_Canvas.canvas": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1833,
+      "exportedPath": "HERMES_Evaluation_Canvas.html",
+      "dependencies": []
+    },
+    "HERMES_Implementation_Details_Canvas.canvas": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 2176,
+      "exportedPath": "HERMES_Implementation_Details_Canvas.html",
+      "dependencies": []
+    },
+    "HERMES_Paper_Structure_Canvas.canvas": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 2954,
+      "exportedPath": "HERMES_Paper_Structure_Canvas.html",
+      "dependencies": []
+    },
+    "HERMES_Security_Features_Canvas.canvas": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 2063,
+      "exportedPath": "HERMES_Security_Features_Canvas.html",
+      "dependencies": []
+    },
+    "HERMES_System_Overview_Canvas.canvas": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1842,
+      "exportedPath": "HERMES_System_Overview_Canvas.html",
+      "dependencies": []
+    },
+    "HERMES_Implementation_Details.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1595,
+      "exportedPath": "HERMES_Implementation_Details.html",
+      "dependencies": []
+    },
+    "HERMES_Methodology.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1009,
+      "exportedPath": "HERMES_Methodology.html",
+      "dependencies": []
+    },
+    "References.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 2404,
+      "exportedPath": "References.html",
+      "dependencies": []
+    },
+    "Results.md": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 1101,
+      "exportedPath": "Results.html",
+      "dependencies": []
+    },
+    "lib/fonts/94f2f163d4b698242fef.otf": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 66800,
+      "exportedPath": "lib/fonts/94f2f163d4b698242fef.otf",
+      "dependencies": []
+    },
+    "lib/fonts/72505e6a122c6acd5471.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 104232,
+      "exportedPath": "lib/fonts/72505e6a122c6acd5471.woff2",
+      "dependencies": []
+    },
+    "lib/fonts/2d5198822ab091ce4305.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 104332,
+      "exportedPath": "lib/fonts/2d5198822ab091ce4305.woff2",
+      "dependencies": []
+    },
+    "lib/fonts/c8ba52b05a9ef10f4758.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 98868,
+      "exportedPath": "lib/fonts/c8ba52b05a9ef10f4758.woff2",
+      "dependencies": []
+    },
+    "lib/fonts/cb10ffd7684cd9836a05.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 106876,
+      "exportedPath": "lib/fonts/cb10ffd7684cd9836a05.woff2",
+      "dependencies": []
+    },
+    "lib/fonts/b5f0f109bc88052d4000.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 105804,
+      "exportedPath": "lib/fonts/b5f0f109bc88052d4000.woff2",
+      "dependencies": []
+    },
+    "lib/fonts/cbe0ae49c52c920fd563.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 106108,
+      "exportedPath": "lib/fonts/cbe0ae49c52c920fd563.woff2",
+      "dependencies": []
+    },
+    "lib/fonts/535a6cf662596b3bd6a6.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 111708,
+      "exportedPath": "lib/fonts/535a6cf662596b3bd6a6.woff2",
+      "dependencies": []
+    },
+    "lib/fonts/70cc7ff27245e82ad414.ttf": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 192740,
+      "exportedPath": "lib/fonts/70cc7ff27245e82ad414.ttf",
+      "dependencies": []
+    },
+    "lib/fonts/454577c22304619db035.ttf": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 161376,
+      "exportedPath": "lib/fonts/454577c22304619db035.ttf",
+      "dependencies": []
+    },
+    "lib/fonts/52ac8f3034507f1d9e53.ttf": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 191568,
+      "exportedPath": "lib/fonts/52ac8f3034507f1d9e53.ttf",
+      "dependencies": []
+    },
+    "lib/fonts/05b618077343fbbd92b7.ttf": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 155288,
+      "exportedPath": "lib/fonts/05b618077343fbbd92b7.ttf",
+      "dependencies": []
+    },
+    "lib/fonts/4bb6ac751d1c5478ff3a.woff2": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 7876,
+      "exportedPath": "lib/fonts/4bb6ac751d1c5478ff3a.woff2",
+      "dependencies": []
+    },
+    "lib/media/6155340132a851f6089e.svg": {
+      "modifiedTime": 1748541519682,
+      "sourceSize": 315,
+      "exportedPath": "lib/media/6155340132a851f6089e.svg",
+      "dependencies": []
+    }
+  }
+}
