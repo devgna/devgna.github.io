@@ -3,173 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mehul G. Modi - Senior 3D Modeling Artist</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" xintegrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Google Fonts: Inter -->
+    <title>Mehul G. Modi - 3D Modeling Artist</title>
+    <!-- Google Fonts for professional typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Using Inter font as the base font */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --light-gray: #ecf0f1;
+            --text-color: #333;
+            --heading-font: 'Montserrat', sans-serif;
+            --body-font: 'Open Sans', sans-serif;
+        }
+
+        /* General Body Styles */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* A slightly lighter gray for the page background */
+            font-family: var(--body-font);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #fdfdfd;
+            color: var(--text-color);
+            font-size: 11pt;
         }
-        /* Adding a subtle shadow for a premium feel */
+
+        /* Main Container for the Resume */
         .resume-container {
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            max-width: 100%;
+            min-height: 100vh;
+            margin: 0;
+            background: #fff;
+            box-shadow: none;
+            display: flex;
         }
+
+        /* Left Sidebar Styling */
+        .sidebar {
+            width: 35%;
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .sidebar h1 {
+            font-family: var(--heading-font);
+            font-size: 2.5em;
+            margin-top: 0;
+            margin-bottom: 5px;
+            line-height: 1.2;
+            font-weight: 700;
+        }
+
+        .sidebar h2 {
+            font-family: var(--body-font);
+            font-weight: 400;
+            font-size: 1.3em;
+            margin-top: 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+        
+        .sidebar-section h3 {
+            font-family: var(--heading-font);
+            color: var(--accent-color);
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        
+        .contact-info p {
+            margin: 0 0 10px 0;
+        }
+        
+        .contact-info a {
+            color: #fff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        .contact-info i {
+            margin-right: 10px;
+            width: 15px;
+            text-align: center;
+        }
+        
+        .skills-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .skills-list li {
+            margin-bottom: 8px;
+            background: var(--secondary-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        /* Main Content Area Styling */
+        .main-content {
+            width: 65%;
+            padding: 30px 40px;
+            box-sizing: border-box;
+        }
+
+        .main-section {
+            margin-bottom: 30px;
+        }
+
+        .main-section-title {
+            font-family: var(--heading-font);
+            font-size: 1.8em;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--light-gray);
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .summary p {
+            font-size: 1.05em;
+            font-style: italic;
+        }
+
+        .experience-item {
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        /* Timeline effect for experience */
+        .experience-item::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .experience-item::after {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 5px;
+            width: 2px;
+            height: 100%;
+            background-color: var(--light-gray);
+        }
+        
+        .experience-item:last-child::after {
+            display: none;
+        }
+
+        .experience-item h3 {
+            font-family: var(--heading-font);
+            margin: 0 0 2px 0;
+            font-size: 1.3em;
+            color: var(--secondary-color);
+            font-weight: 700;
+        }
+
+        .job-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: var(--text-color);
+        }
+
+        .location-dates {
+            color: #777;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .experience-item ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        .experience-item ul li {
+            margin-bottom: 8px;
+        }
+
+        /* Print-specific styles */
+        @media print {
+            body {
+                font-family: 'Georgia', serif; /* Serif fonts are easier to read on paper */
+                font-size: 10pt;
+                background-color: #fff;
+            }
+
+            .resume-container {
+                box-shadow: none;
+                margin: 0;
+                max-width: 100%;
+            }
+            
+            .sidebar {
+                background-color: #fff !important;
+                color: #000 !important;
+                width: 30%;
+                padding: 20px 15px;
+            }
+
+            .sidebar h1, .sidebar h2, .sidebar-section h3, .sidebar a {
+                color: #000 !important;
+            }
+
+            .skills-list li {
+                background: #eee !important;
+                border: 1px solid #ccc;
+            }
+            
+            .main-content {
+                width: 70%;
+                padding: 20px;
+            }
+
+            .main-section-title {
+                color: #000 !important;
+                border-bottom: 2px solid #000;
+            }
+
+            .experience-item::before {
+                background-color: #000 !important;
+            }
+            
+            .experience-item::after {
+                background-color: #ccc !important;
+            }
+            
+            /* Hide unnecessary icons for print */
+            .contact-info i {
+                display: none;
+            }
+        }
+
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    <!-- Main resume container with a dynamic width -->
-    <div class="resume-container bg-white rounded-lg overflow-hidden">
-        <div class="md:flex">
-            <!-- Left Column (Sidebar) -->
-            <aside class="md:w-1/3 bg-gray-800 text-white p-8">
-                <div class="flex flex-col items-center md:items-start text-center md:text-left mb-8">
-                    <!-- Name and Title as the main header -->
-                    <h1 class="text-4xl font-bold text-white tracking-tight">Mehul G. Modi</h1>
-                    <h2 class="text-xl font-medium text-cyan-400 mt-2">Senior 3D Modeling Artist</h2>
-                </div>
+    <div class="resume-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <h1>Mehul G. Modi</h1>
+            <h2>3D Modeling Artist</h2>
 
-                <!-- Contact Information -->
-                <div>
-                    <h3 class="text-xl font-semibold border-b-2 border-cyan-400 pb-2 mb-4">Contact</h3>
-                    <ul class="space-y-3">
-                        <li class="flex items-center">
-                            <i class="fas fa-phone w-6 text-cyan-400"></i>
-                            <a href="tel:8238037422" class="text-gray-300 hover:text-white transition-colors">8238037422</a>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-envelope w-6 text-cyan-400"></i>
-                            <a href="mailto:mehul.modi9584@gmail.com" class="text-gray-300 hover:text-white transition-colors break-all">mehul.modi9584@gmail.com</a>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-map-marker-alt w-6 text-cyan-400"></i>
-                            <span class="text-gray-300">Nadiad, Gujarat, India</span>
-                        </li>
-                         <li class="flex items-center">
-                            <i class="fab fa-linkedin w-6 text-cyan-400"></i>
-                            <a href="#" class="text-gray-300 hover:text-white transition-colors">linkedin.com/in/mehulmodi</a>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-palette w-6 text-cyan-400"></i>
-                            <a href="#" class="text-gray-300 hover:text-white transition-colors">your-portfolio-url.com</a>
-                        </li>
+            <div class="sidebar-section contact-info">
+                <h3>Contact</h3>
+                <p><i class="fas fa-phone"></i> <a href="tel:8238037422">8238037422</a></p>
+                <p><i class="fas fa-envelope"></i> <a href="mailto:mehul.modi9584@gmail.com">mehul.modi9584@gmail.com</a></p>
+                <p><i class="fas fa-map-marker-alt"></i> Nadiad, Gujarat, India</p>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Technical Skill</h3>
+                <ul class="skills-list">
+                    <li>Maya, 3ds Max, Blender</li>
+                    <li>Photoshop</li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Skills</h3>
+                <ul class="skills-list">
+                    <li>3D modeling</li>
+                    <li>Texturing techniques</li>
+                    <li>Normal mapping</li>
+                    <li>Asset optimization</li>
+                    <li>Environment creation</li>
+                    <li>Quality assurance</li>
+                    <li>Character modeling</li>
+                    <li>Graphic design principles</li>
+                    <li>Artistic vision</li>
+                    <li>Multitasking</li>
+                    <li>Texture Artistry</li>
+                    <li>Creative thinking</li>
+                    <li>Drawing Skills</li>
+                    <li>Hand sketching</li>
+                    <li>Sound editing</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Education and Training</h3>
+                <p><strong>Beta Maya</strong><br>Animation Maac in Andheri Mumbai.</p>
+                <p><strong>High School Diploma</strong><br>The New Progressive Collage of FINE ARTS, Mehsana - Mar 2007</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <section class="main-section summary">
+                <h2 class="main-section-title">Professional Summary</h2>
+                <p>
+                    Dynamic 3D Modeling Artist with a proven track record at funcellgames, specializing in high-quality asset creation and optimization. Expert in texturing techniques and normal mapping, I excel in delivering visually stunning environments and characters. My artistic vision and multitasking abilities drive successful project outcomes, ensuring client satisfaction and project excellence.
+                </p>
+            </section>
+
+            <section class="main-section">
+                <h2 class="main-section-title">Experience</h2>
+                
+                <div class="experience-item">
+                    <h3>Funcell Games.</h3>
+                    <div class="job-title">SR. 3D ARTIST</div>
+                    <div class="location-dates">Ahmedabad, India | Nov 2011 - Jul 2025</div>
+                    <ul>
+                        <li>Created 3D models and textures for characters and environments in a variety of styles.</li>
+                        <li>Modified existing models by adding and removing polygons, adjusting UVs, and optimizing material channels, as needed per project specifications.</li>
+                        <li>Developed high-quality, efficient 3D assets utilizing Maya, Max, Blender, Substance Painter, Photoshop software.</li>
+                        <li>Generated normal maps from high resolution meshes in order to add additional detail without increasing polygon count significantly.</li>
+                        <li>Performed quality assurance checks on every model before it was sent out for review by the client or publisher.</li>
+                        <li>Utilized advanced texturing techniques to enhance realism in 3D assets.</li>
+                        <li>Created high and low-poly models depending on project requirements.</li>
+                        <li>Environment and prop creation for games.</li>
+                        <li>Texturing (including Photoshop-based texture work).</li>
+                        <li>Video and sound editing using After Effects.</li>
+                        <li>Game setup and development in Unity.</li>
                     </ul>
-                </div>
-
-                <!-- Technical Skills -->
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold border-b-2 border-cyan-400 pb-2 mb-4">Software Proficiency</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <span class="bg-gray-700 text-white text-sm font-medium px-3 py-1 rounded-full">Maya</span>
-                        <span class="bg-gray-700 text-white text-sm font-medium px-3 py-1 rounded-full">3ds Max</span>
-                        <span class="bg-gray-700 text-white text-sm font-medium px-3 py-1 rounded-full">Blender</span>
-                        <span class="bg-gray-700 text-white text-sm font-medium px-3 py-1 rounded-full">Photoshop</span>
-                        <span class="bg-gray-700 text-white text-sm font-medium px-3 py-1 rounded-full">Substance Painter</span>
-                        <span class="bg-gray-700 text-white text-sm font-medium px-3 py-1 rounded-full">Unity</span>
-                        <span class="bg-gray-700 text-white text-sm font-medium px-3 py-1 rounded-full">After Effects</span>
-                    </div>
                 </div>
                 
-                <!-- Professional Skills -->
-                 <div class="mt-8">
-                    <h3 class="text-xl font-semibold border-b-2 border-cyan-400 pb-2 mb-4">Core Competencies</h3>
-                    <ul class="space-y-2 list-disc list-inside text-gray-300">
-                        <li>High & Low-Poly Modeling</li>
-                        <li>Texturing & Normal Mapping</li>
-                        <li>Asset Optimization & Performance</li>
-                        <li>Character & Environment Art</li>
-                        <li>Digital Sculpting & Hand Sketching</li>
-                        <li>Creative Problem-Solving</li>
-                        <li>Graphic Design Principles</li>
-                    </ul>
+                <div class="experience-item">
+                    <h3>Indianic infotech Limited.</h3>
+                    <div class="location-dates">Ahmedabad, India</div>
+                    <!-- No date specified in source document -->
                 </div>
 
-                <!-- Education -->
-                <div class="mt-8">
-                    <h3 class="text-xl font-semibold border-b-2 border-cyan-400 pb-2 mb-4">Education & Training</h3>
-                    <div>
-                        <h4 class="font-bold text-gray-200">Animation & VFX Training</h4>
-                        <p class="text-sm text-gray-400">MAAC, Andheri, Mumbai</p>
-                    </div>
-                    <div class="mt-4">
-                        <h4 class="font-bold text-gray-200">High School Diploma in Fine Arts</h4>
-                        <p class="text-sm text-gray-400">The New Progressive College of Fine Arts, Mehsana</p>
-                        <p class="text-xs text-gray-500">March 2007</p>
-                    </div>
+                <div class="experience-item">
+                    <h3>Colorbar Productions.</h3>
+                    <div class="location-dates">(Moving pixels Company AMD) | Ahmedabad, India | April 2008 - June 2011</div>
+                     <!-- No role specified in source document -->
                 </div>
-            </aside>
 
-            <!-- Right Column (Main Content) -->
-            <main class="md:w-2/3 bg-white p-8">
-                <!-- Professional Summary -->
-                <section>
-                    <h3 class="text-2xl font-bold text-gray-800 border-b-4 border-gray-200 pb-2 mb-4 flex items-center"><i class="fas fa-user-tie mr-3 text-gray-500"></i>Professional Summary</h3>
-                    <p class="text-gray-700 leading-relaxed">
-                        Accomplished and passionate Senior 3D Artist with over 17 years of total industry experience, including more than 13 dedicated years defining the visual style at Funcell Games. Proven expertise in creating high-quality, performance-optimized 3D models, characters, and environments for the mobile gaming sector. A specialist in the complete asset pipeline, from concept and high/low-poly modeling to intricate texturing and final implementation in Unity. I blend a strong artistic vision with deep technical proficiency to deliver visually compelling assets that elevate gameplay and captivate users.
-                    </p>
-                </section>
-
-                <!-- Work Experience -->
-                <section class="mt-8">
-                    <h3 class="text-2xl font-bold text-gray-800 border-b-4 border-gray-200 pb-2 mb-4 flex items-center"><i class="fas fa-briefcase mr-3 text-gray-500"></i>Work Experience</h3>
-                    
-                    <!-- Job 1 -->
-                    <div class="mb-8">
-                        <div class="flex flex-col sm:flex-row justify-between sm:items-baseline">
-                           <h4 class="text-xl font-bold text-gray-900">Sr. 3D Artist</h4>
-                           <p class="text-sm font-medium text-gray-600">Nov 2011 - Present</p>
-                        </div>
-                        <div class="flex justify-between items-baseline">
-                            <h5 class="text-md font-semibold text-cyan-600">Funcell Games / Gameanax</h5>
-                            <p class="text-sm font-medium text-gray-600">Ahmedabad, India</p>
-                        </div>
-                        <ul class="mt-3 list-disc list-inside text-gray-700 space-y-2">
-                            <li>Spearheaded the creation of diverse 3D assets, including characters, props, and environments, shaping the artistic direction for numerous successful mobile game titles.</li>
-                            <li>Expertly developed high-quality, memory-efficient 3D assets using Maya, 3ds Max, Blender, and Substance Painter, ensuring optimal performance on mobile hardware.</li>
-                            <li>Generated detailed normal maps from high-poly sculpts to produce visually rich assets while maintaining low polygon counts for smooth gameplay.</li>
-                            <li>Instituted and performed rigorous QA checks on all models, ensuring they met strict technical specifications and artistic standards before delivery.</li>
-                            <li>Collaborated closely with developers to integrate and test assets within the Unity engine, streamlining production workflows.</li>
-                            <li>Produced video and sound assets for promotional materials and in-game cinematics using Adobe After Effects.</li>
-                        </ul>
-                    </div>
-
-                    <!-- Job 2 -->
-                    <div class="mb-8">
-                         <div class="flex flex-col sm:flex-row justify-between sm:items-baseline">
-                           <h4 class="text-xl font-bold text-gray-900">3D Artist</h4>
-                           <p class="text-sm font-medium text-gray-600">April 2008 - June 2011</p>
-                        </div>
-                        <h5 class="text-md font-semibold text-cyan-600">Colorbar Productions (Moving Pixels)</h5>
-                        <p class="text-sm font-medium text-gray-600">Ahmedabad, India</p>
-                        <ul class="mt-3 list-disc list-inside text-gray-700 space-y-2">
-                           <li>Contributed to a variety of 3D projects, developing assets for high-profile animations and advertising campaigns.</li>
-                           <li>Gained critical foundational experience in a professional studio environment, mastering core modeling and texturing pipelines.</li>
-                        </ul>
-                    </div>
-
-                    <!-- Job 3 -->
-                     <div class="mb-8">
-                         <div class="flex flex-col sm:flex-row justify-between sm:items-baseline">
-                           <h4 class="text-xl font-bold text-gray-900">Jr. 3D Artist</h4>
-                        </div>
-                        <h5 class="text-md font-semibold text-cyan-600">Indianic Infotech Limited</h5>
-                         <p class="text-sm font-medium text-gray-600">Ahmedabad, India</p>
-                        <ul class="mt-3 list-disc list-inside text-gray-700 space-y-2">
-                           <li>Supported the creative team with 3D modeling and asset creation for diverse multimedia and web-based projects.</li>
-                        </ul>
-                    </div>
-
-                </section>
-            </main>
-        </div>
+            </section>
+        </main>
     </div>
+
 </body>
 </html>
