@@ -1,307 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ace Computer Science This Summer!</title>
-  <meta name="description" content="50-Day Summer Computer Science Mastery Program with Java, Python, .NET, Projects, and Career Mentorship" />
-  <meta property="og:title" content="Ace CS This Summer!">
-  <meta property="og:description" content="Master Java, Python, .NET, and career skills in 50 days. Affordable, fun, and competitive." />
-  <meta property="og:type" content="website" />
-  <meta name="theme-color" content="#f5f5f7" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <style>
-    /* Base font scaling */
-    html {
-      font-size: clamp(14px, 1.2vw, 18px);
-    }
-
-    :root {
-      --primary: #2b3499;
-      --secondary: #ff6c22;
-      --accent: #ff9209;
-      --background: #f8f9ff;
-      --text: #2d3250;
-    }
-
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', sans-serif;
-      background: var(--background);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: clamp(1rem, 5vw, 2rem);
-    }
-
-    h1 {
-      font-size: clamp(2rem, 6vw, 3.5rem);
-      text-align: center;
-      margin: clamp(1rem, 4vw, 2rem) 0;
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      position: relative;
-      padding-bottom: clamp(0.5rem, 1vw, 1rem);
-    }
-
-    h1::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: clamp(60px, 8vw, 120px);
-      height: clamp(2px, 0.5vw, 4px);
-      background: var(--accent);
-      border-radius: clamp(1px, 0.3vw, 2px);
-    }
-
-    .section {
-      background: white;
-      border-radius: clamp(1rem, 2vw, 2rem);
-      padding: clamp(1.5rem, 3vw, 2.5rem);
-      margin: clamp(1.5rem, 4vw, 2.5rem) 0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      border: 1px solid rgba(0,0,0,0.05);
-      transition: transform 0.3s ease;
-    }
-    .section:hover {
-      transform: translateY(-5px);
-    }
-
-    h2 {
-      font-size: clamp(1.3rem, 2vw, 1.6rem);
-      color: var(--primary);
-      margin-bottom: clamp(0.75rem, 2vw, 1rem);
-      display: flex;
-      align-items: center;
-      gap: clamp(0.5rem, 1vw, 0.75rem);
-      flex-wrap: wrap;
-    }
-
-    h2 i {
-      flex-shrink: 0;
-      min-width: clamp(2rem, 4vw, 2.4rem);
-      min-height: clamp(2rem, 4vw, 2.4rem);
-      font-size: clamp(1rem, 2vw, 1.3rem);
-      border-radius: clamp(0.75rem, 2vw, 1rem);
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      padding: clamp(0.5rem, 1vw, 0.7rem);
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: clamp(0.75rem, 2vw, 1rem);
-    }
-
-    li {
-      background: #f8f9ff;
-      border-radius: clamp(0.5rem, 1vw, 1rem);
-      padding: clamp(0.5rem, 1vw, 1rem) clamp(1rem, 2vw, 1.5rem);
-      display: flex;
-      align-items: flex-start;
-      gap: clamp(0.5rem, 1vw, 0.8rem);
-      position: relative;
-    }
-
-    li::before {
-      content: "•";
-      color: var(--accent);
-      font-weight: 700;
-      font-size: clamp(1.2em, 2vw, 1.3em);
-      line-height: 1;
-      position: relative;
-      top: clamp(1px, 1vw, 2px);
-    }
-
-    li ul {
-      margin-top: clamp(0.25rem, 1vw, 0.5rem);
-      margin-left: clamp(1rem, 2vw, 1.5rem);
-      display: flex;
-      flex-direction: column;
-      gap: clamp(0.25rem, 1vw, 0.5rem);
-    }
-
-    .highlight {
-      color: var(--secondary);
-      font-weight: 700;
-    }
-
-    .price-tag {
-      background: var(--accent);
-      color: white;
-      padding: clamp(0.4rem, 1vw, 0.6rem) clamp(1rem, 2vw, 1.5rem);
-      border-radius: clamp(0.5rem, 1vw, 1rem);
-      display: inline-block;
-      margin: clamp(0.75rem, 2vw, 1rem) 0;
-      font-weight: 700;
-      font-size: clamp(0.9rem, 2.5vw, 1rem);
-    }
-
-    .featured-badge {
-      position: absolute;
-      top: clamp(-0.5rem, -1vw, -10px);
-      right: clamp(-0.5rem, -1vw, -10px);
-      background: var(--secondary);
-      color: white;
-      padding: clamp(0.2rem, 1vw, 0.4rem) clamp(0.8rem, 2vw, 1.2rem);
-      transform: rotate(45deg);
-      font-size: clamp(0.7rem, 2vw, 0.9rem);
-      font-weight: 600;
-      border-radius: clamp(0.25rem, 1vw, 0.5rem);
-    }
-
-    .btn {
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      color: white !important;
-      padding: clamp(0.8rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2.5rem);
-      border-radius: clamp(0.75rem, 2vw, 1rem);
-      display: inline-flex;
-      align-items: center;
-      gap: clamp(0.4rem, 1vw, 0.5rem);
-      font-weight: 600;
-      font-size: clamp(0.9rem, 2.5vw, 1rem);
-      transition: all 0.3s ease;
-      text-decoration: none !important;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 10px 20px rgba(43, 52, 153, 0.2);
-    }
-
-    .contact {
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      color: white;
-      border-radius: clamp(1rem, 2vw, 2rem);
-      padding: clamp(1.5rem, 3vw, 2rem);
-      text-align: center;
-    }
-    .contact a {
-      color: white !important;
-      text-decoration: underline !important;
-    }
-
-    .footer {
-      text-align: center;
-      color: #6b7280;
-      margin-top: clamp(1rem, 3vw, 2rem);
-      font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-    }
-
-    @media (max-width: 480px) {
-      h1 { font-size: clamp(1.8rem, 8vw, 2.5rem); }
-      .btn { padding: clamp(0.6rem, 3vw, 0.8rem) clamp(1rem, 5vw, 1.5rem); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Java Unit 2 Study Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            --primary-color: #3B82F6; /* blue-500 */
+            --secondary-color: #10B981; /* green-500 */
+            --correct-bg: #D1FAE5; /* green-100 */
+            --correct-border: #10B981; /* green-500 */
+            --incorrect-bg: #FEE2E2; /* red-100 */
+            --incorrect-border: #EF4444; /* red-500 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F3F4F6; /* gray-100 */
+        }
+        .tab-button.active {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: white;
+        }
+        .solution-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            padding: 0 1.5rem;
+        }
+        .solution-content.show {
+            max-height: 1500px; /* Adjust if content is longer */
+            padding: 1.5rem;
+        }
+        .option-label.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--correct-border);
+        }
+        .option-label.incorrect {
+            background-color: var(--incorrect-bg);
+            border-color: var(--incorrect-border);
+        }
+        .solution-toggle .icon {
+            transition: transform 0.3s ease;
+        }
+        .solution-toggle.open .icon {
+            transform: rotate(45deg);
+        }
+    </style>
 </head>
-<body>
-  <div class="container">
-    <h1>🌟 Ace Computer Science This Summer!</h1>
+<body class="p-4 md:p-8">
 
-    <div class="section" style="position: relative;">
-      <div class="featured-badge">Early Bird!</div>
-      <h2><i class="fas fa-users"></i>SUMMER VACATION BATCH (Group + 1-on-1 Options)</h2>
-      <div class="price-tag">₹1800 Early Bird Offer</div>
-      <ul>
-        <li><span class="highlight">Included:</span></li>
-        <li>
-          <strong>Full Syllabus Coverage:</strong>
-          <ul>
-            <li>☕ Java: OOP, Multithreading, Collections</li>
-            <li>🖥️ C#/.NET: Windows Forms, ASP.NET, WPF</li>
-            <li>🐍 Python: NumPy, Pandas, Django Web Apps</li>
-            <li>📚 C/C++: OOP, Data Structures & Algorithms</li>
-            <li>🌐 Web Development: HTML, CSS, JavaScript, PHP</li>
-            <li>🗃️ Databases: Oracle, MySQL</li>
-          </ul>
-        </li>
-        <li>🛠️ Build Real Projects</li>
-        <li>
-          <strong>Program Duration:</strong>
-          <ul>
-            <li>12th May – 1st July (₹2000)</li>
-          </ul>
-        </li>
-        <li><span class="highlight">Early Bird:</span> ₹1800 if booked before 13th May!</li>
-        <li>📍 Mode: Online</li>
-        <li>
-          <strong>1-on-1 Sessions Available:</strong>
-          <ul>
-            <li>₹1200/session or ₹5000/month (Flexible scheduling)</li>
-            <li>Personalized attention for complex topics</li>
-          </ul>
-        </li>
-      </ul>
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+        <header class="p-6 md:p-8 bg-gray-800 text-white">
+            <h1 class="text-3xl md:text-4xl font-bold">CA327: Java Unit 2 Interactive Study Guide</h1>
+            <p class="mt-2 text-gray-300">Select a paper to test your knowledge. Good luck!</p>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="flex flex-wrap border-b border-gray-200 bg-gray-50 px-4">
+            <button class="tab-button text-sm md:text-base font-semibold py-4 px-3 md:px-6 text-gray-600 border-b-4 border-transparent hover:bg-gray-200 active" data-tab="1">Paper 1</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-4 px-3 md:px-6 text-gray-600 border-b-4 border-transparent hover:bg-gray-200" data-tab="2">Paper 2</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-4 px-3 md:px-6 text-gray-600 border-b-4 border-transparent hover:bg-gray-200" data-tab="3">Paper 3</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-4 px-3 md:px-6 text-gray-600 border-b-4 border-transparent hover:bg-gray-200" data-tab="4">Paper 4</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-4 px-3 md:px-6 text-gray-600 border-b-4 border-transparent hover:bg-gray-200" data-tab="5">Paper 5</button>
+            <button class="tab-button text-sm md:text-base font-semibold py-4 px-3 md:px-6 text-gray-600 border-b-4 border-transparent hover:bg-gray-200" data-tab="6">Paper 6</button>
+        </nav>
+
+        <main class="p-6 md:p-8">
+            <div id="papers-container">
+                <!-- All paper content will be dynamically generated by JavaScript -->
+            </div>
+        </main>
     </div>
 
-    <div class="section">
-      <h2><i class="fas fa-graduation-cap"></i>POST-VACATION TUITIONS (Starts July)</h2>
-      <ul>
-        <li>
-          <strong>1-on-1 Sessions</strong>
-          <ul>
-            <li>₹1000/session or ₹4000/month (8 sessions)</li>
-            <li>Flexible Timings: Weekends</li>
-          </ul>
-        </li>
-        <li>
-          <strong>Group Sessions:</strong>
-          <ul>
-            <li>₹500/session or ₹2000/month</li>
-          </ul>
-        </li>
-        <li>✅ All students welcome: Clear backlogs, prep for exams!</li>
-      </ul>
-    </div>
+    <script>
+        const quizData = [
+            // Paper 1
+            {
+                objectives: [
+                    { q: "True or False: The <code>do-while</code> loop checks the condition <em>before</em> executing the loop body.", o: ["True", "False"], a: "b" },
+                    { q: "What is the main purpose of the <code>static</code> keyword in Java?", o: ["To create constants", "For memory management", "For method overloading", "To create instances"], a: "b" },
+                    { q: "Which operator is used to instantiate a class by allocating memory?", o: ["<code>this</code>", "<code>alloc</code>", "<code>new</code>", "<code>create</code>"], a: "c" },
+                    { q: "True or False: An instance variable is declared inside the body of a method.", o: ["True", "False"], a: "b" },
+                    { q: "What is the size of the <code>char</code> data type in Java?", o: ["1 byte", "2 bytes", "4 bytes", "1 bit"], a: "b" }
+                ],
+                descriptives: [
+                    { 
+                        q: "Explain the difference between a <code>while</code> loop and a <code>do-while</code> loop.",
+                        a: `<ul class="list-disc list-inside space-y-2"><li><strong><code>while</code> loop</strong>: An <strong>entry-controlled</strong> loop. The condition is checked <em>before</em> executing the loop body.</li><li><strong><code>do-while</code> loop</strong>: An <strong>exit-controlled</strong> loop. The condition is checked <em>after</em> executing the loop body, guaranteeing at least one execution.</li></ul>`
+                    },
+                    { 
+                        q: "What is constructor overloading? Write a Java program for a <code>Student</code> class that demonstrates this.",
+                        a: `<p class="mb-4"><strong>Constructor overloading</strong> is having more than one constructor in a class, each with a different parameter list.</p><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>class Student {\n    int id;\n    String name;\n    int age;\n\n    Student(int i, String n) { id = i; name = n; }\n    Student(int i, String n, int a) { id = i; name = n; age = a; }\n\n    void display() { System.out.println(id + " " + name + " " + age); }\n}</code></pre>`
+                    },
+                    {
+                        q: "What is the <code>this</code> keyword? Explain how it's used to refer to a current class instance variable.",
+                        a: `<ul class="list-disc list-inside space-y-2"><li>The <code>this</code> keyword is a <strong>reference variable</strong> that refers to the <strong>current object</strong>.</li><li>It's used to resolve ambiguity when an instance variable and a parameter have the same name.</li></ul><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>class Student {\n    int rollno; // Instance variable\n\n    Student(int rollno) { // Parameter\n        this.rollno = rollno; // 'this' refers to instance variable\n    }\n}</code></pre>`
+                    }
+                ]
+            },
+            // Paper 2
+            {
+                objectives: [
+                    { q: "What prefix is used for a hexadecimal integer literal?", o: ["<code>0b</code>", "<code>0</code>", "<code>0x</code> or <code>0X</code>", "<code>\\u</code>"], a: "c" },
+                    { q: "True or False: The logical <code>OR</code> (<code>||</code>) operator always checks both conditions.", o: ["True", "False"], a: "b" },
+                    { q: "Which keyword is used to access properties from a parent class?", o: ["<code>implements</code>", "<code>extends</code>", "<code>this</code>", "<code>super</code>"], a: "b" },
+                    { q: "A variable declared inside the body of a method is called a:", o: ["Instance Variable", "Static Variable", "Class Variable", "Local Variable"], a: "d" },
+                    { q: "What does the <code>break</code> statement do when encountered inside a loop?", o: ["Skips the current iteration", "Terminates the loop immediately", "Continues the loop", "Throws an exception"], a: "b" }
+                ],
+                descriptives: [
+                    {
+                        q: "List and briefly explain the three types of variables in Java.",
+                        a: `<ul class="list-disc list-inside space-y-2"><li><strong>Local Variable</strong>: Declared inside a method; its scope is limited to that method.</li><li><strong>Instance Variable</strong>: Declared inside a class but outside a method; unique to each object.</li><li><strong>Static Variable</strong>: Declared with <code>static</code>; a class-level variable shared among all objects.</li></ul>`
+                    },
+                    {
+                        q: "Write a Java program using an <code>if-else-if</code> ladder to assign a grade based on marks.",
+                        a: `<p class="mb-4">The <code>if-else-if</code> ladder checks multiple conditions sequentially.</p><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>public class GradeCalculator {\n    public static void main(String[] args) {\n        int marks = 65;\n\n        if (marks < 50) {\n            System.out.println("fail");\n        } else if (marks >= 60 && marks < 70) {\n            System.out.println("C grade");\n        } else {\n            System.out.println("Other grade");\n        }\n    }\n}</code></pre>`
+                    },
+                    {
+                        q: "Explain four key differences between a constructor and a method in Java.",
+                        a: `<ul class="list-disc list-inside space-y-2"><li><strong>Purpose</strong>: Constructor initializes state; Method exposes behavior.</li><li><strong>Return Type</strong>: Constructor has none; Method must have one.</li><li><strong>Name</strong>: Constructor name must match class name; Method name can be anything.</li><li><strong>Invocation</strong>: Constructor is called implicitly with <code>new</code>; Method is called explicitly.</li></ul>`
+                    }
+                ]
+            },
+            // Paper 3
+            {
+                objectives: [
+                    { q: "What is the output of the expression <code>20 >> 2</code>?", o: ["80", "5", "2", "10"], a: "b" },
+                    { q: "Which statement is used to immediately jump to the next iteration of a loop?", o: ["<code>break</code>", "<code>return</code>", "<code>continue</code>", "<code>next</code>"], a: "c" },
+                    { q: "True or False: The <code>this()</code> call can be placed anywhere inside another constructor.", o: ["True", "False"], a: "b" },
+                    { q: "A Java <code>String</code> is immutable. Which class can be used for a mutable string?", o: ["<code>StringLiteral</code>", "<code>Object</code>", "<code>CharSequence</code>", "<code>StringBuffer</code> or <code>StringBuilder</code>"], a: "d" },
+                    { q: "A <code>for-each</code> loop works on an _______ basis.", o: ["elements", "index", "collection", "iterator"], a: "a" }
+                ],
+                descriptives: [
+                    {
+                        q: "What is a static block and what is its execution order?",
+                        a: `<ul class="list-disc list-inside space-y-2"><li>A <strong>static block</strong> is used to initialize static data.</li><li>It executes only once when the class is loaded.</li><li>It always executes <em>before</em> the <code>main</code> method.</li></ul><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>class StaticBlockDemo {\n    static {\n        System.out.println("Static block invoked."); // Executes first\n    }\n\n    public static void main(String args[]) {\n        System.out.println("Main method invoked."); // Executes second\n    }\n}</code></pre>`
+                    },
+                    {
+                        q: "Write a Java program that initializes a 2D array and prints its elements in a matrix format.",
+                        a: `<p class="mb-4">Nested loops are used to traverse the rows and columns of a 2D array.</p><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>class MatrixPrinter {\n    public static void main(String args[]) {\n        int arr[][] = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };\n\n        for (int i = 0; i < 3; i++) {\n            for (int j = 0; j < 3; j++) {\n                System.out.print(arr[i][j] + " ");\n            }\n            System.out.println();\n        }\n    }\n}</code></pre>`
+                    },
+                    {
+                        q: "Explain the difference between the postfix (<code>x++</code>) and prefix (<code>++x</code>) unary operators.",
+                        a: `<ul class="list-disc list-inside space-y-2"><li><strong>Postfix (<code>x++</code>)</strong>: The original value of <code>x</code> is used first, and then it is incremented.</li><li><strong>Prefix (<code>++x</code>)</strong>: The value of <code>x</code> is incremented first, and then the new value is used.</li></ul>`
+                    }
+                ]
+            },
+            // Paper 4
+            {
+                objectives: [
+                    { q: "What is the purpose of a default constructor?", o: ["To create a copy of an object", "To initialize an object with given values", "To provide default values (0, null, etc.) to an object", "To prevent object creation"], a: "c" },
+                    { q: "True or False: It is recommended to use a <code>while</code> loop if the number of iterations is fixed.", o: ["True", "False"], a: "b" },
+                    { q: "What does the <code>continue</code> statement do in a loop?", o: ["Terminates the loop", "Jumps to the next iteration of the loop", "Stops the program", "Skips the next statement only"], a: "b" },
+                    { q: "A variable declared inside a class but outside any method is known as a(n):", o: ["Static variable", "Local variable", "Final variable", "Instance variable"], a: "d" },
+                    { q: "The <code>switch</code> statement is most similar to which other control flow statement?", o: ["<code>if</code> statement", "<code>if-else-if</code> ladder", "<code>for</code> loop", "<code>while</code> loop"], a: "b" }
+                ],
+                descriptives: [
+                    { q: "What is a static method, and what are its main restrictions?", a: `<ul class="list-disc list-inside space-y-2"><li>A <strong>static method</strong> belongs to the class, not an object.</li><li>It can be called directly using the class name.</li><li><strong>Restrictions</strong>: It cannot access non-static members directly, and it cannot use <code>this</code> or <code>super</code>.</li></ul>` },
+                    { q: "Write a Java program demonstrating the Ternary Operator.", a: `<p class="mb-4">The ternary operator (<code>? :</code>) is a compact, inline if-else statement.</p><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>class TernaryOperatorDemo {\n    public static void main(String args[]) {\n        int a = 25, b = 15;\n        int min = (a < b) ? a : b;\n        System.out.println("Minimum is: " + min);\n    }\n}</code></pre>` },
+                    { q: "Explain the two ways to create a String object in Java.", a: `<ul class="list-disc list-inside space-y-2"><li><strong>By String Literal</strong>: <code>String s = "hi";</code>. Reuses existing objects from the String Constant Pool. Memory efficient.</li><li><strong>By <code>new</code> Keyword</strong>: <code>String s = new String("hi");</code>. Always creates a new object in the heap memory.</li></ul>` }
+                ]
+            },
+            // Paper 5
+            {
+                objectives: [
+                    { q: "What is the starting index of an array in Java?", o: ["1", "-1", "0", "It depends on the size"], a: "c" },
+                    { q: "True or False: A variable declared as <code>static</code> is also known as an instance variable.", o: ["True", "False"], a: "b" },
+                    { q: "A character literal is enclosed in what?", o: ["Double quotes (<code>\" \"</code>)", "Single quotes (<code>' '</code>)", "Parentheses (<code>( )</code>)", "Backticks (<code>` `</code>)"], a: "b" },
+                    { q: "Which logical operator does not check the second condition if the first is <code>false</code>?", o: ["<code>&</code>", "<code>|</code>", "<code>&&</code>", "<code>||</code>"], a: "c" },
+                    { q: "A constructor must have the same name as its:", o: ["Object", "File", "Package", "Class"], a: "d" }
+                ],
+                descriptives: [
+                    { q: "Define a Java class <code>Dog</code> with attributes and a constructor.", a: `<pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>public class Dog {\n    String name;\n    String breed;\n\n    public Dog(String name, String breed) {\n        this.name = name;\n        this.breed = breed;\n    }\n\n    public void displayDetails() {\n        System.out.println("Name: " + name);\n    }\n}</code></pre>` },
+                    { q: "What is a <code>switch</code> statement? Write a program demonstrating its use.", a: `<p class="mb-4">The <code>switch</code> statement tests a variable against a list of values (cases).</p><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>public class SwitchDemo {\n    public static void main(String[] args) {\n        int day = 4;\n        switch (day) {\n            case 1: System.out.println("Monday"); break;\n            case 4: System.out.println("Thursday"); break;\n            default: System.out.println("Some other day");\n        }\n    }\n}</code></pre>` },
+                    { q: "Explain what literals are in Java, describing Integer and String literals.", a: `<ul class="list-disc list-inside space-y-2"><li>A <strong>literal</strong> is a source code representation of a fixed value.</li><li><strong>Integer Literal</strong>: Represents a whole number (e.g., <code>100</code>, <code>0x64</code>).</li><li><strong>String Literal</strong>: Represents a sequence of characters enclosed in double quotes (e.g., <code>"Jack"</code>).</li></ul>` }
+                ]
+            },
+            // Paper 6
+            {
+                objectives: [
+                    { q: "True or False: A primitive data type has additional methods associated with it.", o: ["True", "False"], a: "b" },
+                    { q: "What is the output of the expression <code>10 << 2</code>?", o: ["20", "5", "40", "2"], a: "c" },
+                    { q: "The <code>for-each</code> loop is used to traverse which data structures?", o: ["Only collections", "Only arrays", "An array or a collection", "Only lists"], a: "c" },
+                    { q: "A constructor is called when an object is created using which keyword?", o: ["<code>create</code>", "<code>static</code>", "<code>this</code>", "<code>new</code>"], a: "d" },
+                    { q: "Which of these is a non-primitive data type?", o: ["<code>int</code>", "<code>boolean</code>", "<code>String</code>", "<code>char</code>"], a: "c" }
+                ],
+                descriptives: [
+                    { q: "Explain the difference between the logical <code>&&</code> and bitwise <code>&</code> operators.", a: `<ul class="list-disc list-inside space-y-2"><li><strong>Logical AND (<code>&&</code>)</strong>: Short-circuit operator. Doesn't check the second condition if the first is false.</li><li><strong>Bitwise AND (<code>&</code>)</strong>: Always checks both conditions.</li></ul>` },
+                    { q: "Write a Java program that demonstrates a static variable and a static method.", a: `<pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>class Counter {\n    static int objectCount = 0;\n\n    Counter() { objectCount++; }\n\n    public static int getCount() { return objectCount; }\n\n    public static void main(String args[]) {\n        new Counter(); new Counter();\n        System.out.println("Objects: " + Counter.getCount());\n    }\n}</code></pre>` },
+                    { q: "What is a <code>for</code> loop? Write a program that uses one to print numbers from 1 to 5.", a: `<p class="mb-4">A <code>for</code> loop repeats a block of code a fixed number of times.</p><pre class="bg-gray-800 text-white p-4 rounded-md text-sm"><code>class ForLoopDemo {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 5; i++) {\n            System.out.println(i);\n        }\n    }\n}</code></pre>` }
+                ]
+            }
+        ];
 
-    <div class="section">
-      <h2><i class="fas fa-trophy"></i>Why Choose Us?</h2>
-      <ul>
-        <li>💸 Learn more, pay less!</li>
-        <li>👫 Peer-Based Learning with Leaderboards</li>
-        <li>🎁 <strong>Top Rank Reward:</strong> 1 Month ChatGPT Premium</li>
-        <li>💰 Refer & Earn: ₹500 CASHBACK per referral</li>
-      </ul>
-    </div>
+        document.addEventListener('DOMContentLoaded', function () {
+            const papersContainer = document.getElementById('papers-container');
+            const tabs = document.querySelectorAll('.tab-button');
+            const scores = {};
 
-    <div class="section contact">
-      <p><strong>💳 Payment Options:</strong> UPI / Net Banking</p>
-      <p>🔗 Share this with friends!</p>
-      <p><strong>📱 Contact:</strong><br />
-        ☎️ WhatsApp: <a href="https://wa.me/919510292044">+91 9510292044</a><br />
-        📧 Email: <a href="mailto:vyasdevgna@gmail.com">vyasdevgna@gmail.com</a>
-      </p>
-    </div>
+            function generatePaperHTML(paperData, paperIndex) {
+                const paperNumber = paperIndex + 1;
+                scores[paperNumber] = { correct: 0, total: paperData.objectives.length, answered: 0 };
 
-    <div style="text-align: center; margin: clamp(1.5rem, 4vw, 2rem) 0;">
-      <a href="https://forms.gle/hZ8nDL8Pon1GN7eC8" class="btn" target="_blank">
-        <i class="fas fa-rocket"></i> Register Now
-      </a>
-    </div>
+                const objectivesHTML = paperData.objectives.map((q, i) => {
+                    const questionNumber = i + 1;
+                    const optionsHTML = q.o.map((opt, optIndex) => {
+                        const optionLetter = String.fromCharCode(97 + optIndex);
+                        return `<label class="option-label block border-2 border-gray-300 p-3 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"><input type="radio" name="q${paperNumber}.${questionNumber}" value="${optionLetter}" class="mr-3 align-middle">${opt}</label>`;
+                    }).join('');
 
-    <div class="footer">
-      <p><em>Tutor: Vyas Devgna</em></p>
-    </div>
-  </div>
+                    return `
+                        <div class="question-block bg-gray-50 p-5 rounded-xl border border-gray-200" data-paper="${paperNumber}" data-question="${questionNumber}" data-answer="${q.a}">
+                            <p class="font-semibold">${questionNumber}. ${q.q}</p>
+                            <div class="mt-3 space-y-2">${optionsHTML}</div>
+                            <div class="feedback-text mt-3 text-sm font-medium hidden"></div>
+                        </div>`;
+                }).join('');
+
+                const descriptivesHTML = paperData.descriptives.map((d, i) => `
+                    <div>
+                        <button class="solution-toggle w-full text-left font-semibold p-4 bg-gray-100 hover:bg-gray-200 rounded-lg flex justify-between items-center transition-colors">
+                            <span>${i + 1}. ${d.q}</span>
+                            <span class="icon text-xl transform">+</span>
+                        </button>
+                        <div class="solution-content bg-white rounded-b-lg border-x border-b border-gray-200">
+                            ${d.a}
+                        </div>
+                    </div>
+                `).join('');
+
+                return `
+                    <div class="paper-content ${paperNumber === 1 ? '' : 'hidden'}" data-paper="${paperNumber}">
+                        <div class="mb-8 p-4 rounded-lg bg-blue-50 border border-blue-200">
+                            <h3 class="font-bold text-lg text-blue-800">Objectives Score</h3>
+                            <div class="w-full bg-gray-200 rounded-full h-4 mt-2 relative">
+                                <div class="progress-bar bg-blue-500 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                <span class="score-text absolute inset-0 flex items-center justify-center text-xs font-bold text-white">0 / ${scores[paperNumber].total}</span>
+                            </div>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-700 mb-6">Section A: Objective Questions</h2>
+                        <div class="space-y-6">${objectivesHTML}</div>
+                        <h2 class="text-2xl font-bold text-gray-700 mt-12 mb-6">Section B: Descriptive Questions</h2>
+                        <div class="space-y-4">${descriptivesHTML}</div>
+                    </div>`;
+            }
+
+            papersContainer.innerHTML = quizData.map(generatePaperHTML).join('');
+
+            // Add event listeners after content is generated
+            addEventListeners();
+
+            function addEventListeners() {
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        const tabNumber = tab.dataset.tab;
+                        document.querySelectorAll('.paper-content').forEach(paper => {
+                            paper.classList.toggle('hidden', paper.dataset.paper !== tabNumber);
+                        });
+                    });
+                });
+
+                document.querySelectorAll('.question-block').forEach(block => {
+                    block.querySelectorAll('input[type="radio"]').forEach(radio => {
+                        radio.addEventListener('change', () => checkAnswer(block));
+                    });
+                });
+
+                document.querySelectorAll('.solution-toggle').forEach(toggle => {
+                    toggle.addEventListener('click', () => {
+                        toggle.classList.toggle('open');
+                        toggle.nextElementSibling.classList.toggle('show');
+                    });
+                });
+            }
+
+            function checkAnswer(block) {
+                const selectedRadio = block.querySelector('input:checked');
+                if (!selectedRadio) return;
+
+                const paperNumber = block.dataset.paper;
+                const isCorrect = selectedRadio.value === block.dataset.answer;
+                const feedbackEl = block.querySelector('.feedback-text');
+                
+                block.querySelectorAll('input').forEach(r => r.disabled = true);
+                
+                block.querySelectorAll('.option-label').forEach(label => {
+                    const val = label.querySelector('input').value;
+                    if (val === block.dataset.answer) label.classList.add('correct');
+                });
+
+                if (isCorrect) {
+                    scores[paperNumber].correct++;
+                    feedbackEl.textContent = 'Correct! Well done.';
+                    feedbackEl.className = 'feedback-text mt-3 text-sm font-medium text-green-700';
+                } else {
+                    selectedRadio.closest('.option-label').classList.add('incorrect');
+                    feedbackEl.textContent = `Incorrect. The correct answer is highlighted in green.`;
+                    feedbackEl.className = 'feedback-text mt-3 text-sm font-medium text-red-700';
+                }
+                feedbackEl.classList.remove('hidden');
+                scores[paperNumber].answered++;
+                updateScore(paperNumber);
+            }
+
+            function updateScore(paperNumber) {
+                const scoreData = scores[paperNumber];
+                const paperEl = document.querySelector(`.paper-content[data-paper='${paperNumber}']`);
+                const scoreText = paperEl.querySelector('.score-text');
+                const progressBar = paperEl.querySelector('.progress-bar');
+                
+                const answeredPercentage = (scoreData.answered / scoreData.total) * 100;
+
+                scoreText.textContent = `${scoreData.correct} / ${scoreData.total} Correct`;
+                progressBar.style.width = `${answeredPercentage}%`;
+            }
+        });
+    </script>
 </body>
 </html>
+
