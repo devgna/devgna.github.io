@@ -269,15 +269,15 @@
 <script type="module">
     import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
     
-    // Set Mermaid theme based on body class
     const getMermaidTheme = () => document.body.classList.contains('dark-mode') ? 'dark' : 'default';
     mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme(), securityLevel: 'loose' });
 
     document.addEventListener('DOMContentLoaded', () => {
         const DB = {
-            files: [
+            documents: [
                  {
                     "name": "AEP Notes Chapter 1 and Chapter 2.pdf",
+                    "type": "summary",
                     "sections": [
                         { 
                             "title": "Differences: Microprocessor vs Microcontroller",
@@ -308,12 +308,106 @@
                                { "type": "paragraph", "text": "The Arduino UNO is organized into several functional groups of pins and components." },
                                { "type": "diagram", "text": "graph TD\n    subgraph Power\n        p1(USB Port)\n        p2(Barrel Jack)\n    end\n    subgraph Core\n        c1(ATmega328p Microcontroller)\n        c2(16MHz Crystal Oscillator)\n        c3(Reset Button)\n    end\n    subgraph GPIO\n        g1(14 Digital Pins 0-13)\n        g2(6 Analog Pins A0-A5)\n    end\n    subgraph Communication\n        co1(TX/RX for UART)\n        co2(ICSP for SPI)\n        co3(SDA/SCL for I2C)\n    end\n    Power --> Core --> GPIO & Communication" }
                             ]
+                        },
+                        {
+                            "title": "Arduino Control Statements",
+                            "content": [
+                                { "type": "paragraph", "text": "Control statements like `if-else` and `switch-case` are used to control the program flow based on certain conditions." },
+                                { "type": "diagram", "text": "graph TD\n    A(Start) --> B{if condition};\n    B -- True --> C[Execute 'if' block];\n    B -- False --> D[Execute 'else' block];\n    C --> E(End);\n    D --> E;" }
+                            ]
+                        },
+                        {
+                            "title": "Arduino Looping Structures",
+                            "content": [
+                                { "type": "paragraph", "text": "Loops are used to execute a block of code repeatedly. The main types are `for` and `while` loops." },
+                                { "type": "diagram", "text": "graph TD\n    A(Start) --> B[Initialize Counter];\n    B --> C{Condition Check};\n    C -- True --> D[Execute Loop Body];\n    D --> E[Increment/Decrement Counter];\n    E --> C;\n    C -- False --> F(End);" }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "AEP Notes Chapter 3.pdf",
+                    "type": "summary",
+                    "sections": [
+                        {
+                            "title": "Sensors and Actuators",
+                            "content": [
+                                { "type": "paragraph", "text": "A sensor is a device that detects changes in the environment and provides a corresponding output, usually an electrical signal. An actuator is a component that converts this energy into mechanical motion." }
+                            ]
+                        },
+                        {
+                            "title": "16x2 LCD Display",
+                            "content": [
+                                { "type": "paragraph", "text": "A Liquid Crystal Display (LCD) is used to display characters and numbers. A 16x2 display has 16 columns and 2 rows. Its pins control power, contrast, data transfer, and more." },
+                                { "type": "table", "headers": ["Pin", "Name", "Function"], "rows": [
+                                    ["1", "VSS", "Ground"],
+                                    ["2", "VCC", "+5V Power"],
+                                    ["3", "VEE", "Contrast Control"],
+                                    ["4", "RS", "Register Select (Command/Data)"],
+                                    ["5", "RW", "Read/Write"],
+                                    ["6", "E", "Enable"],
+                                    ["7-14", "D0-D7", "Data Pins"],
+                                    ["15", "LED+", "Backlight Anode (+)"],
+                                    ["16", "LED-", "Backlight Cathode (-)"]
+                                ]}
+                            ]
+                        },
+                        {
+                            "title": "Ultrasonic Sensor (HC-SR04)",
+                            "content": [
+                                { "type": "paragraph", "text": "This sensor measures distance using sound waves. It sends a 'Trig' pulse and listens for the returning 'Echo'. The time difference is used to calculate the distance." },
+                                { "type": "diagram", "text": "graph LR\n    A(Controller) -- Trig Pulse --> B(Sensor);\n    B -- Sound Wave --> C(Object);\n    C -- Echo --> B;\n    B -- Echo Signal --> A;" },
+                                { "type": "paragraph", "text": "The distance is calculated with the formula: `Distance (cm) = (Duration * 0.0343) / 2`, where duration is the travel time in microseconds." }
+                            ]
+                        },
+                        {
+                            "title": "Communication Protocols: UART vs I2C",
+                            "content": [
+                                { "type": "paragraph", "text": "UART and I2C are common serial communication protocols." },
+                                { "type": "table", "headers": ["Feature", "UART", "I2C"], "rows": [
+                                    ["Full Name", "Universal Asynchronous Receiver-Transmitter", "Inter-Integrated Circuit"],
+                                    ["Wires", "2 (TX, RX)", "2 (SDA, SCL)"],
+                                    ["Clock", "No shared clock (Asynchronous)", "Shared clock (Synchronous)"],
+                                    ["Devices", "Point-to-point (2 devices)", "Multi-device bus (up to 128 devices)"],
+                                    ["Data Flow", "Full-duplex", "Half-duplex"]
+                                ]},
+                                { "type": "diagram", "text": "graph TD\n    subgraph UART\n        D1(Device 1) -- TX --> D2(Device 2);\n        D1 <-- RX --- D2;\n    end\n    subgraph I2C\n        Master -- \"SDA / SCL\" --> Slave1;\n        Master -- \"SDA / SCL\" --> Slave2;\n        Master -- \"SDA / SCL\" --> Slave3;\n    end" }
+                            ]
+                        },
+                        {
+                            "title": "L293D Motor Driver IC",
+                            "content": [
+                                { "type": "paragraph", "text": "The L293D is an IC used to drive DC motors, as microcontrollers cannot supply enough current. It allows for control over the direction and speed of two separate motors." },
+                                { "type": "table", "headers": ["Pin Type", "Function"], "rows": [
+                                    ["VCC1 / Vss", "Logic Circuit Power (+5V)"],
+                                    ["VCC2 / Vs", "Motor Power (+4.5V to +36V)"],
+                                    ["Enable 1,2 / 3,4", "Turns the corresponding motor ON/OFF"],
+                                    ["Input 1,2 / 3,4", "Controls the direction of the motor"],
+                                    ["Output 1,2 / 3,4", "Connects to the motor terminals"],
+                                    ["Ground", "Common ground connection"]
+                                ]}
+                            ]
+                        },
+                        {
+                            "title": "Servomotor",
+                            "content": [
+                                { "type": "paragraph", "text": "A servomotor is a rotary actuator that allows for precise control of angular position. It typically operates on a principle of Pulse Width Modulation (PWM)." },
+                                 { "type": "diagram", "text": "graph TD\n    A[Control Signal] -- PWM --> C(DC Motor);\n    C --> D(Gear Mechanism);\n    D --> E[Output Shaft];\n    E --> B{Position Sensor};\n    B -- Feedback --> A;" }
+                            ]
                         }
                     ]
                 },
                 {
                     "name": "Raspberry PI Basics.pdf",
+                    "type": "summary",
                     "sections": [
+                        {
+                            "title": "Raspberry Pi Architecture",
+                             "content": [
+                                { "type": "paragraph", "text": "The Raspberry Pi is a single-board computer with a central processor connected to various peripherals and controllers." },
+                                { "type": "diagram", "text": "graph TD\n    A(Processor) <--> B(RAM);\n    A <--> C(USB Controller);\n    A <--> D(Ethernet Controller);\n    A <--> E(GPIO Pins);\n    A <--> F(Wireless Module);\n    A <--> G(Display/Camera Ports);\n    C --> H[USB Ports];\n    D --> I[Ethernet Port];\n    F --> J[WiFi & Bluetooth];\n    G --> K[HDMI/DSI/CSI];" }
+                            ]
+                        },
                         {
                             "title": "Differences: Raspberry Pi vs Arduino",
                             "content": [
@@ -335,6 +429,7 @@
                 },
                 {
                     "name": "AEP Notes Chapter 4 and Chapter 5.pdf",
+                    "type": "summary",
                     "sections": [
                          {
                             "title": "Differences: Python List vs Tuple",
@@ -356,164 +451,181 @@
                             "title": "Python Set Operations",
                             "content": [
                                 { "type": "paragraph", "text": "Sets are collections of unique items and are optimized for mathematical operations." },
-                                { "type": "diagram", "text": "graph TD\n    subgraph Set A\n        A1(red)\n        A2(green)\n        A3(blue)\n    end\n    subgraph Set B\n        B1(yellow)\n        B2(red)\n        B3(orange)\n    end\n\n    subgraph Operations\n        U[Union: A | B] --> R1{red, green, blue, yellow, orange}\n        I[Intersection: A & B] --> R2{red}\n        D[Difference: A - B] --> R3{green, blue}\n        S[Symmetric Difference: A ^ B] --> R4{green, blue, yellow, orange}\n    end\n    A1 & A2 & A3 --> U & I & D & S;\n    B1 & B2 & B3 --> U & I & D & S;" }
+                                { "type": "diagram", "text": "graph TD\n    A[\"Set A: {red, green, blue}\"]\n    B[\"Set B: {red, yellow, orange}\"]\n\n    subgraph Operations\n        U[\"Union\"] --> R1(\"{red, green, blue, yellow, orange}\")\n        I[\"Intersection\"] --> R2(\"{red}\")\n        D[\"Difference (A-B)\"] --> R3(\"{green, blue}\")\n        S[\"Symmetric Difference\"] --> R4(\"{green, blue, yellow, orange}\")\n    end\n\n    A --> U & I & D & S;\n    B --> U & I & D & S;" }
+                            ]
+                        },
+                         {
+                            "title": "Python Dictionary Properties",
+                            "content": [
+                                { "type": "paragraph", "text": "Dictionaries are collections of key-value pairs with specific properties." },
+                                { "type": "table", "headers": ["Property", "Description"], "rows": [
+                                    ["Uniqueness", "Keys must be unique within a dictionary. Duplicate keys will overwrite previous values."],
+                                    ["Immutability of Keys", "Keys must be of an immutable type (e.g., string, number, tuple). Lists cannot be keys."],
+                                    ["Mutability of Values", "Values can be of any data type (mutable or immutable) and can be duplicated."]
+                                ]}
                             ]
                         }
                     ]
+                },
+                {
+                    "name": "AEP MCQs and short questions.pdf",
+                    "type": "solutions",
+                    "content": [
+                        {"q": "1. What is a sensor?", "a": "A device that produces an output signal (usually electrical) for the purpose of sensing a physical phenomenon. It's an input device for a controller."},
+                        {"q": "2. A sensor is an _____ device.", "a": "Input device."},
+                        {"q": "3. A (16x2) LCD display has:", "a": "2 rows and 16 columns."},
+                        {"q": "4. Which device converts an electrical signal to a sound signal?", "a": "Speaker."},
+                        {"q": "5. Which sensor detects an object's distance using sound energy?", "a": "Ultrasonic sensor."},
+                        {"q": "6. Which device converts temperature to an electrical signal?", "a": "Thermistor."},
+                        {"q": "7. How many analog input pins are on an Arduino UNO board?", "a": "6 (A0 to A5)."},
+                        {"q": "8. How many digital I/O pins are on an Arduino UNO board?", "a": "14 (0 to 13)."},
+                        {"q": "9. How many Ground pins are on an Arduino UNO board?", "a": "3."},
+                        {"q": "10. How many +5V pins are on an Arduino UNO board?", "a": "1."},
+                        {"q": "11. What is the use of the pinMode() function?", "a": "To declare a pin as either an INPUT or an OUTPUT."},
+                        {"q": "12. Which of the following is not a standard Arduino function: AnalogRead(), AnalogWrite(), serial.begin(), AnalogStore()?", "a": "AnalogStore() is not a standard function."},
+                        {"q": "13. What does delay(5000); mean?", "a": "Wait for 5000 milliseconds, which is 5 seconds."},
+                        {"q": "14. What does digitalWrite(13, LOW); do?", "a": "It turns the device connected to pin 13 OFF."},
+                        {"q": "15. A forward slash (//) is used for what?", "a": "Single-line comments."},
+                        {"q": "16. Is an LED an input or output device?", "a": "Output."},
+                        {"q": "17. Is a Pushbutton an input or output device?", "a": "Input."},
+                        {"q": "18. Is a Knob (potentiometer) an input or output device?", "a": "Input."},
+                        {"q": "19. Is a Servomotor an input or output device?", "a": "Output (actuator)."},
+                        {"q": "20. What is a 'sketch' in Arduino?", "a": "An Arduino program file."},
+                        {"q": "21. In the code `delay(1000);`, how long is the pause?", "a": "1 second."},
+                        {"q": "22. In `digitalWrite(13, HIGH);`, which pin is being controlled?", "a": "Pin 13."},
+                        {"q": "23. Which statement do you change to alter the timing of a blink?", "a": "The `delay()` statement."},
+                        {"q": "24. Which function in an Arduino sketch runs forever?", "a": "`void loop()`."},
+                        {"q": "25. Which constant is used to turn an LED ON?", "a": "HIGH."},
+                        {"q": "26. Which constant is used to turn an LED OFF?", "a": "LOW."},
+                        {"q": "27. Which symbol begins a single-line comment?", "a": "//"},
+                        {"q": "28. What must the entire code block of a function end with?", "a": "A closing curly brace }."},
+                        {"q": "29. Which symbol ends a statement in Arduino C?", "a": "Semicolon ;"},
+                        {"q": "30. Why do LEDs have different length legs?", "a": "To indicate polarity: the longer leg is the positive (anode), and the shorter is the negative (cathode)."},
+                        {"q": "31. What microcontroller is used in the Arduino UNO?", "a": "ATmega328P."},
+                        {"q": "32. Which function is called only once when a program starts?", "a": "`void setup()`."},
+                        {"q": "33. What does enclosing text in /* ... */ do?", "a": "Creates a multi-line comment."},
+                        {"q": "34. Is `pinMode(led, INPUT);` a correct declaration for an LED?", "a": "False. An LED is an output device, so it should be `pinMode(led, OUTPUT);`."},
+                        {"q": "35. What is the component used for temporary electronic circuits?", "a": "Breadboard."},
+                        {"q": "36. Arduino can interact with:", "a": "All of these (LEDs, Keypads, Sensors)."},
+                        {"q": "37. What is the meaning of `delay(1000)`?", "a": "Provide a delay of 1000 milliseconds (1 second)."},
+                        {"q": "38. What is PWM?", "a": "Pulse Width Modulation."},
+                        {"q": "39. Which pins on the Arduino UNO are used for serial communication (Tx/Rx)?", "a": "Digital pins 0 (RX) and 1 (TX)."},
+                        {"q": "40. What is the correct syntax for reading an analog pin?", "a": "`analogRead(A0);`"},
+                        {"q": "41. A program written with the Arduino IDE is called a:", "a": "Sketch."},
+                        {"q": "42. Is the Arduino IDE an open-source platform?", "a": "True."},
+                        {"q": "43. What does IDE stand for?", "a": "Integrated Development Environment."},
+                        {"q": "44. What is the HC-SR04 component?", "a": "Ultrasonic sensor."},
+                        {"q": "45. Which sensor is used to detect smoke?", "a": "Gas sensor (like MQ series)."},
+                        {"q": "46. Which sensor is used to detect the distance of an object?", "a": "Ultrasonic sensor."},
+                        {"q": "47. Which IC is a common DC motor driver?", "a": "L293D."},
+                        {"q": "48. How many pins does an L293D IC have?", "a": "16."},
+                        {"q": "49. What is used to control a high-power circuit with a low-power signal?", "a": "A Relay."},
+                        {"q": "50. What are the two main functions in an Arduino sketch?", "a": "`setup()` and `loop()`."},
+                        {"q": "51. What does GPIO stand for?", "a": "General Purpose Input/Output."},
+                        {"q": "52. Which command displays characters in the serial monitor?", "a": "`Serial.println()`."},
+                        {"q": "53. What is the component with a knob that varies resistance?", "a": "Potentiometer."},
+                        {"q": "54. What does `lcd.begin()` do?", "a": "It initializes the LCD screen, setting its dimensions (e.g., 16 columns, 2 rows)."},
+                        {"q": "55. What does `lcd.clear()` do?", "a": "It clears all characters from the LCD screen."},
+                        {"q": "56. What does `lcd.setCursor()` do?", "a": "It sets the position of the cursor (where the next character will be printed) on the LCD screen."},
+                        {"q": "57. What is the value of a resistor with color code Red, Red, Orange?", "a": "22 KΩ (22 x 10^3 Ohms)."},
+                        {"q": "58. What is the color code for a 10 KΩ resistor?", "a": "Brown, Black, Orange."},
+                        {"q": "59. What is the syntax of the `map()` function?", "a": "`map(value, fromLow, fromHigh, toLow, toHigh)`."},
+                        {"q": "60. Which constant represents +5V?", "a": "HIGH."},
+                        {"q": "61. `LiquidCrystal lcd(rs, en, d4, d5, d6, d7)` is an example of what pin configuration?", "a": "6-pin (4-bit mode)."},
+                        {"q": "62. What are the 2 arguments in `lcd.setCursor()`?", "a": "First: column number, Second: row number."},
+                        {"q": "63. How many times does the `loop()` function run?", "a": "Infinitely, as long as the Arduino has power."},
+                        {"q": "64. What are the two modes for `pinMode()`?", "a": "INPUT and OUTPUT."},
+                        {"q": "65. Which Arduino board uses the ATmega328 controller?", "a": "Arduino UNO."},
+                        {"q": "66. How many arguments does `digitalRead()` have?", "a": "1 (the pin number)."},
+                        {"q": "67. Which of the following is a temperature sensor: LM25, MQ5, LM35, MQ6?", "a": "LM35."},
+                        {"q": "68. What does IoT stand for?", "a": "Internet of Things."},
+                        {"q": "69. Which of these is LEAST likely to be an IoT device: Smartwatch, Android Phone, Laptop, Tubelight?", "a": "Tubelight (unless it's a 'smart' tubelight)."},
+                        {"q": "70. Which is not an IoT platform: Xiaomi Cloud, Google Cloud, Myntra, AWS?", "a": "Myntra (it's an e-commerce platform)."},
+                        {"q": "71. IoT is based on which technology?", "a": "Both Hardware and Software."},
+                        {"q": "72. What is an IoT network?", "a": "A collection of interconnected devices."},
+                        {"q": "73. What is the full form of MQTT?", "a": "Message Queue Telemetry Transport."},
+                        {"q": "74. What does IIOT stand for?", "a": "Industrial Internet of Things."},
+                        {"q": "75. Is an IoT network a collection of interconnected devices?", "a": "True."},
+                        {"q": "76. How is an IoT device's data typically associated or stored?", "a": "In the Cloud."},
+                        {"q": "77. Which of the following is not an application of IoT: Wearables, Smart Grid, Arduino, Smart City?", "a": "Arduino (it's a tool to build IoT applications)."},
+                        {"q": "78. How is the Raspberry Pi defined?", "a": "As a minicomputer or single-board computer."},
+                        {"q": "79. How many total pins does a Raspberry Pi 4 Model B have?", "a": "40."},
+                        {"q": "80. How many GPIO pins does a Raspberry Pi 4 have?", "a": "28 of the 40 pins are GPIO pins."},
+                        {"q": "81. What are the capabilities of a Raspberry Pi?", "a": "All of the above (browsing, spreadsheets, programming, etc.)."},
+                        {"q": "82. How many ground pins does a Raspberry Pi 4B have?", "a": "8."},
+                        {"q": "83. How many +5V pins does a Raspberry Pi 4B have?", "a": "2."},
+                        {"q": "84. How many +3.3V pins does a Raspberry Pi 4B have?", "a": "2."},
+                        {"q": "85. What is the standard form of SDA in I2C?", "a": "Serial Data."},
+                        {"q": "86. What is the standard form of SCL in I2C?", "a": "Serial Clock."},
+                        {"q": "87. What is the standard form of TXD in UART?", "a": "Transmit Data."},
+                        {"q": "88. How many connections does I2C communication have?", "a": "Two (SDA and SCL)."},
+                        {"q": "89. Which port is used to power the Raspberry Pi?", "a": "Micro USB port or USB-C port (depending on the model)."},
+                        {"q": "90. What is the standard form of CSI?", "a": "Camera Serial Interface."},
+                        {"q": "91. What is the standard form of RFID?", "a": "Radio Frequency Identification."},
+                        {"q": "92. Is the Arduino UNO hardware or software?", "a": "Hardware Device."},
+                        {"q": "93. Can ESP32 have touch sensor GPIO pins?", "a": "True."},
+                        {"q": "94. What is Blynk?", "a": "A mobile application platform for IoT."},
+                        {"q": "95. Who developed the ESP32 series of microcontrollers?", "a": "Espressif Systems."},
+                        {"q": "96. Does the ESP32 have WiFi capability?", "a": "True."},
+                        {"q": "97. Do ESP32 devices have more GPIO pins than ESP8266?", "a": "True."},
+                        {"q": "98. What does SaaS mean?", "a": "Software as a Service."},
+                        {"q": "99. What is the Arduino IoT Cloud?", "a": "An online platform to create, deploy, and monitor IoT projects."},
+                        {"q": "100. What does UART stand for?", "a": "Universal Asynchronous Reception and Transmission."}
+                    ]
+                },
+                {
+                    "name": "Basic List Tuple and List Comprehension Questions.pdf",
+                    "type": "solutions",
+                    "content": [
+                        {"q": "1. Create a list of numbers from 0 to 50 using List comprehension.", "a": "<pre><code>Numbers = [x for x in range(51)]</code></pre>"},
+                        {"q": "2. Create a list of the square of numbers from 1 to 20.", "a": "<pre><code>squares = [x**2 for x in range(1, 21)]</code></pre>"},
+                        {"q": "3. Create a list of 10 characters and slice it from index 3 to 7.", "a": "<pre><code>Chars = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']\nSlice = Chars[3:8] # Result: ['D', 'E', 'F', 'G', 'H']</code></pre>"},
+                        {"q": "4. What is the difference between list.insert() and list.append()?", "a": "`append()` adds an element to the very end of the list. `insert()` adds an element at a specified index, shifting other elements."},
+                        {"q": "5. How do you combine two lists?", "a": "Using the `extend()` method (`L.extend(M)`) or the `+` operator (`L + M`)."},
+                        {"q": "6. How do you remove an item from a list by index vs. by value?", "a": "Use `pop(index)` to remove by index (e.g., `L.pop(3)`). Use `remove(value)` to remove the first occurrence of a value (e.g., `L.remove(\"OS\")`)."},
+                        {"q": "7. Create a list of even numbers from 0 to 24.", "a": "<pre><code>evens = [x for x in range(0, 25, 2)]</code></pre>"},
+                        {"q": "8. Create a list of numbers from 0 to 10, with each number multiplied by 5.", "a": "<pre><code>multiplied = [x * 5 for x in range(11)]</code></pre>"},
+                        {"q": "9. From a list of strings, create a new list with only the first letter of each string.", "a": "<pre><code>L = [\"EPR\", \"EPA\", \"FEP\"]\nfirst_letters = [word[0] for word in L] # Result: ['E', 'E', 'F']</code></pre>"},
+                        {"q": "10. Separate characters in a string into a list.", "a": "<pre><code>letters = [char for char in \"embedded\"]</code></pre>"},
+                        {"q": "11. Convert a list of lowercase letters to uppercase.", "a": "<pre><code>L = ['a', 'b', 'c']\nupper_L = [letter.upper() for letter in L]</code></pre>"},
+                        {"q": "12. From a string containing text and numbers, extract only the digits.", "a": "<pre><code>text = \"My number is 9876543210.\"\ndigits = [char for char in text if char.isdigit()]</code></pre>"},
+                        {"q": "13. How do you read all lines from a text file into a list?", "a": "<pre><code>with open(\"emails.txt\", 'r') as file:\n    emails = [line.strip() for line in file]\n</code></pre>"},
+                        {"q": "14. Double only the even numbers from 1 to 10.", "a": "<pre><code>doubled_evens = [x * 2 for x in range(1, 11) if x % 2 == 0]</code></pre>"},
+                        {"q": "15. Add all possible combinations of numbers from two lists.", "a": "<pre><code>L=[1,2], M=[10,20]\naddition = [x + y for x in L for y in M] # Result: [11, 21, 12, 22]</code></pre>"},
+                        {"q": "16. How do you count the occurrences of a specific item in a list?", "a": "Use the `.count()` method. `L.count(9)` will count how many 9s are in list L."},
+                        {"q": "17. How can you count all items in a list at once?", "a": "Use the `Counter` class from the `collections` module. <pre><code>from collections import Counter\nprint(Counter(L))</code></pre>"},
+                        {"q": "18. How do you reverse a list in-place?", "a": "Use the `.reverse()` method. `L.reverse()`."},
+                        {"q": "19. How do you access each list item in reversed order without changing the list?", "a": "Use the `reversed()` function in a loop: `for x in reversed(L):`"},
+                        {"q": "20. How do you sort a list?", "a": "Use the `.sort()` method to sort it in-place. `L.sort()`."},
+                        {"q": "21. How do you sort a list in reverse (descending) order?", "a": "Use the `reverse=True` argument: `L.sort(reverse=True)`."},
+                        {"q": "22. How do you sum all elements of a number list?", "a": "Use the `sum()` function: `total = sum(L)`."},
+                        {"q": "23. What does the slice `L[::-1]` do?", "a": "It creates a reversed copy of the list without modifying the original."},
+                        {"q": "24. How can you add items to the end of a list using `len()`?", "a": "By assigning to a slice at the end: `L[len(L):] = [1, 2, 3]`."},
+                        {"q": "25. How do you insert items at a specific index using slicing?", "a": "Assign to an empty slice at that index: `L[2:2] = [1, 2, 3]` inserts the items at index 2."},
+                        {"q": "26. How do you delete items using slicing?", "a": "Assign an empty list to the slice you want to remove: `L[1:4] = []` deletes items from index 1 up to (but not including) 4."},
+                        {"q": "27. What is the difference between `L2 = L1` and `L2 = L1[:]`?", "a": "`L2 = L1` makes L2 a reference to L1 (changing one changes the other). `L2 = L1[:]` creates a shallow copy of L1, so they are independent lists."},
+                        {"q": "28. How do you create a list with the absolute values of another list?", "a": "<pre><code>L = [-2, -1, 0, 1, 2]\nabsolutes = [abs(x) for x in L]</code></pre>"},
+                        {"q": "29. How do you remove leading/trailing whitespace from a list of strings?", "a": "Use the `.strip()` method in a list comprehension: `clean_list = [s.strip() for s in original_list]`."},
+                        {"q": "30. Why use list comprehensions?", "a": "They are more concise, readable, and often faster than traditional for loops for creating lists."},
+                        {"q": "31. How do you print only the positive numbers from a list?", "a": "<pre><code>L = [-2, -1, 0, 1, 2]\npositives = [x for x in L if x > 0]</code></pre>"},
+                        {"q": "32. How do you convert a List into a Tuple?", "a": "Use the `tuple()` constructor: `my_tuple = tuple(my_list)`."},
+                        {"q": "33. How do you convert a string into a tuple?", "a": "Use the `tuple()` constructor: `my_tuple = tuple('abcd')` results in `('a', 'b', 'c', 'd')`."},
+                        {"q": "34. What are Tuple Packing and Unpacking?", "a": "**Packing** is creating a tuple: `T = (1, 2, 3)`. **Unpacking** is assigning the tuple's elements to variables: `x, y, z = T`."},
+                        {"q": "35. How can you swap two variables using a tuple?", "a": "Use tuple packing and unpacking on one line: `a, b = b, a`."},
+                        {"q": "36. How can you split an email address into a username and domain?", "a": "Use `.split('@')` with tuple unpacking: `username, domain = 'name@example.com'.split('@')`."},
+                        {"q": "37. How do you access tuple items using negative indexing?", "a": "`T[-1]` accesses the last item, `T[-2]` the second to last, and so on."},
+                        {"q": "38. How does tuple slicing work?", "a": "It works just like list slicing, creating a new tuple. `T[2:5]` creates a new tuple with elements from index 2 up to 5."},
+                        {"q": "39. Can you change the value of a tuple? E.g., `T = (1, [2, 3], 4)`", "a": "You cannot change the immutable elements (like 1 and 4). However, you *can* change the contents of mutable elements within it, like the list. `T[1][0] = 99` is a valid operation."},
+                        {"q": "40. How can you sort a tuple?", "a": "You can't sort a tuple directly. You must convert it to a list, sort the list, and then convert it back to a tuple: `sorted_tuple = tuple(sorted(my_tuple))`."},
+                        {"q": "41. How do you count occurrences in a tuple?", "a": "Use the `.count()` method: `T.count('red')`."},
+                        {"q": "42. How do you sum the elements of a tuple?", "a": "Use the `sum()` function: `total = sum(T)`."},
+                        {"q": "43. How do you create a tuple of a sequence of numbers?", "a": "Use the `range()` function inside the `tuple()` constructor: `T = tuple(range(10))`."},
+                        {"q": "44. How do you create a set from a string 'abcde'?", "a": "`S = set('abcde')`"},
+                        {"q": "45. How do you convert a list into a set (removing duplicates)?", "a": "Use the `set()` constructor: `my_set = set(my_list)`."},
+                        {"q": "46. How do you create a set of numbers from 0 to 9?", "a": "`S = set(range(10))`"}
+                    ]
                 }
             ],
-            "solutions": {
-                "AEP MCQs and short questions.pdf": [
-                    {"q": "1. What is a sensor?", "a": "A device that produces an output signal (usually electrical) for the purpose of sensing a physical phenomenon. It's an input device for a controller."},
-                    {"q": "2. A sensor is an _____ device.", "a": "Input device."},
-                    {"q": "3. A (16x2) LCD display has:", "a": "2 rows and 16 columns."},
-                    {"q": "4. Which device converts an electrical signal to a sound signal?", "a": "Speaker."},
-                    {"q": "5. Which sensor detects an object's distance using sound energy?", "a": "Ultrasonic sensor."},
-                    {"q": "6. Which device converts temperature to an electrical signal?", "a": "Thermistor."},
-                    {"q": "7. How many analog input pins are on an Arduino UNO board?", "a": "6 (A0 to A5)."},
-                    {"q": "8. How many digital I/O pins are on an Arduino UNO board?", "a": "14 (0 to 13)."},
-                    {"q": "9. How many Ground pins are on an Arduino UNO board?", "a": "3."},
-                    {"q": "10. How many +5V pins are on an Arduino UNO board?", "a": "1."},
-                    {"q": "11. What is the use of the pinMode() function?", "a": "To declare a pin as either an INPUT or an OUTPUT."},
-                    {"q": "12. Which of the following is not a standard Arduino function: AnalogRead(), AnalogWrite(), serial.begin(), AnalogStore()?", "a": "AnalogStore() is not a standard function."},
-                    {"q": "13. What does delay(5000); mean?", "a": "Wait for 5000 milliseconds, which is 5 seconds."},
-                    {"q": "14. What does digitalWrite(13, LOW); do?", "a": "It turns the device connected to pin 13 OFF."},
-                    {"q": "15. A forward slash (//) is used for what?", "a": "Single-line comments."},
-                    {"q": "16. Is an LED an input or output device?", "a": "Output."},
-                    {"q": "17. Is a Pushbutton an input or output device?", "a": "Input."},
-                    {"q": "18. Is a Knob (potentiometer) an input or output device?", "a": "Input."},
-                    {"q": "19. Is a Servomotor an input or output device?", "a": "Output (actuator)."},
-                    {"q": "20. What is a 'sketch' in Arduino?", "a": "An Arduino program file."},
-                    {"q": "21. In the code `delay(1000);`, how long is the pause?", "a": "1 second."},
-                    {"q": "22. In `digitalWrite(13, HIGH);`, which pin is being controlled?", "a": "Pin 13."},
-                    {"q": "23. Which statement do you change to alter the timing of a blink?", "a": "The `delay()` statement."},
-                    {"q": "24. Which function in an Arduino sketch runs forever?", "a": "`void loop()`."},
-                    {"q": "25. Which constant is used to turn an LED ON?", "a": "HIGH."},
-                    {"q": "26. Which constant is used to turn an LED OFF?", "a": "LOW."},
-                    {"q": "27. Which symbol begins a single-line comment?", "a": "//"},
-                    {"q": "28. What must the entire code block of a function end with?", "a": "A closing curly brace }."},
-                    {"q": "29. Which symbol ends a statement in Arduino C?", "a": "Semicolon ;"},
-                    {"q": "30. Why do LEDs have different length legs?", "a": "To indicate polarity: the longer leg is the positive (anode), and the shorter is the negative (cathode)."},
-                    {"q": "31. What microcontroller is used in the Arduino UNO?", "a": "ATmega328P."},
-                    {"q": "32. Which function is called only once when a program starts?", "a": "`void setup()`."},
-                    {"q": "33. What does enclosing text in /* ... */ do?", "a": "Creates a multi-line comment."},
-                    {"q": "34. Is `pinMode(led, INPUT);` a correct declaration for an LED?", "a": "False. An LED is an output device, so it should be `pinMode(led, OUTPUT);`."},
-                    {"q": "35. What is the component used for temporary electronic circuits?", "a": "Breadboard."},
-                    {"q": "36. Arduino can interact with:", "a": "All of these (LEDs, Keypads, Sensors)."},
-                    {"q": "37. What is the meaning of `delay(1000)`?", "a": "Provide a delay of 1000 milliseconds (1 second)."},
-                    {"q": "38. What is PWM?", "a": "Pulse Width Modulation."},
-                    {"q": "39. Which pins on the Arduino UNO are used for serial communication (Tx/Rx)?", "a": "Digital pins 0 (RX) and 1 (TX)."},
-                    {"q": "40. What is the correct syntax for reading an analog pin?", "a": "`analogRead(A0);`"},
-                    {"q": "41. A program written with the Arduino IDE is called a:", "a": "Sketch."},
-                    {"q": "42. Is the Arduino IDE an open-source platform?", "a": "True."},
-                    {"q": "43. What does IDE stand for?", "a": "Integrated Development Environment."},
-                    {"q": "44. What is the HC-SR04 component?", "a": "Ultrasonic sensor."},
-                    {"q": "45. Which sensor is used to detect smoke?", "a": "Gas sensor (like MQ series)."},
-                    {"q": "46. Which sensor is used to detect the distance of an object?", "a": "Ultrasonic sensor."},
-                    {"q": "47. Which IC is a common DC motor driver?", "a": "L293D."},
-                    {"q": "48. How many pins does an L293D IC have?", "a": "16."},
-                    {"q": "49. What is used to control a high-power circuit with a low-power signal?", "a": "A Relay."},
-                    {"q": "50. What are the two main functions in an Arduino sketch?", "a": "`setup()` and `loop()`."},
-                    {"q": "51. What does GPIO stand for?", "a": "General Purpose Input/Output."},
-                    {"q": "52. Which command displays characters in the serial monitor?", "a": "`Serial.println()`."},
-                    {"q": "53. What is the component with a knob that varies resistance?", "a": "Potentiometer."},
-                    {"q": "54. What does `lcd.begin()` do?", "a": "It initializes the LCD screen, setting its dimensions (e.g., 16 columns, 2 rows)."},
-                    {"q": "55. What does `lcd.clear()` do?", "a": "It clears all characters from the LCD screen."},
-                    {"q": "56. What does `lcd.setCursor()` do?", "a": "It sets the position of the cursor (where the next character will be printed) on the LCD screen."},
-                    {"q": "57. What is the value of a resistor with color code Red, Red, Orange?", "a": "22 KΩ (22 x 10^3 Ohms)."},
-                    {"q": "58. What is the color code for a 10 KΩ resistor?", "a": "Brown, Black, Orange."},
-                    {"q": "59. What is the syntax of the `map()` function?", "a": "`map(value, fromLow, fromHigh, toLow, toHigh)`."},
-                    {"q": "60. Which constant represents +5V?", "a": "HIGH."},
-                    {"q": "61. `LiquidCrystal lcd(rs, en, d4, d5, d6, d7)` is an example of what pin configuration?", "a": "6-pin (4-bit mode)."},
-                    {"q": "62. What are the 2 arguments in `lcd.setCursor()`?", "a": "First: column number, Second: row number."},
-                    {"q": "63. How many times does the `loop()` function run?", "a": "Infinitely, as long as the Arduino has power."},
-                    {"q": "64. What are the two modes for `pinMode()`?", "a": "INPUT and OUTPUT."},
-                    {"q": "65. Which Arduino board uses the ATmega328 controller?", "a": "Arduino UNO."},
-                    {"q": "66. How many arguments does `digitalRead()` have?", "a": "1 (the pin number)."},
-                    {"q": "67. Which of the following is a temperature sensor: LM25, MQ5, LM35, MQ6?", "a": "LM35."},
-                    {"q": "68. What does IoT stand for?", "a": "Internet of Things."},
-                    {"q": "69. Which of these is LEAST likely to be an IoT device: Smartwatch, Android Phone, Laptop, Tubelight?", "a": "Tubelight (unless it's a 'smart' tubelight)."},
-                    {"q": "70. Which is not an IoT platform: Xiaomi Cloud, Google Cloud, Myntra, AWS?", "a": "Myntra (it's an e-commerce platform)."},
-                    {"q": "71. IoT is based on which technology?", "a": "Both Hardware and Software."},
-                    {"q": "72. What is an IoT network?", "a": "A collection of interconnected devices."},
-                    {"q": "73. What is the full form of MQTT?", "a": "Message Queue Telemetry Transport."},
-                    {"q": "74. What does IIOT stand for?", "a": "Industrial Internet of Things."},
-                    {"q": "75. Is an IoT network a collection of interconnected devices?", "a": "True."},
-                    {"q": "76. How is an IoT device's data typically associated or stored?", "a": "In the Cloud."},
-                    {"q": "77. Which of the following is not an application of IoT: Wearables, Smart Grid, Arduino, Smart City?", "a": "Arduino (it's a tool to build IoT applications)."},
-                    {"q": "78. How is the Raspberry Pi defined?", "a": "As a minicomputer or single-board computer."},
-                    {"q": "79. How many total pins does a Raspberry Pi 4 Model B have?", "a": "40."},
-                    {"q": "80. How many GPIO pins does a Raspberry Pi 4 have?", "a": "28 of the 40 pins are GPIO pins."},
-                    {"q": "81. What are the capabilities of a Raspberry Pi?", "a": "All of the above (browsing, spreadsheets, programming, etc.)."},
-                    {"q": "82. How many ground pins does a Raspberry Pi 4B have?", "a": "8."},
-                    {"q": "83. How many +5V pins does a Raspberry Pi 4B have?", "a": "2."},
-                    {"q": "84. How many +3.3V pins does a Raspberry Pi 4B have?", "a": "2."},
-                    {"q": "85. What is the standard form of SDA in I2C?", "a": "Serial Data."},
-                    {"q": "86. What is the standard form of SCL in I2C?", "a": "Serial Clock."},
-                    {"q": "87. What is the standard form of TXD in UART?", "a": "Transmit Data."},
-                    {"q": "88. How many connections does I2C communication have?", "a": "Two (SDA and SCL)."},
-                    {"q": "89. Which port is used to power the Raspberry Pi?", "a": "Micro USB port or USB-C port (depending on the model)."},
-                    {"q": "90. What is the standard form of CSI?", "a": "Camera Serial Interface."},
-                    {"q": "91. What is the standard form of RFID?", "a": "Radio Frequency Identification."},
-                    {"q": "92. Is the Arduino UNO hardware or software?", "a": "Hardware Device."},
-                    {"q": "93. Can ESP32 have touch sensor GPIO pins?", "a": "True."},
-                    {"q": "94. What is Blynk?", "a": "A mobile application platform for IoT."},
-                    {"q": "95. Who developed the ESP32 series of microcontrollers?", "a": "Espressif Systems."},
-                    {"q": "96. Does the ESP32 have WiFi capability?", "a": "True."},
-                    {"q": "97. Do ESP32 devices have more GPIO pins than ESP8266?", "a": "True."},
-                    {"q": "98. What does SaaS mean?", "a": "Software as a Service."},
-                    {"q": "99. What is the Arduino IoT Cloud?", "a": "An online platform to create, deploy, and monitor IoT projects."},
-                    {"q": "100. What does UART stand for?", "a": "Universal Asynchronous Reception and Transmission."}
-                ],
-                "Basic List Tuple and List Comprehension Questions.pdf": [
-                    {"q": "1. Create a list of numbers from 0 to 50 using List comprehension.", "a": "<pre><code>Numbers = [x for x in range(51)]</code></pre>"},
-                    {"q": "2. Create a list of the square of numbers from 1 to 20.", "a": "<pre><code>squares = [x**2 for x in range(1, 21)]</code></pre>"},
-                    {"q": "3. Create a list of 10 characters and slice it from index 3 to 7.", "a": "<pre><code>Chars = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']\nSlice = Chars[3:8] # Result: ['D', 'E', 'F', 'G', 'H']</code></pre>"},
-                    {"q": "4. What is the difference between list.insert() and list.append()?", "a": "`append()` adds an element to the very end of the list. `insert()` adds an element at a specified index, shifting other elements."},
-                    {"q": "5. How do you combine two lists?", "a": "Using the `extend()` method (`L.extend(M)`) or the `+` operator (`L + M`)."},
-                    {"q": "6. How do you remove an item from a list by index vs. by value?", "a": "Use `pop(index)` to remove by index (e.g., `L.pop(3)`). Use `remove(value)` to remove the first occurrence of a value (e.g., `L.remove(\"OS\")`)."},
-                    {"q": "7. Create a list of even numbers from 0 to 24.", "a": "<pre><code>evens = [x for x in range(0, 25, 2)]</code></pre>"},
-                    {"q": "8. Create a list of numbers from 0 to 10, with each number multiplied by 5.", "a": "<pre><code>multiplied = [x * 5 for x in range(11)]</code></pre>"},
-                    {"q": "9. From a list of strings, create a new list with only the first letter of each string.", "a": "<pre><code>L = [\"EPR\", \"EPA\", \"FEP\"]\nfirst_letters = [word[0] for word in L] # Result: ['E', 'E', 'F']</code></pre>"},
-                    {"q": "10. Separate characters in a string into a list.", "a": "<pre><code>letters = [char for char in \"embedded\"]</code></pre>"},
-                    {"q": "11. Convert a list of lowercase letters to uppercase.", "a": "<pre><code>L = ['a', 'b', 'c']\nupper_L = [letter.upper() for letter in L]</code></pre>"},
-                    {"q": "12. From a string containing text and numbers, extract only the digits.", "a": "<pre><code>text = \"My number is 9876543210.\"\ndigits = [char for char in text if char.isdigit()]</code></pre>"},
-                    {"q": "13. How do you read all lines from a text file into a list?", "a": "<pre><code>with open(\"emails.txt\", 'r') as file:\n    emails = [line.strip() for line in file]\n</code></pre>"},
-                    {"q": "14. Double only the even numbers from 1 to 10.", "a": "<pre><code>doubled_evens = [x * 2 for x in range(1, 11) if x % 2 == 0]</code></pre>"},
-                    {"q": "15. Add all possible combinations of numbers from two lists.", "a": "<pre><code>L=[1,2], M=[10,20]\naddition = [x + y for x in L for y in M] # Result: [11, 21, 12, 22]</code></pre>"},
-                    {"q": "16. How do you count the occurrences of a specific item in a list?", "a": "Use the `.count()` method. `L.count(9)` will count how many 9s are in list L."},
-                    {"q": "17. How can you count all items in a list at once?", "a": "Use the `Counter` class from the `collections` module. <pre><code>from collections import Counter\nprint(Counter(L))</code></pre>"},
-                    {"q": "18. How do you reverse a list in-place?", "a": "Use the `.reverse()` method. `L.reverse()`."},
-                    {"q": "19. How do you access each list item in reversed order without changing the list?", "a": "Use the `reversed()` function in a loop: `for x in reversed(L):`"},
-                    {"q": "20. How do you sort a list?", "a": "Use the `.sort()` method to sort it in-place. `L.sort()`."},
-                    {"q": "21. How do you sort a list in reverse (descending) order?", "a": "Use the `reverse=True` argument: `L.sort(reverse=True)`."},
-                    {"q": "22. How do you sum all elements of a number list?", "a": "Use the `sum()` function: `total = sum(L)`."},
-                    {"q": "23. What does the slice `L[::-1]` do?", "a": "It creates a reversed copy of the list without modifying the original."},
-                    {"q": "24. How can you add items to the end of a list using `len()`?", "a": "By assigning to a slice at the end: `L[len(L):] = [1, 2, 3]`."},
-                    {"q": "25. How do you insert items at a specific index using slicing?", "a": "Assign to an empty slice at that index: `L[2:2] = [1, 2, 3]` inserts the items at index 2."},
-                    {"q": "26. How do you delete items using slicing?", "a": "Assign an empty list to the slice you want to remove: `L[1:4] = []` deletes items from index 1 up to (but not including) 4."},
-                    {"q": "27. What is the difference between `L2 = L1` and `L2 = L1[:]`?", "a": "`L2 = L1` makes L2 a reference to L1 (changing one changes the other). `L2 = L1[:]` creates a shallow copy of L1, so they are independent lists."},
-                    {"q": "28. How do you create a list with the absolute values of another list?", "a": "<pre><code>L = [-2, -1, 0, 1, 2]\nabsolutes = [abs(x) for x in L]</code></pre>"},
-                    {"q": "29. How do you remove leading/trailing whitespace from a list of strings?", "a": "Use the `.strip()` method in a list comprehension: `clean_list = [s.strip() for s in original_list]`."},
-                    {"q": "30. Why use list comprehensions?", "a": "They are more concise, readable, and often faster than traditional for loops for creating lists."},
-                    {"q": "31. How do you print only the positive numbers from a list?", "a": "<pre><code>L = [-2, -1, 0, 1, 2]\npositives = [x for x in L if x > 0]</code></pre>"},
-                    {"q": "32. How do you convert a List into a Tuple?", "a": "Use the `tuple()` constructor: `my_tuple = tuple(my_list)`."},
-                    {"q": "33. How do you convert a string into a tuple?", "a": "Use the `tuple()` constructor: `my_tuple = tuple('abcd')` results in `('a', 'b', 'c', 'd')`."},
-                    {"q": "34. What are Tuple Packing and Unpacking?", "a": "**Packing** is creating a tuple: `T = (1, 2, 3)`. **Unpacking** is assigning the tuple's elements to variables: `x, y, z = T`."},
-                    {"q": "35. How can you swap two variables using a tuple?", "a": "Use tuple packing and unpacking on one line: `a, b = b, a`."},
-                    {"q": "36. How can you split an email address into a username and domain?", "a": "Use `.split('@')` with tuple unpacking: `username, domain = 'name@example.com'.split('@')`."},
-                    {"q": "37. How do you access tuple items using negative indexing?", "a": "`T[-1]` accesses the last item, `T[-2]` the second to last, and so on."},
-                    {"q": "38. How does tuple slicing work?", "a": "It works just like list slicing, creating a new tuple. `T[2:5]` creates a new tuple with elements from index 2 up to 5."},
-                    {"q": "39. Can you change the value of a tuple? E.g., `T = (1, [2, 3], 4)`", "a": "You cannot change the immutable elements (like 1 and 4). However, you *can* change the contents of mutable elements within it, like the list. `T[1][0] = 99` is a valid operation."},
-                    {"q": "40. How can you sort a tuple?", "a": "You can't sort a tuple directly. You must convert it to a list, sort the list, and then convert it back to a tuple: `sorted_tuple = tuple(sorted(my_tuple))`."},
-                    {"q": "41. How do you count occurrences in a tuple?", "a": "Use the `.count()` method: `T.count('red')`."},
-                    {"q": "42. How do you sum the elements of a tuple?", "a": "Use the `sum()` function: `total = sum(T)`."},
-                    {"q": "43. How do you create a tuple of a sequence of numbers?", "a": "Use the `range()` function inside the `tuple()` constructor: `T = tuple(range(10))`."},
-                    {"q": "44. How do you create a set from a string 'abcde'?", "a": "`S = set('abcde')`"},
-                    {"q": "45. How do you convert a list into a set (removing duplicates)?", "a": "Use the `set()` constructor: `my_set = set(my_list)`."},
-                    {"q": "46. How do you create a set of numbers from 0 to 9?", "a": "`S = set(range(10))`"}
-                ]
-            },
             "flashcards": [
                 {"id":1, "front":"What is the main difference between a microprocessor and a microcontroller?", "back":"A microprocessor is a CPU that needs external memory and peripherals. A microcontroller is a self-contained system-on-a-chip with its own CPU, memory, and I/O.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
                 {"id":2, "front":"What does an ADC do in an embedded system?", "back":"An Analog-to-Digital Converter (ADC) converts a continuous analog signal (like from a temperature sensor) into a discrete digital value that the microcontroller can process.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
@@ -590,7 +702,6 @@
             darkModeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-mode');
                 mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme(), securityLevel: 'loose' });
-                // Re-render any visible mermaid diagrams
                 const visibleDiagrams = document.querySelectorAll('#summary-output .mermaid');
                 if(visibleDiagrams.length > 0) {
                      mermaid.run({ nodes: visibleDiagrams });
@@ -614,7 +725,7 @@
             views.forEach(view => view.classList.toggle('active', view.id === `${viewName}-view`));
             sidebarItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewName));
             if (callback) {
-                setTimeout(callback, 50); // Small delay for view to render
+                setTimeout(callback, 50);
             }
         }
         
@@ -622,26 +733,27 @@
             DB.flashcards.forEach((card, index) => {
                 AppState.searchIndex.push({ text: `${card.front.toLowerCase()} ${card.back.toLowerCase()}`, type: 'flashcard', location: { index }, display: card.front });
             });
-            DB.files.forEach(file => {
-                file.sections.forEach(section => {
-                    const combinedText = section.content.map(c => c.text || (c.rows ? c.rows.flat().join(' ') : '')).join(' ').toLowerCase();
-                    AppState.searchIndex.push({ 
-                        text: `${section.title.toLowerCase()} ${combinedText}`, 
-                        type: 'summary', 
-                        location: { fileName: file.name, sectionTitle: section.title },
-                        display: `${section.title} <small>${file.name}</small>`
+            DB.documents.forEach(doc => {
+                if (doc.type === 'summary') {
+                    doc.sections.forEach(section => {
+                        const combinedText = section.content.map(c => c.text || (c.rows ? c.rows.flat().join(' ') : '')).join(' ').toLowerCase();
+                        AppState.searchIndex.push({ 
+                            text: `${section.title.toLowerCase()} ${combinedText}`, 
+                            type: 'summary', 
+                            location: { fileName: doc.name, sectionTitle: section.title },
+                            display: `${section.title} <small>${doc.name}</small>`
+                        });
                     });
-                });
-            });
-            Object.keys(DB.solutions).forEach(fileName => {
-                DB.solutions[fileName].forEach(item => {
-                    AppState.searchIndex.push({
-                        text: `${item.q.toLowerCase()} ${item.a.toLowerCase()}`,
-                        type: 'solution',
-                        location: { fileName, question: item.q },
-                        display: `${item.q} <small>${fileName}</small>`
+                } else if (doc.type === 'solutions') {
+                    doc.content.forEach(item => {
+                        AppState.searchIndex.push({
+                            text: `${item.q.toLowerCase()} ${item.a.toLowerCase()}`,
+                            type: 'solution',
+                            location: { fileName: doc.name, question: item.q },
+                            display: `${item.q} <small>${doc.name}</small>`
+                        });
                     });
-                });
+                }
             });
         }
 
@@ -682,9 +794,9 @@
 
                     if (result.type === 'summary') {
                         let sectionIndex = -1;
-                        const fileData = DB.files.find(f => f.name === result.location.fileName);
-                        if (fileData) {
-                           sectionIndex = fileData.sections.findIndex(s => s.title === result.location.sectionTitle);
+                        const docData = DB.documents.find(d => d.name === result.location.fileName);
+                        if (docData) {
+                           sectionIndex = docData.sections.findIndex(s => s.title === result.location.sectionTitle);
                         }
                         if (sectionIndex !== -1) {
                             sectionSelect.value = sectionIndex;
@@ -708,11 +820,10 @@
         function initHome() {
             const fileList = document.getElementById('file-list');
             fileList.innerHTML = '';
-            const allFiles = [...Object.keys(DB.solutions), ...DB.files.map(f => f.name)];
-            new Set(allFiles).forEach(fileName => {
+            DB.documents.forEach(doc => {
                 const li = document.createElement('li');
                 li.className = 'card';
-                li.innerHTML = `<a href="${fileName}" target="_blank" style="text-decoration:none;font-weight:600;color:var(--primary-color);">${fileName}</a>`;
+                li.innerHTML = `<a href="${doc.name}" target="_blank" style="text-decoration:none;font-weight:600;color:var(--primary-color);">${doc.name}</a>`;
                 fileList.appendChild(li);
             });
         }
@@ -721,58 +832,56 @@
             const docSelect = document.getElementById('summary-doc-select');
             const sectionSelect = document.getElementById('summary-section-select');
             
-            const allDocs = [...DB.files.map(f => f.name), ...Object.keys(DB.solutions)];
             docSelect.innerHTML = '';
-            new Set(allDocs).forEach(name => docSelect.add(new Option(name, name)));
+            DB.documents.forEach(doc => docSelect.add(new Option(doc.name, doc.name)));
 
             const updateSections = () => {
                 const fileName = docSelect.value;
-                const fileData = DB.files.find(f => f.name === fileName);
+                const docData = DB.documents.find(d => d.name === fileName);
                 sectionSelect.innerHTML = '';
                 
-                if (DB.solutions[fileName]) {
+                if (docData.type === 'solutions') {
                     sectionSelect.style.display = 'none';
-                    displayFullSolutions(fileName);
-                } else if (fileData) {
+                    displayFullSolutions(docData);
+                } else if (docData.type === 'summary') {
                     sectionSelect.style.display = 'block';
-                    fileData.sections.forEach((section, index) => {
+                    docData.sections.forEach((section, index) => {
                         sectionSelect.add(new Option(section.title, index));
                     });
-                    displayDetailedSummary(fileName, 0);
+                    displayDetailedSummary(docData, 0);
                 }
             };
             
             docSelect.addEventListener('change', updateSections);
-            sectionSelect.addEventListener('change', () => displayDetailedSummary(docSelect.value, parseInt(sectionSelect.value)));
+            sectionSelect.addEventListener('change', () => {
+                const docData = DB.documents.find(d => d.name === docSelect.value);
+                if(docData) displayDetailedSummary(docData, parseInt(sectionSelect.value))
+            });
             updateSections();
         }
 
-        function displayFullSolutions(fileName) {
+        function displayFullSolutions(docData) {
             const outputDiv = document.getElementById('summary-output');
-            let html = `<h2>Solutions: ${fileName}</h2>`;
-            const solutionSet = DB.solutions[fileName];
-            if (solutionSet) {
-                solutionSet.forEach(item => {
-                    html += `<div class="card" id="${CSS.escape(item.q)}">
-                        <p><strong>Q: ${item.q}</strong></p>
-                        <div><strong>A:</strong> ${item.a}</div>
-                    </div>`;
-                });
-            }
+            let html = `<h2>Solutions: ${docData.name}</h2>`;
+            docData.content.forEach(item => {
+                html += `<div class="card" id="${CSS.escape(item.q)}">
+                    <p><strong>Q: ${item.q}</strong></p>
+                    <div><strong>A:</strong> ${item.a}</div>
+                </div>`;
+            });
             outputDiv.innerHTML = html;
         }
 
-        async function displayDetailedSummary(fileName, sectionIndex) {
+        async function displayDetailedSummary(docData, sectionIndex) {
             const outputDiv = document.getElementById('summary-output');
-            const fileData = DB.files.find(f => f.name === fileName);
-            if (!fileData || !fileData.sections[sectionIndex]) {
+            if (!docData || !docData.sections[sectionIndex]) {
                 outputDiv.innerHTML = '';
                 return;
             }
 
-            const section = fileData.sections[sectionIndex];
+            const section = docData.sections[sectionIndex];
             let html = `<div class="card" id="${CSS.escape(section.title)}"><h2>${section.title}</h2>`;
-            section.content.forEach((item, index) => {
+            section.content.forEach((item) => {
                 if (item.type === 'paragraph') {
                     html += `<p>${item.text}</p>`;
                 } else if (item.type === 'table') {
@@ -872,9 +981,14 @@
             function checkAnswer(selectedOption, btnEl) {
                 optionsEl.querySelectorAll('.quiz-option').forEach(btn => {
                     btn.disabled = true;
-                     const correct = currentQuestion.options.find(o => o.text === btn.innerHTML)?.correct;
-                    if(correct) btn.style.backgroundColor = 'var(--success-color)';
-                    else btn.style.backgroundColor = 'var(--secondary-text-color)';
+                    const optionText = btn.innerHTML;
+                    const isCorrect = currentQuestion.options.find(o => o.text === optionText)?.correct;
+                    if(isCorrect) {
+                        btn.style.backgroundColor = 'var(--success-color)';
+                        btn.style.borderColor = 'var(--success-color)';
+                    } else {
+                        btn.style.backgroundColor = 'var(--secondary-text-color)';
+                    }
                 });
 
                 if (selectedOption.correct) {
@@ -882,7 +996,7 @@
                     btnEl.style.backgroundColor = 'var(--success-color)';
                 } else {
                     const correctOption = currentQuestion.options.find(o => o.correct);
-                    feedbackEl.innerHTML = `<strong>Incorrect.</strong> The correct answer was related to: ${correctOption.text.substring(0, 80)}... <span class="provenance">[SOURCE: ${correctOption.provenance}]</span>`;
+                    feedbackEl.innerHTML = `<strong>Incorrect.</strong> The correct answer was: <p style='margin-top:0.5rem'>${correctOption.text}</p><span class="provenance">[SOURCE: ${correctOption.provenance}]</span>`;
                     btnEl.style.backgroundColor = 'var(--error-color)';
                 }
                 feedbackEl.style.color = 'white';
@@ -904,6 +1018,17 @@
             const srsFlashcard = document.getElementById('srs-flashcard');
             let srsState = { deck: [], currentCard: null, dueCards: [] };
 
+            function showModal(message) {
+                 const modal = document.createElement('div');
+                 modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1005;`;
+                 modal.innerHTML = `<div style="background-color: var(--secondary-bg-color); color: var(--text-color); padding: 2rem; border-radius: var(--radius-lg); box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;">
+                    <p>${message}</p>
+                    <button id="modal-ok-btn" style="margin-top: 1rem;">OK</button>
+                 </div>`;
+                 document.body.appendChild(modal);
+                 document.getElementById('modal-ok-btn').onclick = () => modal.remove();
+            }
+
             function loadSRSData() {
                 try {
                     const data = localStorage.getItem('srsDeck');
@@ -923,7 +1048,7 @@
             }
             
             function startReviewSession() {
-                srsState.dueCards = getDueCards();
+                srsState.dueCards = getDueCards().sort(() => Math.random() - 0.5); // Shuffle for variety
                 if (srsState.dueCards.length > 0) {
                     srsStatsContainer.style.display = 'none';
                     srsCardContainer.style.display = 'block';
@@ -935,9 +1060,13 @@
                 if (srsState.dueCards.length === 0) { endReviewSession(); return; }
                 srsState.currentCard = srsState.dueCards.shift();
                 const cardData = DB.flashcards.find(c => c.id === srsState.currentCard.id);
-                srsCardFront.textContent = cardData.front;
-                srsCardBack.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
-                srsFlashcard.classList.remove('flipped');
+                if (cardData) {
+                    srsCardFront.textContent = cardData.front;
+                    srsCardBack.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
+                    srsFlashcard.classList.remove('flipped');
+                } else {
+                    showNextSRSCard(); // Skip if card data not found
+                }
             }
             
             function endReviewSession() {
@@ -945,14 +1074,12 @@
                 srsCardContainer.style.display = 'none';
                 srsState.currentCard = null;
                 updateSRSCounters();
-                // Using a custom modal/alert would be better, but for simplicity:
-                const modal = document.createElement('div');
-                modal.innerHTML = `<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: var(--secondary-bg-color); padding: 2rem; border-radius: var(--radius-lg); box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1005;">Review session complete!<br><button onclick="this.parentElement.remove()" style="margin-top: 1rem;">Close</button></div>`;
-                document.body.appendChild(modal);
+                showModal('Review session complete!');
             }
             
             function processSRSReview(quality) {
                 const card = srsState.currentCard;
+                if (!card) return;
                 if (quality < 3) {
                     card.repetition = 0;
                     card.interval = 1;
@@ -978,10 +1105,7 @@
             document.querySelectorAll('.srs-rating-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     if (!srsFlashcard.classList.contains('flipped')) { 
-                        // Using a custom modal/alert would be better, but for simplicity:
-                        const modal = document.createElement('div');
-                        modal.innerHTML = `<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: var(--secondary-bg-color); padding: 2rem; border-radius: var(--radius-lg); box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1005;">Please reveal the answer before rating.<br><button onclick="this.parentElement.remove()" style="margin-top: 1rem;">OK</button></div>`;
-                        document.body.appendChild(modal);
+                        showModal('Please reveal the answer before rating.');
                         return;
                     }
                     processSRSReview(parseInt(e.target.dataset.rating, 10));
