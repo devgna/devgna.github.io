@@ -606,15 +606,17 @@
             document.getElementById('flashcard').addEventListener('click', (e) => e.currentTarget.classList.toggle('flipped'));
 
             nextBtn.addEventListener('click', () => {
+                const newIndex = (AppState.currentCardIndex + 1) % DB.flashcards.length;
                 showFlashcardByIndex(newIndex);
             });
             prevBtn.addEventListener('click', () => {
+                const newIndex = (AppState.currentCardIndex - 1 + DB.flashcards.length) % DB.flashcards.length;
                 showFlashcardByIndex(newIndex);
             });
 
             showFlashcardByIndex(0);
         }
-
+        
         async function displayDetailedSummary(docData, sectionIndex) {
             const outputDiv = document.getElementById('summary-output');
             if (!docData || !docData.sections || !docData.sections[sectionIndex]) {
@@ -623,12 +625,12 @@
             }
 
             const section = docData.sections[sectionIndex];
-            let html = `<div class="card" id="${CSS.escape(section.title)}"><br><br><h2>${section.title}</h2>`;
+            let html = `<div class="card" id="${CSS.escape(section.title)}"><h2>${section.title}</h2>`;
             section.content.forEach((item) => {
                 if (item.type === 'paragraph') {
-                    html += `<br><br><p>${item.text}</p>`;
+                    html += `<p>${item.text}</p>`;
                 } else if (item.type === 'table') {
-                    html += `<br><br></tbody></table>`;
+                    html += `</tbody></table>`;
                 } else if (item.type === 'question') {
                     html += `<div class="card" style="margin-bottom: 1rem;">
                                 <div style="font-weight: bold; margin-bottom: 0.5rem;"><br><br>Q: ${item.question}</div>
@@ -674,9 +676,11 @@
             document.getElementById('flashcard').addEventListener('click', (e) => e.currentTarget.classList.toggle('flipped'));
 
             nextBtn.addEventListener('click', () => {
+                const newIndex = (AppState.currentCardIndex + 1) % DB.flashcards.length;
                 showFlashcardByIndex(newIndex);
             });
             prevBtn.addEventListener('click', () => {
+                const newIndex = (AppState.currentCardIndex - 1 + DB.flashcards.length) % DB.flashcards.length;
                 showFlashcardByIndex(newIndex);
             });
 
