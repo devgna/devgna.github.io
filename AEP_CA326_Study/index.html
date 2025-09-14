@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Study App</title>
+    <style>
+        :root {
+            --bg-color: #f9fafb;
+            --text-color: #1f2937;
+            --primary-color: #4f46e5;
+            --primary-hover-color: #4338ca;
+            --secondary-bg-color: #ffffff;
+            --secondary-text-color: #4b5563;
+            --border-color: #e5e7eb;
+            --highlight-bg: #fefce8;
+            --highlight-text: #854d0e;
+            --success-color: #16a34a;
+            --error-color: #dc2626;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        .dark-mode {
+            --bg-color: #111827;
+            --text-color: #f9fafb;
+            --primary-color: #6366f1;
+            --primary-hover-color: #818cf8;
+            --secondary-bg-color: #1f2937;
+            --secondary-text-color: #d1d5db;
+            --border-color: #374151;
+            --highlight-bg: #1e293b;
+            --highlight-text: #fde047;
+            --success-color: #4ade80;
+            --error-color: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 280px;
+            background-color: var(--secondary-bg-color);
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+            transition: width 0.3s, background-color 0.3s, border-color 0.3s, transform 0.3s ease-in-out;
+        }
+
+        #sidebar h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        #sidebar ul {
+            list-style: none;
+        }
+
+        #sidebar li {
+            padding: 0.75rem 0.5rem;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            transition: background-color 0.2s, color 0.2s;
+            font-weight: 500;
+        }
+
+        #sidebar li:hover, #sidebar li.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .view {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .view.active {
+            display: block;
+        }
+        
+        .warning-banner {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--highlight-text);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--secondary-bg-color);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        
+        header h1 {
+            font-size: 1.75rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        #burger-menu {
+            display: none;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 2rem;
+            height: 2rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 1001;
+        }
+
+        #burger-menu span {
+            width: 2rem;
+            height: 0.25rem;
+            background-color: var(--text-color);
+            border-radius: 10px;
+            transition: all 0.3s linear;
+            position: relative;
+            transform-origin: 1px;
+        }
+        
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+        }
+
+        #overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+
+        /* Generic UI Elements */
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover-color);
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            background-color: var(--secondary-text-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background-color: var(--secondary-text-color);
+        }
+        button.secondary:hover {
+            background-color: var(--text-color);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: var(--secondary-bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 20%, transparent);
+        }
+
+        .card {
+            background-color: var(--secondary-bg-color);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--primary-color); }
+        h3 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .provenance {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--secondary-text-color);
+            margin-top: 0.5rem;
+            text-align: right;
+            font-style: italic;
+        }
+
+        /* Search View */
+        #search-results .result-item {
+            cursor: pointer;
+        }
+        #search-results .result-item:hover {
+            border-color: var(--primary-color);
+        }
+        #search-results .result-snippet {
+            margin-bottom: 0.5rem;
+        }
+        #search-results .result-snippet mark {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2px 4px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* Document Viewer */
+        #document-viewer-content {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            border-radius: var(--radius-md);
+            line-height: 1.7;
+            white-space: pre-wrap;
+            margin-top: 1rem;
+        }
+        #document-viewer-content .highlight {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            padding: 2px;
+            border-radius: 2px;
+        }
+
+        /* Concept Map View */
+        .concept-map ul { list-style: none; padding-left: 20px; }
+        .concept-map li { margin-top: 10px; }
+        .concept-map .concept-node {
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .concept-map .concept-node::before {
+            content: '▶';
+            margin-right: 8px;
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+        .concept-map .concept-node.expanded::before { transform: rotate(90deg); }
+        .concept-map .concept-children {
+            display: none;
+            border-left: 2px solid var(--primary-color);
+            margin-left: 5px;
+            padding-left: 15px;
+        }
+        .concept-map .concept-children.show { display: block; }
+        .concept-map .concept-snippet {
+            padding: 10px;
+            margin-top: 5px;
+            background-color: var(--bg-color);
+            border-radius: var(--radius-sm);
+            font-weight: normal;
+        }
+
+        /* Flashcards View */
+        #flashcard-container, #srs-flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            margin: 0 auto 1.5rem auto;
+        }
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            font-size: 1.2rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            background-color: var(--secondary-bg-color);
+        }
+        .flashcard-back { transform: rotateY(180deg); }
+        .flashcard-back pre {
+            white-space: pre-wrap;
+            text-align: left;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        /* Quiz View */
+        #quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .quiz-option {
+            width: 100%;
+            text-align: left;
+            background-color: var(--secondary-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        .quiz-option:hover {
+            background-color: color-mix(in srgb, var(--primary-color) 10%, var(--secondary-bg-color));
+            border-color: var(--primary-color);
+        }
+        .quiz-option.correct {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+        .quiz-option.incorrect {
+            background-color: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+        #quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+        }
+        
+        /* SRS View */
+        .srs-controls button { margin: 0 5px; }
+
+        @media (max-width: 768px) {
+            .container { 
+                flex-direction: column; 
+            }
+            
+            #burger-menu {
+                display: flex;
+                margin-right: 1rem;
+            }
+
+            header {
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 1rem;
+            }
+
+            header h1 {
+                margin-left: 0;
+                margin-bottom: 0;
+            }
+            
+            .header-controls {
+                margin-left: auto;
+            }
+
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 280px;
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+
+            #sidebar.open {
+                transform: translateX(0);
+                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+            }
+            
+            #main-content { padding: 1.5rem; }
+            h2 { font-size: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="burger-menu" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <h1>Interactive Study App</h1>
+        <div class="header-controls">
+            <button id="dark-mode-toggle">Toggle Dark Mode</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav id="sidebar">
+            <h2>Study Tools</h2>
+            <ul>
+                <li class="nav-item active" data-view="home">Home</li>
+                <li class="nav-item" data-view="search">Search Document</li>
+                <li class="nav-item" data-view="concepts">Concept Map</li>
+                <li class="nav-item" data-view="summaries">Summaries & Solutions</li>
+                <li class="nav-item" data-view="flashcards">Flashcards</li>
+                <li class="nav-item" data-view="quiz">Practice Quiz</li>
+                <li class="nav-item" data-view="srs">Spaced Repetition (SRS)</li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            
+            <div id="home-view" class="view active">
+                <h2>Welcome to Your Study Dashboard!</h2>
+                <p>This application has processed the documents below. Use the menu on the left to access powerful study tools like search, flashcards, and quizzes, all generated from your files.</p>
+                <div class="warning-banner">
+                    <strong>Note:</strong> For the file links below to work, the PDF files must be in the same folder as this HTML file.
+                </div>
+                <h3>Processed Documents</h3>
+                <ul id="file-list" style="list-style: none; padding: 0;"></ul>
+            </div>
+
+            <div id="search-view" class="view">
+                <h2>Search Documents</h2>
+                <input type="search" id="search-input" placeholder="Search across all documents...">
+                <div id="search-results" class="results-container"></div>
+                <h3>Document Viewer</h3>
+                <div id="document-viewer" class="card">
+                    <h4 id="document-viewer-title">Click a search result above to view its full page content here.</h4>
+                    <div id="document-viewer-content"></div>
+                </div>
+            </div>
+
+            <div id="concepts-view" class="view">
+                <h2>Concept Map</h2>
+                <p>Explore the document structure and key concepts. Click on a heading to expand it.</p>
+                <div id="concept-map-container" class="concept-map card"></div>
+            </div>
+
+            <div id="summaries-view" class="view">
+                <h2>Summaries & Solutions</h2>
+                <p id="summary-description">Select a document and a section to generate summaries, or view solutions for question banks.</p>
+                <div class="card">
+                    <select id="summary-doc-select"></select>
+                    <select id="summary-section-select" style="margin: 1rem 0;"></select>
+                    <button id="generate-summary-btn">Generate</button>
+                </div>
+                <div id="summary-output"></div>
+            </div>
+
+            <div id="flashcards-view" class="view">
+                <h2>Flashcards</h2>
+                <div id="flashcard-container">
+                    <div class="flashcard" id="flashcard">
+                        <div class="flashcard-face flashcard-front">Click me to start!</div>
+                        <div class="flashcard-face flashcard-back"></div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <button id="prev-card-btn">Previous</button>
+                    <span id="card-counter" style="margin: 0 1rem; font-weight: 500;">0 / 0</span>
+                    <button id="next-card-btn">Next</button>
+                </div>
+                <h3>Export Flashcards</h3>
+                <div class="card">
+                    <p>Download the full deck of generated flashcards for use in other applications.</p>
+                    <button id="export-json-btn">Export as JSON</button>
+                    <button id="export-csv-btn">Export as CSV</button>
+                    <button id="export-anki-btn">Export for Anki (CSV)</button>
+                </div>
+            </div>
+
+            <div id="quiz-view" class="view">
+                <h2>Practice Quiz</h2>
+                <div id="quiz-container" class="card">
+                    <h3 id="quiz-question" style="margin-top: 0;"></h3>
+                    <div id="quiz-options"></div>
+                    <div id="quiz-feedback"></div>
+                </div>
+                <button id="next-quiz-btn">Next Question</button>
+            </div>
+            
+            <div id="srs-view" class="view">
+                <h2>Spaced Repetition System (SRS)</h2>
+                <p>Review flashcards that are due for study to improve long-term retention. Your progress is saved in this browser.</p>
+                <div id="srs-card-container" style="display: none;">
+                    <div id="srs-flashcard-container">
+                       <div class="flashcard" id="srs-flashcard">
+                            <div class="flashcard-face flashcard-front" id="srs-card-front"></div>
+                            <div class="flashcard-face flashcard-back" id="srs-card-back"></div>
+                        </div>
+                    </div>
+                    <div class="srs-controls" style="text-align:center; margin-top: 1.5rem;">
+                        <button class="srs-rating-btn" data-rating="1">Hard</button>
+                        <button class="srs-rating-btn" data-rating="3">Good</button>
+                        <button class="srs-rating-btn" data-rating="5">Easy</button>
+                    </div>
+                </div>
+                <div id="srs-stats" class="card">
+                    <h3>Review Session</h3>
+                    <p>You have <strong id="srs-due-count">0</strong> cards due for review today.</p>
+                    <button id="srs-start-review-btn">Start Review Session</button>
+                </div>
+                 <h3>Manage SRS Data</h3>
+                <div class="card">
+                    <p>Export your learning progress to a file or reset it completely.</p>
+                    <button id="srs-export-btn">Export Progress (JSON)</button>
+                    <button id="srs-reset-btn" class="secondary">Reset All Progress</button>
+                </div>
+            </div>
+
+        </main>
+        <div id="overlay"></div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const DB = {
+        files: [
+            {
+                "name": "AEP MCQs and short questions.pdf",
+                "content": [
+                    { "page": 2, "type": "paragraph", "text": "1. What is sensor?" },
+                    { "page": 2, "type": "paragraph", "text": "A sensor is a device that produces an output signal (Electrical signal) for the purpose of sensing of a physical phenomenon. (It is an input device for controller)" },
+                    { "page": 2, "type": "paragraph", "text": "3. (16x2) LCD display is having...\nB. 2 rows and 16 columns" },
+                    { "page": 3, "type": "paragraph", "text": "8. How many digital inputs / output pins are there on Arduino UNO board?\n4. 14" },
+                    { "page": 4, "type": "paragraph", "text": "20. A sketch is\nA. an Arduino file" },
+                    { "page": 5, "type": "paragraph", "text": "24. Which function will run forever?\nC. void loop" },
+                    { "page": 6, "type": "paragraph", "text": "31. What is the microcontroller used in Arduino UNO?\nA. ATmega328" },
+                    { "page": 7, "type": "paragraph", "text": "38. What is PWM ?\n1. Pulse Width Modulation" },
+                ]
+            },
+            {
+                "name": "AEP Notes Chapter 1 and Chapter 2.pdf",
+                "content": [
+                    { "page": 1, "type": "heading", "text": "Give the differences between Microprocessor and Microcontroller." },
+                    { "page": 1, "type": "paragraph", "text": "Microprocessor: It has basic units like ALU, control units and registers. It can handle multiple operations. Microcontroller: It has units like processing unit, RAM, ROM, ADC and DAC. It can handle single operation." },
+                    { "page": 1, "type": "heading", "text": "Architecture of an embedded system using arduino." },
+                    { "page": 2, "type": "paragraph", "text": "ADC: Analog to Digital Convertor: It convert available input analog signal into digital form because Arduino reads in digital form." },
+                    { "page": 2, "type": "paragraph", "text": "DAC: Digital to Analog Convertor: It converts digital signal back in analog form because output devices may require analog signal." },
+                    { "page": 4, "type": "heading", "text": "Explain PIN Diagram of Arduino UNO board in details." },
+                    { "page": 5, "type": "paragraph", "text": "Crystal Oscillator: The crystal oscillator helps Arduino in dealing with time issues. The frequency is 16,000,000 Hertz or 16 MHz." },
+                ]
+            },
+            {
+                "name": "AEP Notes Chapter 3.pdf",
+                 "content": [
+                    { "page": 1, "type": "heading", "text": "Sensor and Its Types" },
+                    { "page": 1, "type": "paragraph", "text": "A sensor is a device which reads the physical environment or environmental variable and tell you what happened." },
+                    { "page": 2, "type": "heading", "text": "LCD pin configuration and interface with Arduino." },
+                    { "page": 3, "type": "paragraph", "text": "RS (Register Select) pin is used to select either the Data Register (RS=1) or the Instruction Register (RS=0)." },
+                    { "page": 7, "type": "heading", "text": "Interface Ultrasonic sensor with Arduino." },
+                    { "page": 7, "type": "paragraph", "text": "An ultrasonic sensor has two parts: a transmitter which sends a signal, and a receiver which receives the reflected signal." },
+                    { "page": 10, "type": "heading", "text": "UART and its working" },
+                    { "page": 10, "type": "paragraph", "text": "UART stands for Universal Asynchronous Reception and Transmission. It's a simple serial communication protocol." },
+                    { "page": 11, "type": "heading", "text": "What is I2C ?" },
+                    { "page": 11, "type": "paragraph", "text": "I2C (Inter-integrated-circuit) is a bidirectional two-wire synchronous serial bus that can connect up to 128 devices." },
+                ]
+            },
+            {
+                "name": "AEP Notes Chapter 4 and Chapter 5.pdf",
+                "content": [
+                    { "page": 1, "type": "heading", "text": "Features of Raspberry Pi 4 Model B." },
+                    { "page": 1, "type": "paragraph", "text": "Features include Bluetooth 5.0, Dual band wifi (2.4 GHz and 5 GHz), 2 USB 3.0 ports, and a 1.5 GHz CPU." },
+                    { "page": 8, "type": "heading", "text": "PYTHON PROGRAMMING" },
+                    { "page": 10, "type": "heading", "text": "What is List in python?" },
+                    { "page": 10, "type": "paragraph", "text": "A list is a changeable, ordered sequence of values, similar to an array. Values are accessed by an index." },
+                    { "page": 13, "type": "heading", "text": "What do you mean by python Tuple?" },
+                    { "page": 13, "type": "paragraph", "text": "A tuple is an ordered collection of values that is immutable, meaning it cannot be changed after creation." },
+                    { "page": 16, "type": "heading", "text": "What is a python Set?" },
+                    { "page": 16, "type": "paragraph", "text": "A Python set is an unordered collection of unique items, used for mathematical operations like union and intersection." },
+                    { "page": 20, "type": "heading", "text": "What is a Python Dictionary?" },
+                    { "page": 20, "type": "paragraph", "text": "A Python Dictionary stores data in key:value pairs. It is also known as an associative array." },
+                ]
+            },
+            {
+                "name": "Basic List Tuple and List Comprehension Questions.pdf",
+                "content": [
+                    { "page": 1, "type": "paragraph", "text": "Create a list of numbers from 0 to 50 using List comprehension. `Numbers = [x for x in range(51)]`" },
+                    { "page": 1, "type": "paragraph", "text": "Difference between list.insert() and list.append(): append() adds an element to the end, while insert() adds an element at a specified position." },
+                    { "page": 7, "type": "paragraph", "text": "Explain Tuple Packing and Unpacking. Packing: `T = ('a', 'b')`. Unpacking: `(x, y) = T`" },
+                ]
+            },
+            {
+                "name": "Raspberry PI Basics.pdf",
+                "content": [
+                    { "page": 1, "type": "paragraph", "text": "Raspberry Pi has a CSI Port (Camera Serial Interface) used to interface a serial camera." },
+                    { "page": 1, "type": "paragraph", "text": "It has 40 GPIO Pins (General Purpose Input Output Pins)." },
+                    { "page": 2, "type": "paragraph", "text": "Difference: Raspberry Pi works like a minicomputer, while Arduino is a microcontroller." },
+                ]
+            }
+        ],
+        "flashcards": [
+            {"id":1,"front":"What is a sensor?","back":"A device that produces an output signal (usually electrical) for the purpose of sensing a physical phenomenon.","provenance":"AEP MCQs and short questions.pdf | p. 2"},
+            {"id":2,"front":"What is the microcontroller used in the Arduino UNO?","back":"ATmega328","provenance":"AEP MCQs and short questions.pdf | p. 6"},
+            {"id":3,"front":"What does PWM stand for?","back":"Pulse Width Modulation","provenance":"AEP MCQs and short questions.pdf | p. 7"},
+            {"id":4,"front":"What does IoT stand for?","back":"Internet of Things","provenance":"AEP MCQs and short questions.pdf | p. 12"},
+            {"id":5,"front":"How many total pins are on the Raspberry Pi 4 Model B?","back":"40 pins","provenance":"AEP MCQs and short questions.pdf | p. 14"},
+            {"id":6,"front":"What is a major difference between a microprocessor and a microcontroller?","back":"A microprocessor requires external memory, while a microcontroller has internal memory available.","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 1"},
+            {"id":7,"front":"What is the function of an ADC in an embedded system?","back":"Analog to Digital Convertor: It converts an analog input signal into a digital form that the controller can read.","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 2"},
+            {"id":8,"front":"What is the frequency of the crystal oscillator on an Arduino UNO?","back":"16 MHz (16,000,000 Hertz)","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 5"},
+            {"id":9,"front":"How many digital I/O pins does the Arduino UNO have?","back":"14, of which 6 can be used for PWM output.","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 7"},
+            {"id":10,"front":"A 16x2 LCD can display how many total characters?","back":"32 characters (16 columns and 2 rows).","provenance":"AEP Notes Chapter 3.pdf | p. 2"},
+            {"id":11,"front":"What temperature range can the LM35 sensor detect?","back":"-55 degrees to +150 degrees Celsius.","provenance":"AEP Notes Chapter 3.pdf | p. 6"},
+            {"id":12,"front":"What does UART stand for?","back":"Universal Asynchronous Reception and Transmission.","provenance":"AEP Notes Chapter 3.pdf | p. 10"},
+            {"id":13,"front":"What does I2C stand for?","back":"Inter-Integrated-Circuit.","provenance":"AEP Notes Chapter 3.pdf | p. 11"},
+            {"id":14,"front":"What is a key feature of the Raspberry Pi 4 regarding connectivity?","back":"It has both dual-band Wi-Fi (2.4 GHz and 5 GHz) and Bluetooth 5.0.","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 1"},
+            {"id":15,"front":"What is a Python List?","back":"A list is an ordered, changeable sequence of values, similar to an array.","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 10"},
+            {"id":16,"front":"What does it mean for a Python Tuple to be 'immutable'?","back":"It means its contents cannot be changed (added to, removed from, or modified) after it is created.","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 13"},
+            {"id":17,"front":"What is a key property of a Python Set?","back":"A set is an unordered collection of *unique* items. Duplicates are not allowed.","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 16"},
+            {"id":18,"front":"How do you create a list of numbers from 0 to 50 with list comprehension?","back":"`Numbers = [x for x in range(51)]`","provenance":"Basic List Tuple and List Comprehension Questions.pdf | p. 1"},
+            {"id":19,"front":"What is the difference between list.append() and list.insert()?","back":"`append()` adds an item to the end of the list. `insert()` adds an item at a specified index.","provenance":"Basic List Tuple and List Comprehension Questions.pdf | p. 1"},
+            {"id":20,"front":"How is the Raspberry Pi different from Arduino in terms of its function?","back":"Raspberry Pi works like a minicomputer, capable of running an operating system, while Arduino works as a general microcontroller for more specific tasks.","provenance":"Raspberry PI Basics.pdf | p. 2"},
+            {"id":21,"front":"What is a Python Dictionary?","back":"A data structure that stores data in key:value pairs. It is also known as an associative array.","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 20"},
+            {"id":22,"front":"What are the two main parts of an ultrasonic sensor?","back":"A transmitter (sends the signal) and a receiver (receives the reflected signal).","provenance":"AEP Notes Chapter 3.pdf | p. 7"},
+            {"id":23,"front":"What is the purpose of the `pinMode()` function in Arduino?","back":"To configure a specific pin to behave either as an INPUT or an OUTPUT.","provenance":"AEP MCQs and short questions.pdf | p. 3"},
+            {"id":24,"front":"What does the `void loop()` function do in an Arduino sketch?","back":"It runs continuously and infinitely as long as the board has power.","provenance":"AEP MCQs and short questions.pdf | p. 5"},
+            {"id":25,"front":"What command is used to display text on the Arduino Serial Monitor?","back":"`Serial.println()`","provenance":"AEP MCQs and short questions.pdf | p. 9"},
+            {"id":26,"front":"What are the two data lines in the I2C protocol?","back":"SCL (Serial Clock Line) and SDA (Serial Data Line).","provenance":"AEP Notes Chapter 3.pdf | p. 12"},
+            {"id":27,"front":"What is the purpose of a DC motor driver IC like the L293D?","back":"It allows a microcontroller like an Arduino to control the direction and speed of DC motors, which often require more current than the microcontroller can supply directly.","provenance":"AEP Notes Chapter 3.pdf | p. 15"},
+            {"id":28,"front":"What are the four main parts of a servomotor?","back":"1. DC motor\n2. Gear Mechanism\n3. Shaft with Horn\n4. Position sensor","provenance":"AEP Notes Chapter 3.pdf | p. 16"},
+            {"id":29,"front":"What is the function of a DAC in an embedded system?","back":"Digital to Analog Convertor: It converts a digital signal from the controller back into an analog form for output devices.","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 2"},
+            {"id":30,"front":"What does `GPIO.setmode(GPIO.BOARD)` signify in a Raspberry Pi Python script?","back":"It tells the script to use the physical pin numbering on the Raspberry Pi board (e.g., pin 1, pin 2, etc.).","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 5"},
+            {"id":31,"front":"What is a servomotor?","back":"An actuator that allows for precise control of angular position. It rotates to a specific angle based on the input signal.","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 12"},
+            {"id":32,"front":"What is Tuple Packing in Python?","back":"The process of creating a tuple by grouping a sequence of values together. Example: `my_tuple = 1, 'hello', True`","provenance":"Basic List Tuple and List Comprehension Questions.pdf | p. 7"},
+            {"id":33,"front":"How do you convert a list to a tuple in Python?","back":"By using the `tuple()` constructor. Example: `my_tuple = tuple([1, 2, 3])`","provenance":"Basic List Tuple and List Comprehension Questions.pdf | p. 7"},
+            {"id":34,"front":"What is the primary characteristic of keys in a Python dictionary?","back":"Dictionary keys must be unique and of an immutable type (e.g., string, number, or tuple).","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 23"},
+            {"id":35,"front":"What is the purpose of the `map()` function in Arduino?","back":"It re-maps a number from one range to another. For example, mapping a sensor reading of 0-1023 to a motor speed of 0-255.","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 25"},
+            {"id":36,"front":"What is the value of a resistor with the color code Brown, Black, Red?","back":"10 x 10² = 1000 ohms or 1 KΩ. (Brown=1, Black=0, Red=multiplier of 10²)","provenance":"AEP Notes Chapter 1 and Chapter 2.pdf | p. 13"},
+            {"id":37,"front":"What is a 'sketch' in the context of Arduino?","back":"A program or file written using the Arduino IDE.","provenance":"AEP MCQs and short questions.pdf | p. 4"},
+            {"id":38,"front":"What does the `delay(1000)` command do in an Arduino sketch?","back":"It pauses the program for 1000 milliseconds, which is equal to 1 second.","provenance":"AEP MCQs and short questions.pdf | p. 7"},
+            {"id":39,"front":"What is the function of the CSI port on a Raspberry Pi?","back":"CSI stands for Camera Serial Interface. It is used to connect a dedicated camera module to the Raspberry Pi.","provenance":"Raspberry PI Basics.pdf | p. 1"},
+            {"id":40,"front":"What are the four main set operations in Python?","back":"Union, Intersection, Difference, and Symmetric Difference.","provenance":"AEP Notes Chapter 4 and Chapter 5.pdf | p. 17"}
+        ],
+        "solutions": {
+            "AEP MCQs and short questions.pdf": [
+                { "page": 2, "question": "1. What is sensor?", "answer": "A sensor is a device that produces an output signal (Electrical signal) for the purpose of sensing of a physical phenomenon. (It is an input device for controller)" },
+                { "page": 2, "question": "2. sensor is _____ device", "answer": "input" },
+                { "page": 2, "question": "3. (16x2) LCD display is having", "answer": "B. 2 rows and 16 columns" },
+                { "page": 2, "question": "4. Which embedded device converts electrical signal to sound signal?", "answer": "Speaker" },
+                { "page": 2, "question": "5. Which sensor is used to detect an object with distance using sound energy?", "answer": "ultrasonic sensor" },
+                { "page": 2, "question": "6. Which embedded device converts temperature to electrical signal?", "answer": "Thermistor" },
+                { "page": 2, "question": "7. How many analog inputs / output pins are there on Arduino UNO board?", "answer": "6" },
+                { "page": 3, "question": "8. How many digital inputs / output pins are there on Arduino UNO board?", "answer": "14" },
+                { "page": 3, "question": "9. How many Ground pins are there on Arduino UNO board?", "answer": "3" },
+                { "page": 3, "question": "10. How many +5v pins are there on Arduino UNO board?", "answer": "1" },
+                { "page": 3, "question": "11. What is the use of pinMode() Function?", "answer": "declaring pin as input or output" },
+                { "page": 3, "question": "12. Which of the following is not an Arduino function?", "answer": "D. AnalogStore(pin)" },
+                { "page": 3, "question": "13. delay(5000); stands for", "answer": "B. Wait 5 seconds" },
+                { "page": 3, "question": "14. digitalWrite(13, LOW); turns the light", "answer": "B. off" },
+                { "page": 4, "question": "15. A forward slash is used for", "answer": "C. comments" },
+                { "page": 4, "question": "16. An LED is an _____ device.", "answer": "A. output" },
+                { "page": 4, "question": "17. Pushbutton is an _____ device.", "answer": "B. input" },
+                { "page": 4, "question": "18. Knob is an _____ device.", "answer": "B. input" },
+                { "page": 4, "question": "19. Servomotor is an _____ device.", "answer": "A. output" },
+                { "page": 4, "question": "20. A sketch is", "answer": "A. an Arduino file" },
+                { "page": 4, "question": "21. How long is the LED on?", "answer": "C. 1 second" },
+                { "page": 5, "question": "22. At Which pin the jumper wire is connected to?", "answer": "A. 13" },
+                { "page": 5, "question": "23. Which statement do you change to alter the time?", "answer": "A. delay" },
+                { "page": 5, "question": "24. Which function will run forever?", "answer": "C. void loop" },
+                { "page": 5, "question": "25. Which constant is used to make LED ON?", "answer": "A. HIGH" },
+                { "page": 5, "question": "26. Which constant is used to make LED OFF?", "answer": "B. LOW" },
+                { "page": 5, "question": "27. Which symbol begins a comment?", "answer": "D. //" },
+                { "page": 6, "question": "28. The entire code must end with", "answer": "D. Curly Brace }" },
+                { "page": 6, "question": "29. Which symbol ends a statement?", "answer": "A. Semicolon;" },
+                { "page": 6, "question": "30. Why does the LED have different length legs?", "answer": "B. To indicate which side is negative and which side is positive." },
+                { "page": 6, "question": "31. What is the microcontroller used in Arduino UNO?", "answer": "A. ATmega328" },
+                { "page": 6, "question": "32. Which function is called once when the program starts:", "answer": "B. setup()" },
+                { "page": 6, "question": "33. If a line of code starts with /* and continues until */ What does this do?", "answer": "B. Makes comment" },
+                { "page": 6, "question": "34. pinMode(led, INPUT); is a correct declaration.", "answer": "B. False" },
+                { "page": 7, "question": "35. Identify this component", "answer": "B. Bread board" },
+                { "page": 7, "question": "36. Arduino can interact with", "answer": "4. All of these" },
+                { "page": 7, "question": "37. What is the meaning of delay(1000) Function?", "answer": "2. provide delay of 1000 mili seconds" },
+                { "page": 7, "question": "38. What is PWM ?", "answer": "1. Pulse Width Modulation" },
+                { "page": 7, "question": "39. Which pins of Arduino UNO boards are used for Tx and Rx (Transmit and receive)?", "answer": "1. digital pin 1 and 0" },
+                { "page": 7, "question": "40. What is the correct syntax of analogread() function?", "answer": "1. analogread(A0)" },
+                { "page": 8, "question": "41. A program written with the IDE for Arduino is called", "answer": "B. Sketch" },
+                { "page": 8, "question": "42. Arduino IDE is an open-source platform.", "answer": "A. TRUE" },
+                { "page": 8, "question": "43. In Arduino IDE, IDE stands for?", "answer": "B. Integrated Development Environment" },
+                { "page": 8, "question": "44. Identify the component.", "answer": "C. Ultrasonic sensor" },
+                { "page": 8, "question": "45. _____ sensor is used to detect smoke in industrial or residential area.", "answer": "A. Gas sensor" },
+                { "page": 8, "question": "46. _____ sensor is used to detect the distance of an object.", "answer": "B. Ultrasonic sensor" },
+                { "page": 9, "question": "47. Which one is DC motor driver IC?", "answer": "A. L293D" },
+                { "page": 9, "question": "48. L293D is a _____ Pin Motor Driver IC.", "answer": "D. 16" },
+                { "page": 9, "question": "49. _____ is used to control the circuits by employing a low power signal.", "answer": "A. Relay" },
+                { "page": 9, "question": "50. In arduino IDE, there are two functions. What are they?", "answer": "A. setup() and loop()" },
+                { "page": 9, "question": "51. GPIO stand for", "answer": "B. General purpose input output" },
+                { "page": 9, "question": "52. The command which is used to display the characters in the serial monitor is", "answer": "C. Serial.println" },
+                { "page": 10, "question": "53. what is the name of following device?", "answer": "D. Potentiometer" },
+                { "page": 10, "question": "54. For the LCD screen, what does \"lcd.begin()\" do?", "answer": "A. It turns on the LCD" },
+                { "page": 10, "question": "55. What does \"lcd.clear()\" do?", "answer": "B. It clears the LCD screen of any characters" },
+                { "page": 10, "question": "56. What does \"lcd.setCursor()\" do?", "answer": "D. It sets the position of the cursor on the LCD screen" },
+                { "page": 10, "question": "57. A resistor with color code red, red, orange has its value of", "answer": "1. 22 K ohm" },
+                { "page": 10, "question": "58. A 10 K ohm resistor is having following color code printed on it.", "answer": "1. Brown, black, orange" },
+                { "page": 11, "question": "59. write the syntax of map() function.", "answer": "map(value, fromLow, fromHigh, toLow, toHigh)" },
+                { "page": 11, "question": "60. _____ constant is used to assign +5v value to given variable or pin.", "answer": "1. HIGH" },
+                { "page": 11, "question": "61. LiquidCrystal lcd (rs, enable, d4, d5, d6, d7) declaration is an example of _____ pin configurations.", "answer": "2. 6" },
+                { "page": 11, "question": "62. What are the 2 arguments in \"lcd.setCursor()\"?", "answer": "A. 1st: column number, 2nd: row number" },
+                { "page": 11, "question": "63. How many times does the loop() function run on every startup of Arduino system?", "answer": "C. Infinitely till the power is supplied." },
+                { "page": 11, "question": "64. What are the two modes that pinMode() function sets for a particular pin?", "answer": "C. INPUT and OUTPUT" },
+                { "page": 11, "question": "65. Which Arduino board uses Atmega328 controller?", "answer": "A. Arduino UNO" },
+                { "page": 12, "question": "66. How many arguments does the digitalread() have?", "answer": "A. 1" },
+                { "page": 12, "question": "67. Which of the following is temperature sensor?", "answer": "C. LM35" },
+                { "page": 12, "question": "68. IoT stands for:", "answer": "C. Internet of Things" },
+                { "page": 12, "question": "69. Which of the following can not be considered an IoT device?", "answer": "D. Tubelight" },
+                { "page": 12, "question": "70. Which is not an IoT platform?", "answer": "C. Myntra" },
+                { "page": 12, "question": "71. IoT is based on _____ technology.", "answer": "D. Both of these" },
+                { "page": 13, "question": "72. What is an IoT network?", "answer": "B. a collection of Interconnected devices" },
+                { "page": 13, "question": "73. Full form of MQTT?", "answer": "A. Message Queue Telemetry Transport" },
+                { "page": 13, "question": "74. IIOT Stands for", "answer": "Industrial Internet of Things" },
+                { "page": 13, "question": "75. An IoT network is a collection of interconnected devices.", "answer": "A. True" },
+                { "page": 13, "question": "76. Which of the following is the way in which an IoT device is associated with data?", "answer": "Cloud" },
+                { "page": 13, "question": "77. Which of the following is not an application of IoT?", "answer": "Arduino" },
+                { "page": 14, "question": "78. The Raspberry Pi is defined as the?", "answer": "1. Minicomputer" },
+                { "page": 14, "question": "79. How many Total pins on board Raspberry Pi4 model B has?", "answer": "3. 40" },
+                { "page": 14, "question": "80. How many GPIO pins on board Raspberry Pi4 has?", "answer": "1. 28" },
+                { "page": 14, "question": "81. What are the capabilities of raspberry pi?", "answer": "4. All of the above" },
+                { "page": 14, "question": "82. How many ground pins Raspberry PI model 4B is having?", "answer": "4. 8" },
+                { "page": 14, "question": "83. How many +5 Volt pins Raspberry PI model 4B is having?", "answer": "1. 2" },
+                { "page": 15, "question": "84. How many +3.3 Volt pins Raspberry PI model 4B is having?", "answer": "1. 2" },
+                { "page": 15, "question": "85. What is the standard form of SDA pin of I2C on ESP32?", "answer": "3. Serial data" },
+                { "page": 15, "question": "86. What is the standard form of SCL pin of I2C on ESP32?", "answer": "3. Serial clock" },
+                { "page": 15, "question": "87. What is the standard form of TXD pin of UART on ESP32?", "answer": "2. Transmit Data" },
+                { "page": 15, "question": "88. The I2C communication on the ESP32 board has _____ connections", "answer": "2. Two (SDA, SCL)" },
+                { "page": 15, "question": "89. Which port is used to power the raspberry pi device?", "answer": "3. Micro USB port" },
+                { "page": 15, "question": "90. What is the standard form of CSI?", "answer": "1. Camera Serial Interface" },
+                { "page": 16, "question": "91. What is the standard form of RFID?", "answer": "A. Radio Frequency Identification" },
+                { "page": 16, "question": "92. Arduino UNO is", "answer": "3. Hardware Device" },
+                { "page": 16, "question": "93. ESP32 can have touch sensor GPIO pins", "answer": "1. True" },
+                { "page": 16, "question": "94. Blynk is", "answer": "1. Mobile application" },
+                { "page": 16, "question": "95. The ESP32 is a series of chip microcontrollers developed by", "answer": "1. Espressif" },
+                { "page": 16, "question": "96. ESP32 has wifi capability.", "answer": "1. True" },
+                { "page": 17, "question": "97. ESP32 devices have more GPIO to work compare to ESP8266.", "answer": "1. True" },
+                { "page": 17, "question": "98. SaaS mobile cloud apps means", "answer": "1. Software as a service" },
+                { "page": 17, "question": "99. The _____ is an online platform that makes it easy for you to create, deploy and monitor IoT projects.", "answer": "1. Arduino IoT Cloud" },
+                { "page": 17, "question": "100. UART stands for", "answer": "1. Universal Asynchronous Reception and Transmission" }
+            ]
+        }
+    };
+
+    const AppState = {
+        currentView: 'home',
+        currentCardIndex: 0,
+        flashcards: DB.flashcards,
+        quiz: {
+            questions: [],
+            currentQuestionIndex: 0,
+            score: 0
+        },
+        srs: {
+            deck: [],
+            currentCard: null,
+        }
+    };
+
+    const sidebarItems = document.querySelectorAll('.nav-item');
+    const views = document.querySelectorAll('.view');
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const burgerMenu = document.getElementById('burger-menu');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    function init() {
+        burgerMenu.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const viewName = item.getAttribute('data-view');
+                switchView(viewName);
+                if (sidebar.classList.contains('open')) {
+                    toggleMenu();
+                }
+            });
+        });
+
+        darkModeToggle.addEventListener('click', () => document.body.classList.toggle('dark-mode'));
+        
+        initHome();
+        initSearch();
+        initConcepts();
+        initSummaries();
+        initFlashcards();
+        initQuiz();
+        initSRS();
+
+        switchView('home');
+    }
+
+    function toggleMenu() {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+
+    function switchView(viewName) {
+        AppState.currentView = viewName;
+        views.forEach(view => view.classList.toggle('active', view.id === `${viewName}-view`));
+        sidebarItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewName));
+    }
+
+    function initHome() {
+        const fileList = document.getElementById('file-list');
+        DB.files.forEach(file => {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.style.padding = '1rem';
+            const a = document.createElement('a');
+            a.href = file.name;
+            a.textContent = file.name;
+            a.target = "_blank";
+            a.style.textDecoration = 'none';
+            a.style.fontWeight = '600';
+            a.style.color = 'var(--primary-color)';
+            li.appendChild(a);
+            fileList.appendChild(li);
+        });
+    }
+
+    function initSearch() {
+        const searchInput = document.getElementById('search-input');
+        const resultsContainer = document.getElementById('search-results');
+        const viewerTitle = document.getElementById('document-viewer-title');
+        const viewerContent = document.getElementById('document-viewer-content');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            resultsContainer.innerHTML = '';
+
+            if (query.length < 3) {
+                viewerTitle.textContent = 'Click a search result above to view its full page content here.';
+                viewerContent.innerHTML = '';
+                return;
+            }
+            
+            const results = [];
+            DB.files.forEach(file => {
+                file.content.forEach(block => {
+                    if (block.text.toLowerCase().includes(query)) {
+                        results.push({ ...block, fileName: file.name });
+                    }
+                });
+            });
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<p>No results found.</p>';
+                return;
+            }
+
+            results.forEach(result => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'result-item card';
+                const snippet = result.text.substring(0, 200) + (result.text.length > 200 ? '...' : '');
+                const highlightedSnippet = snippet.replace(new RegExp(query, 'gi'), match => `<mark>${match}</mark>`);
+                itemEl.innerHTML = `<div class="result-snippet">${highlightedSnippet}</div><span class="provenance">[SOURCE: ${result.fileName} | p. ${result.page}]</span>`;
+                itemEl.addEventListener('click', () => {
+                    viewerTitle.textContent = `Content from ${result.fileName} | Page ${result.page}`;
+                    const fullPageContent = DB.files.find(f => f.name === result.fileName).content
+                        .filter(c => c.page === result.page).map(c => c.text).join('\n\n');
+                    const highlightedPageContent = fullPageContent.replace(new RegExp(query, 'gi'), match => `<span class="highlight">${match}</span>`);
+                    viewerContent.innerHTML = highlightedPageContent;
+                });
+                resultsContainer.appendChild(itemEl);
+            });
+        });
+    }
+
+    function initConcepts() {
+        const container = document.getElementById('concept-map-container');
+        container.innerHTML = '';
+        DB.files.forEach(file => {
+            const headings = file.content.filter(b => b.type === 'heading');
+            if (headings.length === 0) return;
+
+            const fileHeader = document.createElement('h4');
+            fileHeader.textContent = file.name;
+            container.appendChild(fileHeader);
+            
+            const fileList = document.createElement('ul');
+            let currentHeading = null;
+            
+            file.content.forEach(block => {
+                if (block.type === 'heading') {
+                    currentHeading = document.createElement('li');
+                    currentHeading.innerHTML = `<div class="concept-node">${block.text}</div><div class="concept-children"></div>`;
+                    fileList.appendChild(currentHeading);
+                } else if (block.type === 'paragraph' && currentHeading) {
+                    const childrenContainer = currentHeading.querySelector('.concept-children');
+                    const snippet = document.createElement('div');
+                    snippet.className = 'concept-snippet';
+                    snippet.innerHTML = `${block.text.substring(0, 150)}... <span class="provenance">[p. ${block.page}]</span>`;
+                    childrenContainer.appendChild(snippet);
+                }
+            });
+            container.appendChild(fileList);
+        });
+
+        container.querySelectorAll('.concept-node').forEach(node => {
+            node.addEventListener('click', () => {
+                node.classList.toggle('expanded');
+                node.nextElementSibling.classList.toggle('show');
+            });
+        });
+    }
+
+    function initSummaries() {
+        const docSelect = document.getElementById('summary-doc-select');
+        const sectionSelect = document.getElementById('summary-section-select');
+        const generateBtn = document.getElementById('generate-summary-btn');
+        const outputDiv = document.getElementById('summary-output');
+        const summaryDescription = document.getElementById('summary-description');
+
+        docSelect.innerHTML = ''; // Clear existing options
+        DB.files.forEach(file => {
+            const option = document.createElement('option');
+            option.value = file.name;
+            option.textContent = file.name;
+            docSelect.appendChild(option);
+        });
+        
+        docSelect.addEventListener('change', () => {
+            const fileName = docSelect.value;
+            const file = DB.files.find(f => f.name === fileName);
+            outputDiv.innerHTML = '';
+
+            if (fileName === "AEP MCQs and short questions.pdf") {
+                generateBtn.textContent = "Show All Solutions";
+                sectionSelect.style.display = 'none';
+                summaryDescription.textContent = 'This file contains questions. Click the button to view all questions and their solutions.';
+            } else {
+                generateBtn.textContent = "Generate Summary";
+                sectionSelect.style.display = 'block';
+                summaryDescription.textContent = 'Select a document and a section to generate summaries based on its content.';
+                
+                sectionSelect.innerHTML = '';
+                const headings = file.content.filter(b => b.type === 'heading');
+                if (headings.length > 0) {
+                     headings.forEach((heading, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = heading.text;
+                        sectionSelect.appendChild(option);
+                    });
+                } else {
+                     sectionSelect.innerHTML = '<option value="-1">No sections found in this document</option>';
+                }
+            }
+        });
+        docSelect.dispatchEvent(new Event('change'));
+
+        generateBtn.addEventListener('click', () => {
+            const fileName = docSelect.value;
+            if (fileName === "AEP MCQs and short questions.pdf") {
+                displaySolutions(fileName);
+            } else {
+                generateStandardSummary(fileName);
+            }
+        });
+
+        function displaySolutions(fileName) {
+            let html = '<h3>Questions & Solutions</h3>';
+            const solutionSet = DB.solutions[fileName];
+            if (solutionSet && solutionSet.length > 0) {
+                solutionSet.forEach(qa => {
+                    html += `<div class="card"><p><strong>${qa.question}</strong></p><p><strong>Answer:</strong> <span style="color: var(--success-color); font-weight: bold;">${qa.answer}</span></p><span class="provenance">[SOURCE: ${fileName} | p. ${qa.page}]</span></div>`;
+                });
+            } else {
+                html += '<p>Solutions for this file are not available.</p>';
+            }
+            outputDiv.innerHTML = html;
+        }
+
+        function generateStandardSummary(fileName) {
+            const headingIndex = parseInt(sectionSelect.value, 10);
+            if (headingIndex === -1) {
+                outputDiv.innerHTML = '<div class="card"><p>Cannot generate summary as no sections were found.</p></div>';
+                return;
+            }
+
+            const file = DB.files.find(f => f.name === fileName);
+            const headings = file.content.filter(b => b.type === 'heading');
+            const startBlockIndex = file.content.indexOf(headings[headingIndex]);
+            const endBlockIndex = (headingIndex + 1 < headings.length) ? file.content.indexOf(headings[headingIndex + 1]) : file.content.length;
+            const sectionContent = file.content.slice(startBlockIndex, endBlockIndex).filter(b => b.type === 'paragraph');
+
+            if(sectionContent.length === 0) {
+                 outputDiv.innerHTML = '<div class="card"><p>No content found for this section to summarize.</p></div>';
+                return;
+            }
+            
+            const eli5 = sectionContent[0].text.split('.')[0] + `. <span class="provenance">[SOURCE: ${fileName} | p. ${sectionContent[0].page}]</span>`;
+            const standard = sectionContent.slice(0, 3).map(p => `<li>${p.text.split('.')[0]}. <span class="provenance">[p. ${p.page}]</span></li>`).join('');
+            const expert = `<p>${sectionContent[0].text} <span class="provenance">[p. ${sectionContent[0].page}]</span></p>`;
+
+            outputDiv.innerHTML = `<div class="card"><h3>ELI5 (Explain Like I'm 5)</h3><p>${eli5}</p></div><div class="card"><h3>Standard Summary</h3><ul>${standard}</ul></div><div class="card"><h3>Expert Detail</h3>${expert}</div>`;
+        }
+    }
+
+    function initFlashcards() {
+        const flashcard = document.getElementById('flashcard');
+        const front = document.querySelector('#flashcards-view .flashcard-front');
+        const back = document.querySelector('#flashcards-view .flashcard-back');
+        const prevBtn = document.getElementById('prev-card-btn');
+        const nextBtn = document.getElementById('next-card-btn');
+        const counter = document.getElementById('card-counter');
+
+        function updateCard() {
+            if (AppState.flashcards.length === 0) return;
+            const cardData = AppState.flashcards[AppState.currentCardIndex];
+            front.innerHTML = cardData.front;
+            back.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
+            counter.textContent = `${AppState.currentCardIndex + 1} / ${AppState.flashcards.length}`;
+            flashcard.classList.remove('flipped');
+        }
+
+        flashcard.addEventListener('click', () => flashcard.classList.toggle('flipped'));
+        
+        nextBtn.addEventListener('click', () => {
+            AppState.currentCardIndex = (AppState.currentCardIndex + 1) % AppState.flashcards.length;
+            updateCard();
+        });
+        
+        prevBtn.addEventListener('click', () => {
+            AppState.currentCardIndex = (AppState.currentCardIndex - 1 + AppState.flashcards.length) % AppState.flashcards.length;
+            updateCard();
+        });
+
+        document.getElementById('export-json-btn').addEventListener('click', () => downloadFile(JSON.stringify(AppState.flashcards, null, 2), 'flashcards.json', 'application/json'));
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            const headers = "front,back,provenance";
+            const rows = AppState.flashcards.map(c => `"${c.front.replace(/"/g, '""')}","${c.back.replace(/"/g, '""')}","${c.provenance}"`).join('\n');
+            downloadFile(`${headers}\n${rows}`, 'flashcards.csv', 'text/csv');
+        });
+        document.getElementById('export-anki-btn').addEventListener('click', () => {
+            const rows = AppState.flashcards.map(c => `"${c.front.replace(/"/g, '""')}";"${c.back.replace(/"/g, '""')}"`).join('\n');
+            downloadFile(rows, 'anki_flashcards.txt', 'text/plain');
+        });
+
+        updateCard();
+    }
+    
+    function initQuiz() {
+        const questionEl = document.getElementById('quiz-question');
+        const optionsEl = document.getElementById('quiz-options');
+        const feedbackEl = document.getElementById('quiz-feedback');
+        const nextBtn = document.getElementById('next-quiz-btn');
+
+        function displayQuizQuestion() {
+            feedbackEl.style.display = 'none';
+            optionsEl.innerHTML = '';
+            
+            const correctCard = AppState.flashcards[Math.floor(Math.random() * AppState.flashcards.length)];
+            const distractors = [];
+            while(distractors.length < 3) {
+                const randomCard = AppState.flashcards[Math.floor(Math.random() * AppState.flashcards.length)];
+                if (randomCard.id !== correctCard.id && !distractors.some(d => d.id === randomCard.id)) {
+                    distractors.push(randomCard);
+                }
+            }
+
+            const options = [
+                { text: correctCard.back, correct: true, provenance: correctCard.provenance },
+                ...distractors.map(d => ({ text: d.back, correct: false }))
+            ].sort(() => Math.random() - 0.5);
+
+            AppState.quiz.currentQuestion = { question: correctCard.front, options };
+            questionEl.textContent = AppState.quiz.currentQuestion.question;
+
+            options.forEach(option => {
+                const optionBtn = document.createElement('button');
+                optionBtn.className = 'quiz-option';
+                optionBtn.innerHTML = option.text;
+                optionBtn.onclick = () => checkAnswer(option, optionBtn);
+                optionsEl.appendChild(optionBtn);
+            });
+        }
+        
+        function checkAnswer(selectedOption, btnEl) {
+            optionsEl.querySelectorAll('.quiz-option').forEach(btn => btn.disabled = true);
+            if (selectedOption.correct) {
+                btnEl.classList.add('correct');
+                feedbackEl.innerHTML = `<strong>Correct!</strong> <span class="provenance">[SOURCE: ${selectedOption.provenance}]</span>`;
+                feedbackEl.style.backgroundColor = 'var(--success-color)';
+            } else {
+                btnEl.classList.add('incorrect');
+                const correctOption = AppState.quiz.currentQuestion.options.find(o => o.correct);
+                feedbackEl.innerHTML = `<strong>Incorrect.</strong> The correct answer was related to: ${correctOption.text.substring(0, 80)}... <span class="provenance">[SOURCE: ${correctOption.provenance}]</span>`;
+                feedbackEl.style.backgroundColor = 'var(--error-color)';
+            }
+            feedbackEl.style.color = 'white';
+            feedbackEl.style.display = 'block';
+        }
+
+        nextBtn.addEventListener('click', displayQuizQuestion);
+        displayQuizQuestion();
+    }
+    
+    function initSRS() {
+        const startBtn = document.getElementById('srs-start-review-btn');
+        const dueCountEl = document.getElementById('srs-due-count');
+        const srsCardContainer = document.getElementById('srs-card-container');
+        const srsStatsContainer = document.getElementById('srs-stats');
+        const srsCardFront = document.getElementById('srs-card-front');
+        const srsCardBack = document.getElementById('srs-card-back');
+        const srsFlashcard = document.getElementById('srs-flashcard');
+
+        function loadSRSData() {
+            try {
+                const data = localStorage.getItem('srsDeck');
+                if (data) {
+                    AppState.srs.deck = JSON.parse(data);
+                } else {
+                    AppState.srs.deck = AppState.flashcards.map(card => ({ id: card.id, interval: 0, repetition: 0, easeFactor: 2.5, dueDate: new Date().toISOString() }));
+                }
+            } catch (e) {
+                console.error("Could not access localStorage for SRS data:", e);
+                AppState.srs.deck = [];
+            }
+            updateSRSCounters();
+        }
+
+        function saveSRSData() {
+            try {
+                localStorage.setItem('srsDeck', JSON.stringify(AppState.srs.deck));
+            } catch (e) {
+                console.error("Could not save SRS data to localStorage:", e);
+            }
+        }
+        
+        const getDueCards = () => AppState.srs.deck.filter(card => new Date(card.dueDate) <= new Date());
+
+        function updateSRSCounters() {
+            const dueCards = getDueCards();
+            dueCountEl.textContent = dueCards.length;
+            startBtn.disabled = dueCards.length === 0;
+        }
+        
+        function startReviewSession() {
+            AppState.srs.dueCards = getDueCards();
+            if (AppState.srs.dueCards.length > 0) {
+                srsStatsContainer.style.display = 'none';
+                srsCardContainer.style.display = 'block';
+                showNextSRSCard();
+            }
+        }
+        
+        function showNextSRSCard() {
+            if (AppState.srs.dueCards.length === 0) {
+                endReviewSession();
+                return;
+            }
+            AppState.srs.currentCard = AppState.srs.dueCards.shift();
+            const cardData = AppState.flashcards.find(c => c.id === AppState.srs.currentCard.id);
+            srsCardFront.textContent = cardData.front;
+            srsCardBack.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
+            srsFlashcard.classList.remove('flipped');
+        }
+
+        function endReviewSession() {
+            srsStatsContainer.style.display = 'block';
+            srsCardContainer.style.display = 'none';
+            AppState.srs.currentCard = null;
+            updateSRSCounters();
+            alert('Review session complete!');
+        }
+
+        function processSRSReview(quality) {
+            const card = AppState.srs.currentCard;
+            if (quality < 3) {
+                card.repetition = 0;
+                card.interval = 1;
+            } else {
+                card.repetition += 1;
+                if (card.repetition === 1) card.interval = 1;
+                else if (card.repetition === 2) card.interval = 6;
+                else card.interval = Math.round(card.interval * card.easeFactor);
+            }
+            card.easeFactor = Math.max(1.3, card.easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+            
+            const now = new Date();
+            now.setDate(now.getDate() + card.interval);
+            card.dueDate = now.toISOString();
+
+            const deckIndex = AppState.srs.deck.findIndex(c => c.id === card.id);
+            if(deckIndex > -1) AppState.srs.deck[deckIndex] = card;
+
+            saveSRSData();
+            showNextSRSCard();
+        }
+        
+        startBtn.addEventListener('click', startReviewSession);
+        srsFlashcard.addEventListener('click', () => srsFlashcard.classList.toggle('flipped'));
+        document.querySelectorAll('.srs-rating-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (!srsFlashcard.classList.contains('flipped')) {
+                    alert('Please reveal the answer before rating.');
+                    return;
+                }
+                processSRSReview(parseInt(e.target.dataset.rating, 10));
+            });
+        });
+        
+        document.getElementById('srs-export-btn').addEventListener('click', () => downloadFile(JSON.stringify(AppState.srs.deck, null, 2), 'srs_progress.json', 'application/json'));
+        document.getElementById('srs-reset-btn').addEventListener('click', () => {
+            if (confirm('Are you sure? This will reset all your spaced repetition learning progress.')) {
+                try { localStorage.removeItem('srsDeck'); } catch(e) { console.error(e); }
+                loadSRSData();
+                alert('SRS progress has been reset.');
+            }
+        });
+
+        loadSRSData();
+    }
+
+    function downloadFile(content, fileName, contentType) {
+        const a = document.createElement("a");
+        const file = new Blob([content], { type: contentType });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+    
+    init();
+});
+</script>
+
+</body>
+</html>
+
