@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Science Study App</title>
+    <style>
+        :root {
+            --bg-color: #f9fafb;
+            --text-color: #1f2937;
+            --primary-color: #0d9488; /* Teal */
+            --primary-hover-color: #0f766e;
+            --secondary-bg-color: #ffffff;
+            --secondary-text-color: #4b5563;
+            --border-color: #e5e7eb;
+            --highlight-bg: #fefce8;
+            --highlight-text: #854d0e;
+            --success-color: #16a34a;
+            --error-color: #dc2626;
+            --code-bg-color: #f3f4f6;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        .dark-mode {
+            --bg-color: #111827;
+            --text-color: #f9fafb;
+            --primary-color: #2dd4bf; /* Lighter Teal */
+            --primary-hover-color: #5eead4;
+            --secondary-bg-color: #1f2937;
+            --secondary-text-color: #d1d5db;
+            --border-color: #374151;
+            --highlight-bg: #1e293b;
+            --highlight-text: #fde047;
+            --success-color: #4ade80;
+            --error-color: #f87171;
+            --code-bg-color: #374151;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container { display: flex; flex: 1; overflow: hidden; }
+
+        #sidebar {
+            width: 280px;
+            background-color: var(--secondary-bg-color);
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+            border-right: 1px solid var(--border-color);
+            transition: width 0.3s, background-color 0.3s, border-color 0.3s, transform 0.3s ease-in-out;
+            flex-shrink: 0;
+        }
+
+        #sidebar h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; }
+        #sidebar ul { list-style: none; }
+        #sidebar li { padding: 0.75rem 0.5rem; cursor: pointer; border-radius: var(--radius-sm); transition: background-color 0.2s, color 0.2s; font-weight: 500; }
+        #sidebar li:hover, #sidebar li.active { background-color: var(--primary-color); color: white; }
+
+        #main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+
+        .view { display: none; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .view.active { display: block; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--secondary-bg-color);
+            transition: background-color 0.3s, border-color 0.3s;
+            position: sticky;
+            top: 0;
+            z-index: 1002;
+        }
+        
+        header h1 { font-size: 1.75rem; color: var(--primary-color); font-weight: 700; flex-shrink: 0; }
+        .header-controls { display: flex; align-items: center; }
+
+        #global-search-container { position: relative; width: 100%; max-width: 500px; }
+        #global-search { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--secondary-bg-color); color: var(--text-color); font-size: 1rem; }
+        #global-search-results {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--secondary-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1003;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .search-result-item { padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        .search-result-item:hover { background-color: var(--primary-color); color: white; }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item small { display: block; opacity: 0.7; }
+        .search-result-item:hover small { color: white; }
+
+        #burger-menu {
+            display: none;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 2rem;
+            height: 2rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 1001;
+        }
+        #burger-menu span { width: 2rem; height: 0.25rem; background-color: var(--text-color); border-radius: 10px; transition: all 0.3s linear; position: relative; transform-origin: 1px; }
+        
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; transition: opacity 0.3s ease-in-out; opacity: 0; }
+        #overlay.active { display: block; opacity: 1; }
+
+        button { background-color: var(--primary-color); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background-color 0.2s, transform 0.1s; }
+        button:hover { background-color: var(--primary-hover-color); transform: translateY(-1px); }
+        button:disabled { background-color: var(--secondary-text-color); cursor: not-allowed; transform: none; }
+        button.secondary { background-color: var(--secondary-text-color); }
+        button.secondary:hover { background-color: var(--text-color); }
+
+        select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--secondary-bg-color); color: var(--text-color); font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 20%, transparent); }
+
+        .card { background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s, box-shadow 0.2s, border-color 0.3s; }
+        .card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .highlight-card { border: 2px solid var(--primary-color); box-shadow: 0 0 15px color-mix(in srgb, var(--primary-color) 30%, transparent); }
+        
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--primary-color); }
+        h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+        .provenance { display: block; font-size: 0.8rem; color: var(--secondary-text-color); margin-top: 0.5rem; text-align: right; font-style: italic; }
+
+        pre { background-color: var(--code-bg-color); color: var(--text-color); padding: 1rem; border-radius: var(--radius-md); white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', Courier, monospace; }
+        .mermaid { text-align: center; margin: 1.5rem 0; background-color: white; padding: 1rem; border-radius: var(--radius-md); }
+        .dark-mode .mermaid { background-color: var(--secondary-bg-color); }
+        
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        th, td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: left; }
+        th { background-color: var(--code-bg-color); font-weight: 600; }
+        
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            #burger-menu { display: flex; margin-right: 1rem; }
+            header { flex-wrap: wrap; }
+            #global-search-container { order: 3; width: 100%; margin-top: 1rem; }
+            #sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; transform: translateX(-100%); z-index: 1003; }
+            #sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
+            #main-content { padding: 1.5rem; }
+            h2 { font-size: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button id="burger-menu" aria-label="Open menu">
+            <span></span><span></span><span></span>
+        </button>
+        <h1>Data Science Study App</h1>
+        <div id="global-search-container">
+            <input type="search" id="global-search" placeholder="Search anything...">
+            <div id="global-search-results"></div>
+        </div>
+        <div class="header-controls">
+            <button id="dark-mode-toggle">Toggle Dark Mode</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <nav id="sidebar">
+            <h2>Study Tools</h2>
+            <ul>
+                <li class="nav-item active" data-view="home">Home</li>
+                <li class="nav-item" data-view="summaries">Course Material</li>
+                <li class="nav-item" data-view="flashcards">Flashcards</li>
+                <li class="nav-item" data-view="quiz">Practice Quiz</li>
+                <li class="nav-item" data-view="srs">Spaced Repetition (SRS)</li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <div id="home-view" class="view active">
+                <h2>Welcome to Your Data Science Study Dashboard!</h2>
+                <p>This application contains the complete material from your sessional PDF. Use the menu to access study tools, or use the global search bar above to find anything instantly.</p>
+                <h3>Processed Document</h3>
+                <ul id="file-list" style="list-style: none; padding: 0;"></ul>
+            </div>
+
+            <div id="summaries-view" class="view">
+                <h2>Course Material</h2>
+                <p id="summary-description">Select a unit to view its full content.</p>
+                <div class="card">
+                    <select id="summary-doc-select"></select>
+                    <select id="summary-section-select" style="margin-top: 1rem;"></select>
+                </div>
+                <div id="summary-output"></div>
+            </div>
+
+            <div id="flashcards-view" class="view">
+                <h2>Flashcards</h2>
+                <div id="flashcard-container" style="perspective: 1000px; width: 100%; max-width: 600px; height: 300px; margin: 0 auto 1.5rem auto;">
+                    <div class="flashcard" id="flashcard" style="width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer;">
+                        <div class="flashcard-face flashcard-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color);">Click me to start!</div>
+                        <div class="flashcard-face flashcard-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color); transform: rotateY(180deg);"></div>
+                    </div>
+                </div>
+                <div id="flashcard-controls" style="text-align: center; margin-bottom: 1.5rem;">
+                    <button id="prev-card-btn">Previous</button>
+                    <span id="card-counter" style="margin: 0 1rem; font-weight: 500;">0 / 38</span>
+                    <button id="next-card-btn">Next</button>
+                </div>
+            </div>
+            
+            <div id="quiz-view" class="view">
+                <h2>Practice Quiz</h2>
+                <div id="quiz-container" class="card">
+                    <h3 id="quiz-question" style="margin-top: 0;"></h3>
+                    <div id="quiz-options" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                    <div id="quiz-feedback" style="margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md);"></div>
+                </div>
+                <button id="next-quiz-btn">Next Question</button>
+            </div>
+            
+            <div id="srs-view" class="view">
+                <h2>Spaced Repetition System (SRS)</h2>
+                 <div id="srs-card-container" style="display: none;">
+                    <div id="srs-flashcard-container" style="perspective: 1000px; width: 100%; max-width: 600px; height: 300px; margin: 0 auto 1.5rem auto;">
+                       <div class="flashcard" id="srs-flashcard" style="width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer;">
+                            <div class="flashcard-face flashcard-front" id="srs-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color);"></div>
+                            <div class="flashcard-face flashcard-back" id="srs-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color); transform: rotateY(180deg);"></div>
+                        </div>
+                    </div>
+                    <div class="srs-controls" style="text-align:center; margin-top: 1.5rem;">
+                        <button class="srs-rating-btn" data-rating="1">Hard</button>
+                        <button class="srs-rating-btn" data-rating="3">Good</button>
+                        <button class="srs-rating-btn" data-rating="5">Easy</button>
+                    </div>
+                </div>
+                <div id="srs-stats" class="card">
+                    <h3>Review Session</h3>
+                    <p>You have <strong id="srs-due-count">0</strong> cards due for review today.</p>
+                    <button id="srs-start-review-btn">Start Review Session</button>
+                </div>
+            </div>
+        </main>
+        <div id="overlay"></div>
+    </div>
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    
+    const getMermaidTheme = () => document.body.classList.contains('dark-mode') ? 'dark' : 'default';
+    mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme(), securityLevel: 'loose' });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const DB = {
+            documents: [
+                {
+                    "name": "DS_Sessional (U1-U4).pdf",
+                    "type": "summary",
+                    "sections": [
+                        {
+                            "title": "Unit 1: Overview of Data Science",
+                            "content": [
+                                { "type": "paragraph", "text": "<strong>Q1. Define Data Science.</strong><br>Data Science is the art of using scientific methods, programming skills, and knowledge of statistics to find meaningful stories and insights from data. For example, a detective (data scientist) collects clues (data) and analyzes them to solve a case (gain insights)." },
+                                { "type": "paragraph", "text": "<strong>Q2. Differentiate between Data Science and Machine Learning.</strong><br>Data Science is the entire process from data collection to insight. Machine Learning is a specific tool within data science used for making predictions. Analogy: Data Science is building a car; Machine Learning is the engine." },
+                                { "type": "paragraph", "text": "<strong>Q3. What are the three types of data?</strong><br><strong>Structured:</strong> Highly organized, like an Excel sheet (e.g., student info with columns).<br><strong>Unstructured:</strong> No specific format (e.g., a photo, social media post).<br><strong>Semi-structured:</strong> A mix of both, with tags for separation (e.g., an email with To/From fields and an unstructured body)." },
+                                { "type": "paragraph", "text": "<strong>Q4. List two key benefits of Data Science in business.</strong><br>1. <strong>Better Decision Making:</strong> Using data to make factual decisions (e.g., a store analyzing sales to stock products).<br>2. <strong>Personalized Customer Experience:</strong> Offering tailored recommendations (e.g., Netflix suggestions)." },
+                                { "type": "paragraph", "text": "<strong>Q5. Who first used the term 'Data Science' and when?</strong><br>Peter Naur, a Danish computer science pioneer, in 1974." },
+                                { "type": "paragraph", "text": "<strong>Q6. Explain the evolution of Data Science.</strong><br>The field has evolved significantly:<br><strong>1960s-70s:</strong> Basic statistics and relational databases.<br><strong>1990s:</strong> Rise of Data Mining to find hidden patterns.<br><strong>2000s:</strong> The 'Big Data' explosion, leading to the formalization of Data Science with tools like Hadoop.<br><strong>2010s-Present:</strong> The AI and Deep Learning era, enabling complex tasks like image recognition and prediction." },
+                                 {
+                                    "type": "table", "headers": ["Term", "What It Is", "Goal", "Analogy"],
+                                    "rows": [
+                                        ["Data Mining", "Automatically discovering hidden patterns in large datasets.", "Find unknown info.", "A detective using fingerprint analysis to find a hidden clue."],
+                                        ["Data Analysis", "Inspecting, cleaning, and modeling data hands-on.", "Discover useful info.", "The detective organizing clues to form a theory."],
+                                        ["Data Analytics", "The entire process from collection to reporting.", "Make informed decisions.", "The entire investigation, from crime scene to courtroom."]
+                                    ]
+                                },
+                                { "type": "paragraph", "text": "<strong>Q8. Describe the components of Data Science.</strong><br>1. <strong>Data:</strong> The foundation (structured, unstructured).<br>2. <strong>Big Data:</strong> Datasets too large for traditional tools.<br>3. <strong>Machine Learning:</strong> The 'brain' - algorithms that learn from data.<br>4. <strong>Statistics & Probability:</strong> The scientific backbone for sound conclusions.<br>5. <strong>Programming:</strong> The 'hands' - tools like Python/R to process data." },
+                                { "type": "diagram", "text": "graph TD\n    A[1. Frame the Problem] --> B[2. Collect Raw Data];\n    B --> C[3. Process and Clean Data];\n    C --> D[4. Explore the Data];\n    D --> E[5. Perform In-depth Analysis];\n    E --> F[6. Communicate Results];" },
+                                { "type": "paragraph", "text": "<strong>Q10. Discuss real-world applications of Data Science.</strong><br><strong>Healthcare:</strong> Medical image analysis for early disease detection, speeding up drug discovery.<br><strong>E-commerce:</strong> Recommendation engines (like Amazon's) and dynamic price optimization.<br><strong>Logistics:</strong> Route optimization for deliveries (like FedEx) and demand forecasting." },
+                                { "type": "paragraph", "text": "<strong>Q11. How does Data Science help in driverless cars?</strong><br>It enables the car to 'see' (collect sensor data), 'think' (process data with ML models to recognize objects and predict paths), and 'act' (send decisions to the car's controls)." },
+                                { "type": "paragraph", "text": "<strong>Q12. Explain the role of Data Science in stock market predictions.</strong><br>It involves collecting historical data, using ML for pattern recognition, performing sentiment analysis on news/social media, and building predictive models to forecast price movements." },
+                                { "type": "paragraph", "text": "<strong>Q13. How is Data Science used for image recognition?</strong><br>Platforms like Facebook train models on billions of tagged photos. When a new photo is uploaded, the system detects faces, creates a unique digital signature based on facial features, and matches it against its database to suggest tags." }
+                            ]
+                        },
+                        {
+                            "title": "Unit 2: Mathematics and Statistics",
+                            "content": [
+                                { "type": "paragraph", "text": "<strong>Q1. Define Linear Algebra and its role in Data Science.</strong><br>Linear Algebra deals with vectors and matrices. In Data Science, all data is converted into these numerical forms, and linear algebra provides the tools to work with them efficiently." },
+                                { "type": "paragraph", "text": "<strong>Q2. What is a vector?</strong><br>A one-dimensional list of numbers representing a data point. Example: A house's features `[3 bedrooms, 2 bathrooms, 1500 sqft]`." },
+                                {
+                                    "type": "table", "headers": ["Feature", "Matrix Addition", "Matrix Multiplication"],
+                                    "rows": [
+                                        ["How it Works", "Add corresponding elements. Matrices must be the same size.", "Row-by-column operation. Columns in first matrix must equal rows in second."],
+                                        ["Analogy", "Adding two shopping lists item by item.", "Calculating total cost from different stores with separate price/quantity grids."]
+                                    ]
+                                },
+                                { "type": "paragraph", "text": "<strong>Q4. Define determinant.</strong><br>A special number calculated from a square matrix. If the determinant is zero, it indicates that the matrix might 'squash' data, and a unique solution to its system of equations may not exist." },
+                                { "type": "paragraph", "text": "<strong>Q6. Differentiate between descriptive and inferential statistics.</strong><br><strong>Descriptive:</strong> Summarizes data (e.g., calculating the class average).<br><strong>Inferential:</strong> Uses a small sample to make predictions about a larger population (e.g., election polling)." },
+                                {
+                                    "type": "table", "headers": ["Measure", "Definition", "Example"],
+                                    "rows": [
+                                        ["Mean", "The average of all numbers.", "[10, 20, 30] -> Mean is 20."],
+                                        ["Median", "The middle value when numbers are sorted.", "[1, 3, 5, 8, 9] -> Median is 5."],
+                                        ["Mode", "The number that appears most often.", "[1, 5, 5, 8, 9] -> Mode is 5."]
+                                    ]
+                                },
+                                { "type": "paragraph", "text": "<strong>Q8. What is variance and standard deviation?</strong><br>Variance measures how spread out data is from the mean. Standard Deviation is the square root of variance and is easier to interpret as it's in the same units as the data." },
+                                { "type": "paragraph", "text": "<strong>Q9. Define probability.</strong><br>A measure of how likely an event is to happen, between 0 (impossible) and 1 (certain). P(Event) = Favorable Outcomes / Total Outcomes. Ex: P(rolling a 4 on a die) = 1/6." },
+                                { "type": "paragraph", "text": "<strong>Q10. What is conditional probability?</strong><br>The likelihood of an event happening, given that another event has already occurred. Ex: The probability of the ground being wet is high, given that it just rained." }
+                            ]
+                        },
+                        {
+                            "title": "Unit 3: Data Pre-processing",
+                            "content": [
+                                { "type": "paragraph", "text": "<strong>Q15. Define Data Preprocessing.</strong><br>The process of cleaning and preparing raw, 'dirty' data to make it suitable for analysis. Analogy: You must wash and prepare ingredients before cooking a good meal." },
+                                { "type": "paragraph", "text": "<strong>Q16. Common methods of data collection.</strong><br>Surveys, Web Scraping, Sensors, and Observational Studies." },
+                                {
+                                    "type": "table", "headers": ["Error Type", "Cause", "Example"],
+                                    "rows": [
+                                        ["Measurement Error", "Faulty tool", "A scale that adds 1 kg to every measurement."],
+                                        ["Data Entry Error", "Human mistake during typing", "Typing an age of 32 as 23."]
+                                    ]
+                                },
+                                {
+                                    "type": "table", "headers": ["Missing Data Type", "Reason for Missingness"],
+                                    "rows": [
+                                        ["MCAR (Missing Completely at Random)", "Purely random, no reason. E.g., accidentally skipping a survey question."],
+                                        ["MAR (Missing at Random)", "Can be explained by other variables. E.g., Men being less likely to answer a question on depression."],
+                                        ["NMAR (Not Missing at Random)", "Related to the missing value itself. E.g., People with high incomes not revealing their income."]
+                                    ]
+                                },
+                                { "type": "paragraph", "text": "<strong>Q19. What is consistent data?</strong><br>Data where the same information is represented the same way. E.g., Standardizing 'New York', 'NY', and 'N.Y.' to just 'NY'." },
+                                { "type": "paragraph", "text": "<strong>Q20. Define feature engineering.</strong><br>Using domain knowledge to create new, more effective input variables (features) from existing data. E.g., Creating an 'age' feature from a 'date of birth'." },
+                                { "type": "diagram", "text": "graph LR\n    A[1. Identify Dirty Data] --> B[2. Handle Missing Data];\n    B --> C[3. Correct Outliers];\n    C --> D[4. Standardize Formats];\n    D --> E[5. Remove Duplicates];\n    E --> F[6. Verify Clean Data];" }
+                            ]
+                        },
+                        {
+                            "title": "Unit 4: Data Visualization",
+                            "content": [
+                                { "type": "paragraph", "text": "<strong>Q21. Define a graph or chart.</strong><br>A visual representation of numerical data that helps in understanding patterns, trends, and outliers. Analogy: A map for your data." },
+                                { "type": "paragraph", "text": "<strong>Q22. What is visual encoding?</strong><br>The process of translating data values into visual properties like position, color, size, and shape on a chart." },
+                                { "type": "paragraph", "text": "<strong>Q23. What is Matplotlib?</strong><br>A fundamental Python library for creating a wide variety of static and interactive visualizations. Analogy: A full set of artist's tools for painting with data." },
+                                {
+                                    "type": "table", "headers": ["Plot Type", "Use Case", "Example"],
+                                    "rows": [
+                                        ["Line Plot", "Shows trends over time.", "Tracking stock price over a month."],
+                                        ["Scatter Plot", "Shows the relationship between two numerical variables.", "Plotting height vs. weight."]
+                                    ]
+                                },
+                                { "type": "paragraph", "text": "<strong>Q25. What is a histogram?</strong><br>A bar chart showing the frequency distribution of continuous data. It groups numbers into ranges ('bins') to show how many data points fall into each range. Example: Visualizing the distribution of exam scores." },
+                                { "type": "paragraph", "text": "<strong>Q26. Purpose of annotations and legends.</strong><br><strong>Annotations:</strong> Notes on a plot to highlight specific points (e.g., 'New marketing campaign launched' on a sales spike).<br><strong>Legends:</strong> A key that explains what different colors or shapes represent." },
+                                {
+                                    "type": "table", "headers": ["Aspect", "Bar Chart", "Histogram", "Pie Chart"],
+                                    "rows": [
+                                        ["What it Shows", "Comparison of quantities between categories.", "Frequency distribution of one continuous variable.", "Proportions of a whole."],
+                                        ["Data Type", "Categorical", "Continuous Numerical", "Categorical"],
+                                        ["X-Axis", "Represents distinct categories.", "Represents continuous ranges (bins).", "N/A (slices are categories)."]
+                                    ]
+                                },
+                                { "type": "diagram", "text": "graph TD\n    A[Identify Trends & Patterns] --> B[Simplify Complexity];\n    B --> C[Communicate Insights Effectively];\n    C --> D[Spot Outliers & Anomalies];\n    D --> E{Better Decision-Making};" }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "flashcards": [
+                {"id":1, "front":"What is Data Science?", "back":"The art of using scientific methods, programming, and statistics to find meaningful insights from data.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":2, "front":"Difference between Data Science and Machine Learning?", "back":"Data Science is the whole process of getting insights from data. Machine Learning is a tool within it that makes predictions.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":3, "front":"What are the three types of data?", "back":"Structured (like a spreadsheet), Unstructured (like a photo or text), and Semi-structured (like an email).", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":4, "front":"Name two key benefits of Data Science in business.", "back":"Better Decision Making and Personalized Customer Experience.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":5, "front":"Who first used the term 'Data Science' and when?", "back":"Peter Naur in 1974.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":6, "front":"What is the goal of Data Mining?", "back":"To automatically discover previously unknown and useful patterns in large datasets.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":7, "front":"What are the 5 components of Data Science?", "back":"Data, Big Data, Machine Learning, Statistics & Probability, and Programming.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":8, "front":"What is the first step in the Data Science Process?", "back":"Frame the Problem: Understand the business goal you are trying to solve.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":9, "front":"What is a Vector in Linear Algebra?", "back":"A one-dimensional list or array of numbers, representing a point in space (e.g., features of a house).", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":10, "front":"Difference between Descriptive and Inferential Statistics?", "back":"Descriptive summarizes data (e.g., class average). Inferential uses a sample to predict for a larger group (e.g., election polls).", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":11, "front":"Define Mean, Median, and Mode.", "back":"Mean is the average. Median is the middle value. Mode is the most frequent value.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":12, "front":"What is the relationship between Variance and Standard Deviation?", "back":"Standard Deviation is the square root of the Variance. It measures the spread of data.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":13, "front":"What is Conditional Probability?", "back":"The likelihood of an event happening, given that another event has already occurred.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":14, "front":"What is a Matrix Transpose?", "back":"Swapping the rows and columns of a matrix. The first row becomes the first column, etc.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":15, "front":"What is Data Preprocessing?", "back":"The process of cleaning and preparing raw data to make it suitable for analysis and modeling.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":16, "front":"Difference between Measurement Error and Data Entry Error?", "back":"Measurement error is from a faulty tool. Data entry error is a human mistake during typing.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":17, "front":"What are the three types of missing data?", "back":"MCAR (random), MAR (depends on other variables), and NMAR (depends on the missing value itself).", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":18, "front":"What is Feature Engineering?", "back":"Using domain knowledge to create new, more effective input variables (features) from existing data.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":19, "front":"What is Data Integration?", "back":"Combining data from multiple different sources into a single, unified dataset.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":20, "front":"What is Data Reduction?", "back":"Reducing the size of a dataset (rows or columns) without losing important information.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":21, "front":"What is Normalization in Data Transformation?", "back":"Scaling all numeric data to a common range (e.g., 0 to 1) to prevent bias from features with larger values.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":22, "front":"What is the IQR method used for?", "back":"Detecting and handling outliers in a dataset.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":23, "front":"What is a graph or chart in data science?", "back":"A visual representation of numerical data used to understand patterns, trends, and outliers.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":24, "front":"What is Visual Encoding?", "back":"The process of translating data values into visual properties like position, color, size, and shape on a chart.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":25, "front":"What is Matplotlib?", "back":"A fundamental Python library for creating static, animated, and interactive visualizations.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":26, "front":"Difference between a Line Plot and a Scatter Plot?", "back":"A line plot connects points to show trends over time. A scatter plot shows individual points to see relationships between two variables.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":27, "front":"When do we use a Histogram?", "back":"To understand the frequency distribution of a single continuous numerical variable (e.g., distribution of exam scores).", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":28, "front":"What is the purpose of a Legend in a plot?", "back":"It acts as a key, explaining what different colors, shapes, or line styles represent in the chart.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":29, "front":"When is a Pie Chart the best choice for visualization?", "back":"When you want to show parts of a whole, representing proportions or percentages (e.g., market share).", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":30, "front":"What is the 'Figure' in Matplotlib?", "back":"The outermost container for the entire visualization, controlling its overall size and background.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":31, "front":"What is the 'Axes' in Matplotlib?", "back":"The actual plotting area (the individual graph) where you can set titles and labels.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":32, "front":"How can color be used effectively in visualizations?", "back":"To differentiate categories, show intensity (heatmaps), or highlight specific data points.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":33, "front":"How does Data Science help driverless cars?", "back":"By processing sensor data with ML models to recognize objects, predict paths, and make driving decisions.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":34, "front":"What is Sentiment Analysis?", "back":"Analyzing text data (like reviews or social media) to gauge public opinion (positive, negative, neutral).", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":35, "front":"How is an image represented in computer vision?", "back":"As a matrix (or multiple matrices for color) where each element represents a pixel's intensity.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":36, "front":"What is listwise deletion for missing data?", "back":"Deleting the entire row if it contains any missing value. It's simple but can cause significant data loss.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":37, "front":"What is mean/median imputation?", "back":"Filling missing numerical values with the mean or median of the entire column.", "provenance":"DS_Sessional (U1-U4).pdf"},
+                {"id":38, "front":"What is the main limitation of a pie chart?", "back":"It's hard to accurately compare slices, especially if they are similar in size or if there are too many categories.", "provenance":"DS_Sessional (U1-U4).pdf"}
+            ]
+        };
+
+        const AppState = { currentView: 'home', currentCardIndex: 0, searchIndex: [] };
+        const sidebarItems = document.querySelectorAll('.nav-item');
+        const views = document.querySelectorAll('.view');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const burgerMenu = document.getElementById('burger-menu');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const globalSearchInput = document.getElementById('global-search');
+        const globalSearchResults = document.getElementById('global-search-results');
+
+
+        function init() {
+            buildSearchIndex();
+            globalSearchInput.addEventListener('input', handleGlobalSearch);
+            document.addEventListener('click', (e) => {
+                if (!globalSearchInput.contains(e.target)) {
+                    globalSearchResults.style.display = 'none';
+                }
+            });
+
+            burgerMenu.addEventListener('click', toggleMenu);
+            overlay.addEventListener('click', toggleMenu);
+            sidebarItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const viewName = item.getAttribute('data-view');
+                    switchView(viewName);
+                    if (sidebar.classList.contains('open')) toggleMenu();
+                });
+            });
+            darkModeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme(), securityLevel: 'loose' });
+                const visibleDiagrams = document.querySelectorAll('#summary-output .mermaid');
+                if(visibleDiagrams.length > 0) {
+                     mermaid.run({ nodes: visibleDiagrams });
+                }
+            });
+            initHome();
+            initSummaries();
+            initFlashcards();
+            initQuiz();
+            initSRS();
+            switchView('home');
+        }
+
+        function toggleMenu() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function switchView(viewName, callback) {
+            AppState.currentView = viewName;
+            views.forEach(view => view.classList.toggle('active', view.id === `${viewName}-view`));
+            sidebarItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewName));
+            if (callback) {
+                setTimeout(callback, 50);
+            }
+        }
+        
+        function buildSearchIndex() {
+            DB.flashcards.forEach((card, index) => {
+                AppState.searchIndex.push({ text: `${card.front.toLowerCase()} ${card.back.toLowerCase()}`, type: 'flashcard', location: { index }, display: card.front });
+            });
+            DB.documents.forEach(doc => {
+                doc.sections.forEach(section => {
+                    const combinedText = section.content.map(c => c.text || (c.rows ? c.rows.flat().join(' ') : '')).join(' ').toLowerCase();
+                    AppState.searchIndex.push({ 
+                        text: `${section.title.toLowerCase()} ${combinedText}`, 
+                        type: 'summary', 
+                        location: { fileName: doc.name, sectionTitle: section.title },
+                        display: `${section.title} <small>${doc.name}</small>`
+                    });
+                });
+            });
+        }
+
+        function handleGlobalSearch(e) {
+            const query = e.target.value.toLowerCase();
+            if (query.length < 2) {
+                globalSearchResults.style.display = 'none';
+                return;
+            }
+            const results = AppState.searchIndex.filter(item => item.text.includes(query)).slice(0, 10);
+            globalSearchResults.innerHTML = '';
+            if (results.length > 0) {
+                results.forEach(res => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'search-result-item';
+                    itemEl.innerHTML = res.display;
+                    itemEl.addEventListener('mousedown', () => navigateToSearchResult(res));
+                    globalSearchResults.appendChild(itemEl);
+                });
+                globalSearchResults.style.display = 'block';
+            } else {
+                globalSearchResults.style.display = 'none';
+            }
+        }
+
+        function navigateToSearchResult(result) {
+            globalSearchInput.value = '';
+            globalSearchResults.style.display = 'none';
+            
+            if (result.type === 'flashcard') {
+                switchView('flashcards', () => showFlashcardByIndex(result.location.index));
+            } else if (result.type === 'summary') {
+                switchView('summaries', () => {
+                    const docSelect = document.getElementById('summary-doc-select');
+                    const sectionSelect = document.getElementById('summary-section-select');
+                    docSelect.value = result.location.fileName;
+                    docSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    let sectionIndex = -1;
+                    const docData = DB.documents.find(d => d.name === result.location.fileName);
+                    if (docData) {
+                        sectionIndex = docData.sections.findIndex(s => s.title === result.location.sectionTitle);
+                    }
+                    if (sectionIndex !== -1) {
+                        sectionSelect.value = sectionIndex;
+                        sectionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    
+                     setTimeout(() => {
+                        const element = document.getElementById(CSS.escape(result.location.sectionTitle));
+                        if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            element.classList.add('highlight-card');
+                            setTimeout(() => element.classList.remove('highlight-card'), 2000);
+                        }
+                    }, 100);
+                });
+            }
+        }
+
+        function initHome() {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            DB.documents.forEach(doc => {
+                const li = document.createElement('li');
+                li.className = 'card';
+                li.innerHTML = `<a href="${doc.name}" target="_blank" style="text-decoration:none;font-weight:600;color:var(--primary-color);">${doc.name}</a>`;
+                fileList.appendChild(li);
+            });
+        }
+        
+        function initSummaries() {
+            const docSelect = document.getElementById('summary-doc-select');
+            const sectionSelect = document.getElementById('summary-section-select');
+            
+            docSelect.innerHTML = '';
+            DB.documents.forEach(doc => docSelect.add(new Option(doc.name, doc.name)));
+
+            const updateSections = () => {
+                const fileName = docSelect.value;
+                const docData = DB.documents.find(d => d.name === fileName);
+                sectionSelect.innerHTML = '';
+                sectionSelect.style.display = 'block';
+                docData.sections.forEach((section, index) => {
+                    sectionSelect.add(new Option(section.title, index));
+                });
+                displayDetailedSummary(docData, 0);
+            };
+            
+            docSelect.addEventListener('change', updateSections);
+            sectionSelect.addEventListener('change', () => {
+                const docData = DB.documents.find(d => d.name === docSelect.value);
+                if(docData) displayDetailedSummary(docData, parseInt(sectionSelect.value))
+            });
+            updateSections();
+        }
+
+        function initFlashcards() {
+            const prevBtn = document.getElementById('prev-card-btn');
+            const nextBtn = document.getElementById('next-card-btn');
+
+            document.getElementById('flashcard').addEventListener('click', (e) => e.currentTarget.classList.toggle('flipped'));
+
+            nextBtn.addEventListener('click', () => {
+                showFlashcardByIndex(newIndex);
+            });
+            prevBtn.addEventListener('click', () => {
+                showFlashcardByIndex(newIndex);
+            });
+
+            showFlashcardByIndex(0);
+        }
+
+        async function displayDetailedSummary(docData, sectionIndex) {
+            const outputDiv = document.getElementById('summary-output');
+            if (!docData || !docData.sections || !docData.sections[sectionIndex]) {
+                outputDiv.innerHTML = '';
+                return;
+            }
+
+            const section = docData.sections[sectionIndex];
+            let html = `<div class="card" id="${CSS.escape(section.title)}"><br><br><h2>${section.title}</h2>`;
+            section.content.forEach((item) => {
+                if (item.type === 'paragraph') {
+                    html += `<br><br><p>${item.text}</p>`;
+                } else if (item.type === 'table') {
+                    html += `<br><br></tbody></table>`;
+                } else if (item.type === 'question') {
+                    html += `<div class="card" style="margin-bottom: 1rem;">
+                                <div style="font-weight: bold; margin-bottom: 0.5rem;"><br><br>Q: ${item.question}</div>
+                                <div style="color: var(--secondary-text-color);">A: ${item.solution}</div>
+                             </div>`;
+                } else if (item.type === 'diagram') {
+                    html += `<div class="mermaid">${item.text}</div>`;
+                }
+            });
+            html += `</div>`;
+            outputDiv.innerHTML = html;
+            
+            const diagramElements = outputDiv.querySelectorAll('.mermaid');
+            if(diagramElements.length > 0) {
+                 await mermaid.run({ nodes: diagramElements });
+            }
+        }
+        
+        function showFlashcardByIndex(index) {
+            const flashcard = document.getElementById('flashcard');
+            
+            AppState.currentCardIndex = index;
+            
+            const front = flashcard.querySelector('.flashcard-front');
+            const back = flashcard.querySelector('.flashcard-back');
+            const counter = document.getElementById('card-counter');
+            const cardData = DB.flashcards[index];
+            
+            front.innerHTML = cardData.front;
+            back.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
+            counter.textContent = `${index + 1} / ${DB.flashcards.length}`;
+            flashcard.classList.remove('flipped');
+            
+            flashcard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            flashcard.classList.add('highlight-card');
+            setTimeout(() => flashcard.classList.remove('highlight-card'), 2000);
+        }
+
+        function initFlashcards() {
+            const prevBtn = document.getElementById('prev-card-btn');
+            const nextBtn = document.getElementById('next-card-btn');
+
+            document.getElementById('flashcard').addEventListener('click', (e) => e.currentTarget.classList.toggle('flipped'));
+
+            nextBtn.addEventListener('click', () => {
+                showFlashcardByIndex(newIndex);
+            });
+            prevBtn.addEventListener('click', () => {
+                showFlashcardByIndex(newIndex);
+            });
+
+            showFlashcardByIndex(0);
+        }
+        
+        function initQuiz() {
+            const questionEl = document.getElementById('quiz-question');
+            const optionsEl = document.getElementById('quiz-options');
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const nextBtn = document.getElementById('next-quiz-btn');
+            let currentQuestion = {};
+
+            function displayQuizQuestion() {
+                feedbackEl.style.display = 'none';
+                optionsEl.innerHTML = '';
+                const flashcards = DB.flashcards;
+                if (!flashcards || flashcards.length < 4) {
+                    questionEl.textContent = "Not enough flashcards to generate a quiz.";
+                    return;
+                }
+                const correctCard = flashcards[Math.floor(Math.random() * flashcards.length)];
+                
+                const otherCards = flashcards.filter(card => card.id !== correctCard.id);
+                otherCards.sort(() => 0.5 - Math.random());
+                const distractors = otherCards.slice(0, 3);
+
+                const options = [
+                    { text: correctCard.back, correct: true, provenance: correctCard.provenance },
+                    ...distractors.map(d => ({ text: d.back, correct: false, provenance: d.provenance }))
+                ].sort(() => Math.random() - 0.5);
+                currentQuestion = { question: correctCard.front, options };
+                questionEl.textContent = currentQuestion.question;
+                options.forEach(option => {
+                    const optionBtn = document.createElement('button');
+                    optionBtn.className = 'quiz-option';
+                    optionBtn.style.width = '100%';
+                    optionBtn.style.textAlign = 'left';
+                    optionBtn.style.marginBottom = '0.5rem';
+                    optionBtn.innerHTML = option.text;
+                    optionBtn.onclick = () => checkAnswer(option, optionBtn);
+                    optionsEl.appendChild(optionBtn);
+                });
+            }
+            
+            function checkAnswer(selectedOption, btnEl) {
+                optionsEl.querySelectorAll('.quiz-option').forEach(btn => {
+                    btn.disabled = true;
+                    const optionText = btn.innerHTML;
+                    const isCorrect = currentQuestion.options.find(o => o.text === optionText)?.correct;
+                    if(isCorrect) {
+                        btn.style.backgroundColor = 'var(--success-color)';
+                        btn.style.borderColor = 'var(--success-color)';
+                    } else {
+                        btn.style.backgroundColor = 'var(--secondary-text-color)';
+                    }
+                });
+
+                if (selectedOption.correct) {
+                    feedbackEl.innerHTML = `<strong>Correct!</strong> <span class="provenance">[SOURCE: ${selectedOption.provenance}]</span>`;
+                    btnEl.style.backgroundColor = 'var(--success-color)';
+                } else {
+                    const correctOption = currentQuestion.options.find(o => o.correct);
+                    feedbackEl.innerHTML = `<strong>Incorrect.</strong> The correct answer was: <p style='margin-top:0.5rem'>${correctOption.text}</p><span class="provenance">[SOURCE: ${correctOption.provenance}]</span>`;
+                    btnEl.style.backgroundColor = 'var(--error-color)';
+                }
+                feedbackEl.style.color = 'white';
+                feedbackEl.style.display = 'block';
+                feedbackEl.style.backgroundColor = selectedOption.correct ? 'var(--success-color)' : 'var(--error-color)';
+            }
+
+            nextBtn.addEventListener('click', displayQuizQuestion);
+            displayQuizQuestion();
+        }
+
+        function initSRS() {
+            const startBtn = document.getElementById('srs-start-review-btn');
+            const dueCountEl = document.getElementById('srs-due-count');
+            const srsCardContainer = document.getElementById('srs-card-container');
+            const srsStatsContainer = document.getElementById('srs-stats');
+            const srsCardFront = document.getElementById('srs-card-front');
+            const srsCardBack = document.getElementById('srs-card-back');
+            const srsFlashcard = document.getElementById('srs-flashcard');
+            let srsState = { deck: [], currentCard: null, dueCards: [] };
+
+            function showModal(message) {
+                 const modal = document.createElement('div');
+                 modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1005;`;
+                 modal.innerHTML = `<div style="background-color: var(--secondary-bg-color); color: var(--text-color); padding: 2rem; border-radius: var(--radius-lg); box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;">
+                    <p>${message}</p>
+                    <button id="modal-ok-btn" style="margin-top: 1rem;">OK</button>
+                 </div>`;
+                 document.body.appendChild(modal);
+                 document.getElementById('modal-ok-btn').onclick = () => modal.remove();
+            }
+
+            function loadSRSData() {
+                try {
+                    const data = localStorage.getItem('srsDeck_DS');
+                    srsState.deck = data ? JSON.parse(data) : (DB.flashcards || []).map(card => ({ id: card.id, interval: 0, repetition: 0, easeFactor: 2.5, dueDate: new Date().toISOString() }));
+                } catch (e) { console.error("Could not access localStorage:", e); }
+                updateSRSCounters();
+            }
+            function saveSRSData() {
+                try { localStorage.setItem('srsDeck_DS', JSON.stringify(srsState.deck)); } catch (e) { console.error("Could not save to localStorage:", e); }
+            }
+            const getDueCards = () => srsState.deck.filter(card => new Date(card.dueDate) <= new Date());
+            
+            function updateSRSCounters() {
+                const dueCards = getDueCards();
+                dueCountEl.textContent = dueCards.length;
+                startBtn.disabled = dueCards.length === 0;
+            }
+            
+            function startReviewSession() {
+                srsState.dueCards = getDueCards().sort(() => Math.random() - 0.5); // Shuffle for variety
+                if (srsState.dueCards.length > 0) {
+                    srsStatsContainer.style.display = 'none';
+                    srsCardContainer.style.display = 'block';
+                    showNextSRSCard();
+                }
+            }
+            
+            function showNextSRSCard() {
+                if (srsState.dueCards.length === 0) { endReviewSession(); return; }
+                srsState.currentCard = srsState.dueCards.shift();
+                const cardData = DB.flashcards.find(c => c.id === srsState.currentCard.id);
+                if (cardData) {
+                    srsCardFront.textContent = cardData.front;
+                    srsCardBack.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
+                    srsFlashcard.classList.remove('flipped');
+                } else {
+                    showNextSRSCard(); // Skip if card data not found
+                }
+            }
+            
+            function endReviewSession() {
+                srsStatsContainer.style.display = 'block';
+                srsCardContainer.style.display = 'none';
+                srsState.currentCard = null;
+                updateSRSCounters();
+                showModal('Review session complete!');
+            }
+            
+            function processSRSReview(quality) {
+                const card = srsState.currentCard;
+                if (!card) return;
+                if (quality < 3) {
+                    card.repetition = 0;
+                    card.interval = 1;
+                } else {
+                    card.repetition += 1;
+                    if (card.repetition === 1) card.interval = 1;
+                    else if (card.repetition === 2) card.interval = 6;
+                    else card.interval = Math.round(card.interval * card.easeFactor);
+                }
+                card.easeFactor = Math.max(1.3, card.easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+                const now = new Date();
+                now.setDate(now.getDate() + card.interval);
+                card.dueDate = now.toISOString();
+                const deckIndex = srsState.deck.findIndex(c => c.id === card.id);
+                if(deckIndex > -1) srsState.deck[deckIndex] = card;
+                saveSRSData();
+                showNextSRSCard();
+            }
+
+            startBtn.addEventListener('click', startReviewSession);
+            srsFlashcard.addEventListener('click', () => srsFlashcard.classList.toggle('flipped'));
+            
+            document.querySelectorAll('.srs-rating-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (!srsFlashcard.classList.contains('flipped')) { 
+                        showModal('Please reveal the answer before rating.');
+                        return;
+                    }
+                    processSRSReview(parseInt(e.target.dataset.rating, 10));
+                });
+            });
+            
+            loadSRSData();
+        }
+
+        init();
+    });
+</script>
+
+</body>
+</html>
+
