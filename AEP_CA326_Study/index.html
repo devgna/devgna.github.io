@@ -168,6 +168,16 @@
             #main-content { padding: 1.5rem; }
             h2 { font-size: 1.75rem; }
         }
+
+        .card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .highlight-card { border: 2px solid var(--primary-color); box-shadow: 0 0 15px color-mix(in srgb, var(--primary-color) 30%, transparent); }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--primary-color); }
+        h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
     </style>
 </head>
 <body>
