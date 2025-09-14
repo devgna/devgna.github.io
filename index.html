@@ -313,7 +313,7 @@
                             "title": "Arduino Control Statements",
                             "content": [
                                 { "type": "paragraph", "text": "Control statements like `if-else` and `switch-case` are used to control the program flow based on certain conditions." },
-                                { "type": "diagram", "text": "graph TD\n    A(Start) --> B{if (condition)};\n    B -- True --> C[Execute 'if' block];\n    B -- False --> D[Execute 'else' block];\n    C --> E(End);\n    D --> E;" }
+                                { "type": "diagram", "text": "graph TD\n    A(Start) --> B{if condition};\n    B -- True --> C[Execute 'if' block];\n    B -- False --> D[Execute 'else' block];\n    C --> E(End);\n    D --> E;" }
                             ]
                         },
                         {
@@ -371,7 +371,7 @@
                                     ["Devices", "Point-to-point (2 devices)", "Multi-device bus (up to 128 devices)"],
                                     ["Data Flow", "Full-duplex", "Half-duplex"]
                                 ]},
-                                { "type": "diagram", "text": "graph TD\n    subgraph UART\n        D1(Device 1) -- TX --> RX2(RX);\n        RX1(RX) <-- TX2(TX) -- D2(Device 2);\n    end\n    subgraph I2C\n        Master -- SDA/SCL --> Slave1;\n        Master -- SDA/SCL --> Slave2;\n        Master -- SDA/SCL --> Slave3;\n    end" }
+                                { "type": "diagram", "text": "graph TD\n    subgraph UART\n        D1(Device 1) -- TX --> D2(Device 2);\n        D1 <-- RX --- D2;\n    end\n    subgraph I2C\n        Master -- \"SDA / SCL\" --> Slave1;\n        Master -- \"SDA / SCL\" --> Slave2;\n        Master -- \"SDA / SCL\" --> Slave3;\n    end" }
                             ]
                         },
                         {
@@ -392,7 +392,7 @@
                             "title": "Servomotor",
                             "content": [
                                 { "type": "paragraph", "text": "A servomotor is a rotary actuator that allows for precise control of angular position. It typically operates on a principle of Pulse Width Modulation (PWM)." },
-                                 { "type": "diagram", "text": "graph TD\n    A[Control Signal (PWM)] --> B{Position Sensor};\n    B --> C(DC Motor);\n    C --> D(Gear Mechanism);\n    D --> E[Output Shaft];\n    E --> B;" }
+                                 { "type": "diagram", "text": "graph TD\n    A[Control Signal] -- PWM --> C(DC Motor);\n    C --> D(Gear Mechanism);\n    D --> E[Output Shaft];\n    E --> B{Position Sensor};\n    B -- Feedback --> A;" }
                             ]
                         }
                     ]
@@ -451,7 +451,7 @@
                             "title": "Python Set Operations",
                             "content": [
                                 { "type": "paragraph", "text": "Sets are collections of unique items and are optimized for mathematical operations." },
-                                { "type": "diagram", "text": "graph TD\n    A[Set A: {red, green, blue}]\n    B[Set B: {red, yellow, orange}]\n\n    U[Union: A &cup; B] --> R1{{red, green, blue, yellow, orange}}\n    I[Intersection: A &cap; B] --> R2{{red}}\n    D[Difference: A - B] --> R3{{green, blue}}\n    S[Symmetric Difference: A &Delta; B] --> R4{{green, blue, yellow, orange}}\n\n    A --> U & I & D & S;\n    B --> U & I & D & S;" }
+                                { "type": "diagram", "text": "graph TD\n    A[\"Set A: {red, green, blue}\"]\n    B[\"Set B: {red, yellow, orange}\"]\n\n    subgraph Operations\n        U[\"Union\"] --> R1(\"{red, green, blue, yellow, orange}\")\n        I[\"Intersection\"] --> R2(\"{red}\")\n        D[\"Difference (A-B)\"] --> R3(\"{green, blue}\")\n        S[\"Symmetric Difference\"] --> R4(\"{green, blue, yellow, orange}\")\n    end\n\n    A --> U & I & D & S;\n    B --> U & I & D & S;" }
                             ]
                         },
                          {
