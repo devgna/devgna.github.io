@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ahmedabad Day Itinerary — Checklist + Map (No API)</title>
+<meta name="theme-color" content="#0b1020" />
+<!-- Leaflet (no API key) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+
+<style>
+  :root{
+    --bg:#0b1020; --panel:#111833; --panel-2:#0f1730; --ink:#e8eefc; --muted:#a9b4d1;
+    --accent:#6ee7b7; --accent-2:#60a5fa; --ok:#34d399; --warn:#f59e0b;
+    --ring:rgba(110,231,183,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:linear-gradient(180deg,#0b1020 0%,#0d1631 100%); color:var(--ink);
+    font:16px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial}
+  a{color:var(--accent-2);text-decoration:none}
+  .wrap{max-width:980px;margin:0 auto;padding:16px 18px 120px}
+  header{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
+  .title{font-weight:800;letter-spacing:.2px;font-size:1.25rem}
+  .sub{color:var(--muted);font-size:.9rem}
+  .card{background:linear-gradient(180deg,#121a33 0%,#101831 100%);border:1px solid rgba(255,255,255,.06);
+    border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:14px}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:#0f1730;border:1px solid rgba(255,255,255,.06);color:var(--muted);font-size:.8rem}
+  .controls{display:flex;flex-wrap:wrap;gap:8px}
+  button{cursor:pointer;background:#101a38;color:var(--ink);border:1px solid rgba(255,255,255,.1);padding:10px 12px;border-radius:12px;font-weight:600}
+  button:hover{border-color:var(--accent-2)}
+  button.primary{background:linear-gradient(180deg,#1e293b,#111827);border-color:rgba(255,255,255,.12)}
+  .progress{height:10px;background:#0f1730;border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .4s ease}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:920px){.grid{grid-template-columns:1.15fr .85fr}}
+  details.phase{border-radius:16px;background:#0f1730;border:1px solid rgba(255,255,255,.06);padding:6px 10px}
+  details.phase[open]{background:#101a38}
+  summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px}
+  summary::-webkit-details-marker{display:none}
+  .phase-title{font-weight:700}
+  .when{color:var(--muted);font-size:.9rem}
+  .steps{display:flex;flex-direction:column;gap:8px;padding:8px 10px 12px}
+  .step{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;background:linear-gradient(180deg,#101737,#0f1833);border:1px solid rgba(255,255,255,.06);padding:10px;border-radius:12px}
+  .step.done{opacity:.9;background:linear-gradient(180deg,rgba(16, 55, 35,.35),rgba(10,30,25,.35));border-color:rgba(110,231,183,.35)}
+  .step.done .label{text-decoration:line-through;color:#a7f3d0}
+  .time{font-weight:700;color:#cbd5e1;white-space:nowrap}
+  .label{font-weight:600}
+  .note{color:var(--muted);font-size:.9rem}
+  .badge{font-size:.7rem;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);color:#cbd5e1}
+  .badge.free{border-color:#10b981;color:#a7f3d0}
+  .badge.warn{border-color:#f59e0b;color:#fde68a}
+  .list-inline{display:flex;gap:6px;flex-wrap:wrap}
+  .map-wrap{height:460px;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .legend .pill{font-size:.76rem}
+  .footer{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(11,16,32,.1) 0%,rgba(11,16,32,.75) 25%,#0b1020 75%);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.06);padding:10px 14px}
+  .foot-grid{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .help{color:var(--muted);font-size:.85rem}
+  .ring{box-shadow:0 0 0 6px var(--ring)}
+  /* Leaflet container dark tweak */
+  .leaflet-container{background:#0c1328}
+  /* Custom markers via divIcon */
+  .pin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.9);background:#8aa3ff;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+  .pin.main{width:18px;height:18px;background:linear-gradient(180deg,var(--accent-2),#6ec1ff);border-color:#fff}
+  .leaflet-tooltip{background:#0f1730;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:4px 6px}
+  .leaflet-tooltip:before{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="title">🚗 Ahmedabad Day Itinerary</div>
+      <div class="sub">Sunday, Nov 9 — get to <strong>CHARUSAT by 6:00 PM</strong>. Fast-paced, no slack.</div>
+    </div>
+    <div class="controls">
+      <button id="resetBtn" title="Clear all progress">Reset Day</button>
+      <button id="recenterBtn" class="primary" title="Recenter the map">Recenter Map</button>
+      <button id="locToggle" aria-pressed="false" title="Show my live location">Show My Location</button>
+    </div>
+  </header>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="list-inline" style="justify-content:space-between;align-items:center">
+      <div class="list-inline">
+        <span class="pill">Driver: <strong>Hassan</strong></span>
+        <span class="pill">Vehicle: <strong>6-Seater</strong></span>
+        <span class="pill">Budget Lunch: <strong>₹1,700</strong></span>
+        <span class="pill">Goal: <strong>8 people, 1 car + Group B</strong></span>
+      </div>
+      <div style="min-width:160px">
+        <div class="progress" aria-label="progress">
+          <div class="bar" id="progressBar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div id="phases"></div>
+
+    <div>
+      <div id="map" class="map-wrap" role="region" aria-label="Trip Map"></div>
+      <div class="legend">
+        <span class="pill">● All 12 pins (labels always visible)</span>
+        <span class="pill" style="color:#bfe0ff">● Larger blue pins = main route anchors</span>
+        <span class="pill">📍 Toggle “My Location”</span>
+        <span class="pill">No API keys. OSM tiles.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="foot-grid">
+    <div class="help">Tip: tap a step to toggle ✓. Progress saves automatically on this device.</div>
+    <div class="list-inline">
+      <span class="pill">Works on GitHub Pages</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =======================
+   Static data (no APIs)
+   ======================= */
+const TRIP_ID = "ahd_nov9_leaflet_v1";
+const STORAGE_KEY = `tripState:${TRIP_ID}`;
+
+const MAIN_BACKBONE_NAMES = new Set([
+  "Nadiad Bus Stand",
+  "Himalaya Mall",
+  "Riverfront Park",
+  "Sabarmati Ashram",
+  "Archer Art Gallery",
+  "Iskcon Junction",
+  "CHARUSAT University"
+]);
+
+// Approximate coordinates (handpicked; good enough for pins)
+const stops = [
+  {id:"nadiad-start",   name:"Nadiad Bus Stand",                 lat:22.6931, lng:72.8619},
+  {id:"ashray-park",    name:"Ashray Park (Pij Road)",           lat:22.7165, lng:72.8705},
+  {id:"alindra",        name:"Alindra Bus Stop",                 lat:22.5128, lng:72.9745},
+  {id:"himalaya",       name:"Himalaya Mall",                    lat:23.0405, lng:72.5467},
+  {id:"riverfront",     name:"Riverfront Park",                  lat:23.0366, lng:72.5716},
+  {id:"ashram",         name:"Sabarmati Ashram",                 lat:23.0606, lng:72.5805},
+  {id:"navrangpura",    name:"Navrangpura (Lunch)",              lat:23.0334, lng:72.5627},
+  {id:"archer",         name:"Archer Art Gallery",               lat:23.0246, lng:72.5597},
+  {id:"palladium",      name:"Palladium Mall (PG)",              lat:23.0376, lng:72.5078},
+  {id:"iskcon",         name:"Iskcon Junction",                  lat:23.0308, lng:72.5100},
+  {id:"charusat",       name:"CHARUSAT University",              lat:22.5991, lng:72.8206},
+  {id:"nadiad-end",     name:"Nadiad Bus Stand (End)",           lat:22.6931, lng:72.8619},
+];
+
+// Itinerary phases/steps (for checklist)
+const itinerary = [
+  { id:"phase1", title:"Phase 1: Nadiad Pick-ups & Arrival", window:"8:00 AM – 10:15 AM", steps: [
+    { id:"s1", time:"8:00", label:"Depart Nadiad Bus Stand — pick up Devgna, Harsh, Maitri.", note:"Car status: 4 people." },
+    { id:"s2", time:"8:15", label:"Pick up Ami at Ashray Park, Pij Road (2.2 km).", note:"Car status: 5 people." },
+    { id:"s3", time:"8:45", label:"Pick up Taslim at Alindra Bus Stop (15 km).", note:"Car status: 6 (FULL)." },
+    { id:"s4", time:"8:45–10:15", label:"Drive to Himalaya Mall (75 km).", note:"Main highway drive." },
+  ]},
+  { id:"phase2", title:"Phase 2: Ahmedabad Tour", window:"10:15 AM – 2:30 PM", steps: [
+    { id:"s5", time:"10:15–10:30", label:"Stop 1 — Himalaya Mall. Meet Jiya & Nakshatri; split groups.", note:"15-min meet-and-go." },
+    { id:"s6", time:"10:30–11:15", label:"Stop 2 — Riverfront Park: quick photos.", note:"Tight stop; keep moving." },
+    { id:"s7", time:"11:15–12:30", label:"Stop 3 — Sabarmati Ashram: 1 hour explore.", note:"Cost: Free.", badges:["free"] },
+    { id:"s8", time:"12:30–1:45", label:"Stop 4 — Lunch in Navrangpura (1 hour).", note:"Budget: ₹1,700 total.", badges:["warn"] },
+    { id:"s9", time:"1:45–2:30", label:"Stop 5 — Archer Art Gallery: 30-min walkthrough.", note:"Cost: Free.", badges:["free"] },
+  ]},
+  { id:"phase3", title:"Phase 3: Departures & Rendezvous", window:"2:30 PM – 3:30 PM", steps: [
+    { id:"s10", time:"2:30", label:"All depart Archer Art Gallery.", note:"Parallel sequences begin." },
+    { id:"s11", time:"2:30–3:15", label:"Group B: Drop Jiya near Himalaya Mall; then to Iskcon Junction.", note:"Harsh rejoins later." },
+    { id:"s12", time:"2:30–3:30", label:"Car Group: Drop Nakshatri near Palladium; then to Iskcon Junction.", note:"Rendezvous at 3:30." },
+    { id:"s13", time:"3:30", label:"RENDEZVOUS at Iskcon Junction — depart Ahmedabad.", note:"Car status: 6 people." },
+  ]},
+  { id:"phase4", title:"Phase 4: Final Drop-offs", window:"3:30 PM – 6:15 PM", steps: [
+    { id:"s14", time:"3:30–4:45", label:"To Alindra — drop Taslim.", note:"~69 km drive." },
+    { id:"s15", time:"4:45–5:15", label:"To Ashray Park — drop Ami.", note:"~15 km." },
+    { id:"s16", time:"5:15–5:45", label:"To CHARUSAT — drop Harsh & Maitri.", note:"Arrive before 6:00 PM." },
+    { id:"s17", time:"5:45–6:15", label:"To Nadiad Bus Stand — drop Devgna. Trip concludes.", note:"Hassan heads home." },
+  ]},
+];
+
+/* =======================
+   Checklist state
+   ======================= */
+const loadState = () => {
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? {done:{}, showLocation:false}; }
+  catch{ return {done:{}, showLocation:false}; }
+};
+const saveState = s => localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+let state = loadState();
+
+const $ = s => document.querySelector(s);
+const el = (t,a={},...kids)=>{
+  const n=document.createElement(t);
+  Object.entries(a).forEach(([k,v])=>{
+    if(k==="class") n.className=v;
+    else if(k==="dataset") Object.assign(n.dataset,v);
+    else if(k.startsWith("on") && typeof v==="function") n.addEventListener(k.slice(2), v);
+    else if(v!==null&&v!==undefined) n.setAttribute(k,v);
+  });
+  kids.forEach(k=>n.append(k?.nodeType?k:document.createTextNode(k)));
+  return n;
+};
+
+function renderChecklist(){
+  const mount = $("#phases");
+  mount.innerHTML="";
+  let total=0, done=0;
+
+  itinerary.forEach((p,i)=>{
+    const details=el("details",{class:"phase", open:i===0});
+    const summary=el("summary",{},
+      el("span",{class:"phase-title"}, p.title),
+      el("span",{class:"when"}," — ", p.window)
+    );
+    const stepsWrap=el("div",{class:"steps"});
+    p.steps.forEach(step=>{
+      total++;
+      const checked=!!state.done[step.id];
+      if(checked) done++;
+      const row=el("label",{class:`step ${checked?"done":""}`, for:step.id});
+      const cb=el("input",{type:"checkbox", id:step.id, checked});
+      cb.addEventListener("change",(e)=>{
+        state.done[step.id]=e.target.checked;
+        saveState(state);
+        row.classList.toggle("done", e.target.checked);
+        updateProgress();
+      });
+      const main=el("div",{},
+        el("div",{class:"label"}, step.label),
+        step.note? el("div",{class:"note"}, step.note):""
+      );
+      const badges=el("div",{class:"list-inline"});
+      (step.badges||[]).forEach(b=>{
+        badges.append(el("span",{class:`badge ${b==="free"?"free":b==="warn"?"warn":""}`}, b==="free"?"Free":"Heads-up"));
+      });
+      main.append(badges);
+      row.append(cb, main, el("div",{class:"time"}, step.time));
+      stepsWrap.append(row);
+    });
+    details.append(summary, stepsWrap);
+    mount.append(details);
+  });
+  updateProgress(total, done);
+}
+function updateProgress(total, done){
+  const all = total ?? itinerary.reduce((n,p)=>n+p.steps.length,0);
+  const ok = done ?? Object.values(state.done).filter(Boolean).length;
+  const pct = Math.round((ok/all)*100);
+  $("#progressBar").style.width = `${pct}%`;
+  $("#progressBar").title = `${ok}/${all} steps`;
+}
+
+/* =======================
+   Leaflet map (no API keys)
+   ======================= */
+let map, markers=[], meMarker=null, watchId=null;
+
+function pinIcon(isMain){
+  // simple divIcon circle
+  const cls = "pin"+(isMain?" main":"");
+  return L.divIcon({
+    className: "", // we style via inner HTML
+    html: `<div class="${cls}"></div>`,
+    iconSize: [18,18],
+    iconAnchor: [9,9], // center
+  });
+}
+
+function initMap(){
+  map = L.map('map', { zoomControl:true });
+  // Base tiles (OSM)
+  const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Add pins with always-visible labels
+  const group = L.featureGroup();
+  stops.forEach((s, idx)=>{
+    const isMain = MAIN_BACKBONE_NAMES.has(s.name);
+    const m = L.marker([s.lat, s.lng], {icon: pinIcon(isMain)}).addTo(group);
+    m.bindTooltip(`${idx+1}. ${s.name}`, {permanent:true, direction:'top', offset:[0,-10], opacity:0.95});
+    markers.push(m);
+  });
+  group.addTo(map);
+  map.fitBounds(group.getBounds(), {padding:[20,20]});
+
+  // Buttons
+  $("#recenterBtn").addEventListener("click", ()=>{
+    map.fitBounds(group.getBounds(), {padding:[20,20]});
+    const el=document.getElementById("map");
+    el.classList.add("ring"); setTimeout(()=>el.classList.remove("ring"),600);
+  });
+  $("#locToggle").addEventListener("click", ()=>{
+    const on = $("#locToggle").getAttribute("aria-pressed")==="true";
+    toggleLocation(!on);
+  });
+}
+
+function toggleLocation(on){
+  const btn = $("#locToggle");
+  btn.setAttribute("aria-pressed", on?"true":"false");
+  btn.textContent = on? "Hide My Location" : "Show My Location";
+  state.showLocation = !!on; saveState(state);
+  if(on){
+    if(!("geolocation" in navigator)){ alert("Geolocation not supported on this device."); return; }
+    if(meMarker){ meMarker.remove(); meMarker=null; }
+    watchId = navigator.geolocation.watchPosition(pos=>{
+      const {latitude:lat, longitude:lng} = pos.coords;
+      if(!meMarker){
+        meMarker = L.marker([lat,lng], {icon: L.divIcon({
+          className:"",
+          html:'<div class="pin main" style="width:14px;height:14px;background:#22d3ee;border-color:#e6faff"></div>',
+          iconSize:[16,16], iconAnchor:[8,8]
+        })}).addTo(map);
+      }else{
+        meMarker.setLatLng([lat,lng]);
+      }
+    }, err=>{
+      alert("Location error: "+err.message);
+      btn.setAttribute("aria-pressed","false"); btn.textContent="Show My Location";
+      state.showLocation=false; saveState(state);
+    }, {enableHighAccuracy:true, maximumAge:10000, timeout:10000});
+  }else{
+    if(watchId!==null) navigator.geolocation.clearWatch(watchId);
+    watchId=null;
+    if(meMarker){ meMarker.remove(); meMarker=null; }
+  }
+}
+
+/* =======================
+   Controls + bootstrap
+   ======================= */
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(confirm("Reset all checkboxes?")){
+    state = {done:{}, showLocation:false};
+    saveState(state);
+    renderChecklist();
+    const b=$("#locToggle"); b.setAttribute("aria-pressed","false"); b.textContent="Show My Location";
+    // keep map pins; just stop watching
+    if(watchId!==null) navigator.geolocation.clearWatch(watchId);
+    watchId=null;
+    if(meMarker){ meMarker.remove(); meMarker=null; }
+  }
+});
+
+renderChecklist();
+initMap();
+if(state.showLocation) toggleLocation(true);
+</script>
+</body>
+</html>
