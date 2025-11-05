@@ -10,7 +10,7 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Custom checkbox style */
+        /* Custom checkbox style from your example */
         .custom-checkbox {
             width: 24px;
             height: 24px;
@@ -21,6 +21,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            cursor: pointer;
         }
         .custom-checkbox-checked {
             background-color: #3b82f6; /* blue-500 */
@@ -29,7 +30,7 @@
         .custom-checkbox-checked svg {
             display: block;
         }
-        /* Style for completed items */
+        /* Style for completed items from your example */
         .item-complete {
             opacity: 0.6;
         }
@@ -37,10 +38,49 @@
             text-decoration: line-through;
             color: #6b7280; /* gray-500 */
         }
-        /* Highlight for the next incomplete item */
+        /* Highlight for the next incomplete item from your example */
         .item-current {
             border-left: 4px solid #f59e0b; /* amber-500 */
             background-color: #fffbeb; /* amber-50 */
+        }
+        
+        /* Form input styling to match */
+        .form-input {
+            margin-top: 0.25rem;
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            color: #1f2937;
+            background-color: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .form-input:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .form-select {
+            margin-top: 0.25rem;
+            display: block;
+            width: 100%;
+            padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            color: #1f2937;
+            background-color: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
         }
     </style>
 </head>
@@ -67,99 +107,116 @@
 
         <!-- Itinerary Sections -->
         <div id="itinerary-container" class="space-y-8">
-            <!-- Phases will be dynamically inserted here -->
+            <!-- Phases will be dynamically inserted here by the script -->
         </div>
 
-        <!-- 
-        --- NEW FEATURE: FUEL CALCULATOR ---
-        This section is added as requested.
-        -->
-        <section class="mt-8">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Fuel Cost Calculator</h2>
-            <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
-                
-                <div>
-                    <label for="fuel-type" class="block text-sm font-medium text-gray-700">Fuel Type</label>
-                    <select id="fuel-type" name="fuel-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                        <option>CNG (per kg)</option>
-                        <option>Petrol (per litre)</option>
-                        <option>Diesel (per litre)</option>
-                    </select>
+        <!-- Fuel Calculator Section -->
+        <section class="mt-12">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">⛽ Fuel Cost Calculator</h2>
+            
+            <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <!-- Inputs -->
+                    <div>
+                        <label for="fuelType" class="block text-sm font-medium text-gray-700">Fuel Type</label>
+                        <select id="fuelType" name="fuelType" class="form-select">
+                            <option value="Petrol">Petrol (per Liter)</option>
+                            <option value="Diesel">Diesel (per Liter)</option>
+                            <option value="CNG">CNG (per Kg)</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="fuelPrice" class="block text-sm font-medium text-gray-700">Fuel Price (in ₹)</label>
+                        <input type="number" name="fuelPrice" id="fuelPrice" step="0.01" min="0" class="form-input" placeholder="e.g., 94.50">
+                    </div>
+
+                    <div>
+                        <label for="distance" class="block text-sm font-medium text-gray-700">Total Distance (in km)</label>
+                        <input type="number" name="distance" id="distance" min="0" class="form-input" placeholder="e.g., 150">
+                    </div>
+
+                    <div>
+                        <label for="average" class="block text-sm font-medium text-gray-700">Car Average (km/L or km/kg)</label>
+                        <input type="number" name="average" id="average" step="0.1" min="0" class="form-input" placeholder="e.g., 18.5">
+                    </div>
+
                 </div>
 
-                <div>
-                    <label for="fuel-price" class="block text-sm font-medium text-gray-700">Fuel Price (per unit)</label>
-                    <input type="number" name="fuel-price" id="fuel-price" placeholder="e.g., 85.50" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <!-- Calculate Button -->
+                <div class="mt-6 text-center">
+                    <button id="calculateBtn" class="w-full md:w-auto inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        Calculate Cost
+                    </button>
                 </div>
-
-                <div>
-                    <label for="distance" class="block text-sm font-medium text-gray-700">Distance Covered (km)</label>
-                    <input type="number" name="distance" id="distance" placeholder="e.g., 150" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-
-                <div>
-                    <label for="average" class="block text-sm font-medium text-gray-700">Car Average (km per unit)</label>
-                    <input type="number" name="average" id="average" placeholder="e.g., 22" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-
-                <button id="calculate-fuel-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Calculate Fuel Cost
-                </button>
 
                 <!-- Results -->
-                <div id="fuel-results" class="pt-4 border-t border-gray-200 hidden">
-                    <h3 class="text-lg font-medium text-gray-900">Results</h3>
-                    <div class="mt-2 space-y-2">
-                        <p class="text-gray-700"><strong>Total Fuel Cost:</strong> <span id="total-cost-display" class="font-bold text-xl text-blue-600"></span></p>
-                        <p class="text-gray-600"><strong>Devgna's Share:</strong> <span id="devgna-share-display" class="font-semibold"></span></p>
-                        <p class="text-gray-600"><strong>Maitri's Share:</strong> <span id="maitri-share-display" class="font-semibold"></span></p>
+                <div id="fuelResults" class="mt-6 border-t border-gray-200 pt-6 hidden">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">Calculation Results</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Fuel Type:</span>
+                            <span id="resultFuelType" class="font-medium text-gray-900"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Fuel Needed:</span>
+                            <span id="resultFuelNeeded" class="font-medium text-gray-900"></span>
+                        </div>
+                        <div class="flex justify-between text-lg">
+                            <span class="text-gray-700 font-bold">Total Fuel Cost:</span>
+                            <span id="resultTotalCost" class="font-bold text-blue-600"></span>
+                        </div>
+                        <div class="flex justify-between text-lg mt-2 border-t pt-2">
+                            <span class="text-gray-700 font-bold">Cost per Person:</span>
+                            <span id="resultPerPerson" class="font-bold text-green-600"></span>
+                        </div>
+                        <p class="text-sm text-gray-500 text-center mt-2">(Split between Devgna & Maitri)</p>
                     </div>
-                    <p id="fuel-error" class="text-red-600 text-sm mt-2 hidden"></p>
                 </div>
-
             </div>
         </section>
-        <!-- --- END OF NEW FEATURE --- -->
 
     </div>
 
     <script>
         // --- DATA ---
-        // This is the structured data parsed from your markdown file.
+        // This is the structured data parsed from your ORIGINAL markdown file.
         const defaultItinerary = [
             {
-                phase: "Phase 1: Morning (8:00 AM - 12:45 PM)",
+                phase: "Phase 1: Morning (8:00 AM - 1:00 PM)",
                 items: [
                     { id: 1, time: "8:00 AM", title: "DEPART Nadiad", details: "Car Group (6) DEPART Nadiad via Kheda Hwy.", isComplete: false },
                     { id: 2, time: "9:30 AM", title: "ARRIVE Ahmedabad", details: "Car Group ARRIVE Ahmedabad.", isComplete: false },
-                    { id: 3, time: "9:30 AM - 10:15 AM", title: "Stop 1: Himalaya Mall", details: "Meet Local Group (2) at the entrance. Mall opens at 10:00 AM. Good for restrooms/coffee.", isComplete: false },
-                    { id: 4, time: "10:15 AM - 11:30 AM", title: "Stop 2: Sabarmati Riverfront", details: "10:15: Both groups travel to Riverfront (West).", isComplete: false },
-                    { id: 5, time: "11:30 AM - 12:45 PM", title: "Stop 3: Archer Art Gallery", details: "11:30: Both groups travel to Navrangpura. 11:45: Arrive and explore. (Note: Opens at 10:30 AM. Arriving now should mean minimal crowds).", cost: "Free", isComplete: false }
+                    { id: 3, time: "9:30 AM - 10:15 AM", title: "Stop 1: Himalaya Mall", details: "Meet Local Group (2) at the entrance. Mall opens at 10:00 AM; use for restrooms/quick coffee.", isComplete: false },
+                    { id: 4, time: "10:15 AM - 11:15 AM", title: "Stop 2: Sabarmati Riverfront", details: "10:15: Both groups travel to the Riverfront (West Side). 10:35: Arrive and explore.", cost: "Free", isComplete: false },
+                    { id: 5, time: "11:15 AM - 12:45 PM", title: "Stop 3: Sabarmati Ashram", details: "11:15: Both groups travel to Ashram. 11:30: Arrive. A 1-hour visit is recommended.", cost: "Free", isComplete: false }
                 ]
             },
             {
-                phase: "Phase 2: Afternoon (12:45 PM - 4:30 PM)",
+                phase: "Phase 2: Afternoon (1:00 PM - 4:30 PM)",
                 items: [
-                    { id: 6, time: "12:45 PM - 2:00 PM", title: "Stop 4: Lunch", details: "12:45: Find a cafe. (You are already in Navrangpura). 1:00: Start lunch. Suggestions: Brewich Cafe, Bluez Restaurant, The Upper Crust.", budget: "₹1,700 for 8 people", isComplete: false },
-                    { id: 7, time: "2:00 PM - 3:45 PM", title: "Stop 5: Sabarmati Ashram", details: "(This is the closest, low-cost option vs. Science City). 2:00: Both groups travel to the Ashram. 2:15: Arrive and explore.", cost: "Free", isComplete: false }
+                    { id: 6, time: "12:45 PM - 2:00 PM", title: "Stop 4: Lunch", details: "12:45: Both groups travel to Navrangpura. 1:00: Arrive at cafe. Suggestions: Brewich Cafe, Shambhu's Coffee Bar, Cuppuccino.", budget: "₹1,700 for 8 people", isComplete: false },
+                    { id: 7, time: "2:00 PM - 3:15 PM", title: "Stop 5: Archer Art Gallery", details: "2:00: Walk or short drive from lunch. 2:15: Arrive and explore. Closes: 7:00 PM.", cost: "Free", isComplete: false },
+                    { id: 8, time: "3:15 PM - 4:30 PM", title: "Buffer & Departure Prep", details: "Flexible time. Grab a final coffee. Say goodbye to Local Group (2).", isComplete: false }
                 ]
             },
             {
                 phase: "Phase 3: Departure (4:30 PM)",
                 items: [
-                    { id: 8, time: "3:45 PM - 4:30 PM", title: "Buffer & Goodbyes", details: "CarGroup returns to vehicle from the Ashram. Local Group departs.", isComplete: false },
                     { id: 9, time: "4:30 PM", title: "DEPART for CHARUSAT", details: "Car Group (6) DEPART for CHARUSAT.", isComplete: false },
-                    { id: 10, time: "6:00 PM", title: "(Target) ARRIVE at CHARUSAT", details: "", isComplete: false }
+                    { id: 10, time: "6:00 PM", title: "(Target) ARRIVE at CHARUSAT", details: "Arrive at CHARUSAT.", isComplete: false }
                 ]
             }
         ];
 
         // --- STATE MANAGEMENT ---
         let itineraryData = [];
-        const STORAGE_KEY = 'ahmedabadTripPlanState';
+        const ITINERARY_STORAGE_KEY = 'ahmedabadTripPlanState';
+        const FUEL_STORAGE_KEY = 'ahmedabadTripFuelState';
 
-        function loadState() {
-            const savedState = localStorage.getItem(STORAGE_KEY);
+        function loadItineraryState() {
+            const savedState = localStorage.getItem(ITINERARY_STORAGE_KEY);
             if (savedState) {
                 itineraryData = JSON.parse(savedState);
             } else {
@@ -168,8 +225,8 @@
             }
         }
 
-        function saveState() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(itineraryData));
+        function saveItineraryState() {
+            localStorage.setItem(ITINERARY_STORAGE_KEY, JSON.stringify(itineraryData));
         }
 
         // --- RENDERING ---
@@ -191,7 +248,7 @@
                 
                 phase.items.forEach(item => {
                     const itemElement = document.createElement('div');
-                    itemElement.className = 'p-4 flex items-start space-x-4 cursor-pointer transition-all duration-200';
+                    itemElement.className = 'p-4 flex items-start space-x-4 transition-all duration-200';
                     itemElement.dataset.id = item.id;
 
                     // Apply completed styles
@@ -220,18 +277,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
                         </div>
-                        <div class="flex-1">
+                        <div class="flex-1 cursor-pointer">
                             <div class="flex items-center">
                                 <span class="text-sm font-medium text-blue-600">${item.time}</span>
                                 ${tags}
                             </div>
                             <h3 class="text-lg font-semibold item-title">${item.title}</h3>
                             <p class="text-gray-600 text-sm">${item.details}</p>
-
                         </div>
                     `;
 
-                    // Add click event listener
+                    // Add click event listener to the whole item
                     itemElement.addEventListener('click', () => toggleItemComplete(item.id));
                     
                     listElement.appendChild(itemElement);
@@ -259,7 +315,7 @@
             }
 
             if (itemFound) {
-                saveState();
+                saveItineraryState();
                 renderItinerary(); // Re-render to update UI
             }
         }
@@ -281,59 +337,96 @@
             progressBar.style.width = `${percentage}%`;
             progressText.textContent = `${percentage}%`;
         }
+        
+        // --- FUEL CALCULATOR LOGIC & STATE ---
+        
+        const fuelInputs = {
+            type: document.getElementById('fuelType'),
+            price: document.getElementById('fuelPrice'),
+            distance: document.getElementById('distance'),
+            average: document.getElementById('average')
+        };
+        const calculateBtn = document.getElementById('calculateBtn');
+        const fuelResultsDiv = document.getElementById('fuelResults');
+
+        function saveFuelState() {
+            const fuelState = {
+                type: fuelInputs.type.value,
+                price: fuelInputs.price.value,
+                distance: fuelInputs.distance.value,
+                average: fuelInputs.average.value
+            };
+            localStorage.setItem(FUEL_STORAGE_KEY, JSON.stringify(fuelState));
+        }
+
+        function loadFuelState() {
+            const savedState = localStorage.getItem(FUEL_STORAGE_KEY);
+            if (savedState) {
+                const fuelState = JSON.parse(savedState);
+                fuelInputs.type.value = fuelState.type || 'Petrol';
+                fuelInputs.price.value = fuelState.price || '';
+                fuelInputs.distance.value = fuelState.distance || '';
+                fuelInputs.average.value = fuelState.average || '';
+            }
+        }
+        
+        function calculateFuel() {
+            const price = parseFloat(fuelInputs.price.value);
+            const distance = parseFloat(fuelInputs.distance.value);
+            const average = parseFloat(fuelInputs.average.value);
+            const fuelType = fuelInputs.type.value;
+
+            // Basic validation
+            if (isNaN(price) || price <= 0 || isNaN(distance) || distance <= 0 || isNaN(average) || average <= 0) {
+                fuelResultsDiv.classList.add('hidden');
+                console.error("Please fill in all fuel fields with valid numbers.");
+                // You could show an error message to the user here
+                return;
+            }
+
+            const fuelNeeded = distance / average;
+            const totalCost = fuelNeeded * price;
+            const costPerPerson = totalCost / 2;
+
+            const unit = (fuelType === 'CNG') ? 'kg' : 'Liters';
+
+            // Display results
+            document.getElementById('resultFuelType').textContent = fuelType;
+            document.getElementById('resultFuelNeeded').textContent = `${fuelNeeded.toFixed(2)} ${unit}`;
+            document.getElementById('resultTotalCost').textContent = `₹ ${totalCost.toFixed(2)}`;
+            document.getElementById('resultPerPerson').textContent = `₹ ${costPerPerson.toFixed(2)}`;
+
+            fuelResultsDiv.classList.remove('hidden');
+            
+            // Save the data used for the calculation
+            saveFuelState();
+        }
 
         // --- INITIALIZATION ---
         
         document.addEventListener('DOMContentLoaded', () => {
-            loadState();
+            // Itinerary
+            loadItineraryState();
             renderItinerary();
-        });
-
-        // --- 
-        // --- NEW FEATURE: FUEL CALCULATOR LOGIC ---
-        // --- This script logic is added as requested.
-        // ---
-        document.getElementById('calculate-fuel-btn').addEventListener('click', () => {
-            const price = parseFloat(document.getElementById('fuel-price').value);
-            const distance = parseFloat(document.getElementById('distance').value);
-            const average = parseFloat(document.getElementById('average').value);
             
-            const resultsContainer = document.getElementById('fuel-results');
-            const totalCostDisplay = document.getElementById('total-cost-display');
-            const devgnaShareDisplay = document.getElementById('devgna-share-display');
-            const maitriShareDisplay = document.getElementById('maitri-share-display');
-            const errorDisplay = document.getElementById('fuel-error');
-
-            // Basic validation
-            if (isNaN(price) || price <= 0 || isNaN(distance) || distance <= 0 || isNaN(average) || average <= 0) {
-                errorDisplay.textContent = 'Please enter valid numbers greater than 0 for all fields.';
-                errorDisplay.classList.remove('hidden');
-                // Clear old results if inputs are invalid
-                totalCostDisplay.textContent = '';
-                devgnaShareDisplay.textContent = '';
-                maitriShareDisplay.textContent = '';
-                return; // Stop execution
+            // Fuel Calculator
+            loadFuelState();
+            calculateBtn.addEventListener('click', calculateFuel);
+            
+            // Optional: Save fuel state on input change for real-time persistence
+            Object.values(fuelInputs).forEach(input => {
+                input.addEventListener('change', saveFuelState);
+            });
+            
+            // Re-run calculation if all fields are already filled on load
+            if (fuelInputs.price.value && fuelInputs.distance.value && fuelInputs.average.value) {
+                calculateFuel();
             }
-
-            // If validation passes, hide error message
-            errorDisplay.classList.add('hidden');
-            errorDisplay.textContent = '';
-
-            const totalFuel = distance / average;
-            const totalCost = totalFuel * price;
-            const splitCost = totalCost / 2;
-
-            // Format to 2 decimal places
-            const formatCurrency = (value) => `₹${value.toFixed(2)}`;
-
-            totalCostDisplay.textContent = formatCurrency(totalCost);
-            devgnaShareDisplay.textContent = formatCurrency(splitCost);
-            maitriShareDisplay.textContent = formatCurrency(splitCost);
-
-            resultsContainer.classList.remove('hidden');
         });
-        // --- END OF NEW SCRIPT LOGIC ---
 
     </script>
 </body>
 </html>
+
+
+
