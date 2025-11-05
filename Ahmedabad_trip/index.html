@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ahmedabad Day Trip Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom checkbox style */
+        .custom-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1; /* gray-300 */
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .custom-checkbox-checked {
+            background-color: #3b82f6; /* blue-500 */
+            border-color: #3b82f6;
+        }
+        .custom-checkbox-checked svg {
+            display: block;
+        }
+        /* Style for completed items */
+        .item-complete {
+            opacity: 0.6;
+        }
+        .item-complete .item-title {
+            text-decoration: line-through;
+            color: #6b7280; /* gray-500 */
+        }
+        /* Highlight for the next incomplete item */
+        .item-current {
+            border-left: 4px solid #f59e0b; /* amber-500 */
+            background-color: #fffbeb; /* amber-50 */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="max-w-3xl mx-auto p-4 md:p-8">
+        
+        <!-- Header -->
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Ahmedabad Day Trip</h1>
+            <p class="text-lg text-gray-600">November 9, 2025</p>
+        </header>
+
+        <!-- Progress Section -->
+        <div class="mb-8 p-4 bg-white rounded-xl shadow-sm">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-blue-700">Trip Progress</span>
+                <span id="progress-text" class="text-sm font-medium text-blue-700">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%; transition: width 0.5s;"></div>
+            </div>
+        </div>
+
+        <!-- Itinerary Sections -->
+        <div id="itinerary-container" class="space-y-8">
+            <!-- Phases will be dynamically inserted here -->
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA ---
+        // This is the structured data parsed from your markdown file.
+        const defaultItinerary = [
+            {
+                phase: "Phase 1: Morning (8:00 AM - 12:45 PM)",
+                items: [
+                    { id: 1, time: "8:00 AM", title: "DEPART Nadiad", details: "Car Group (6) DEPART Nadiad via Kheda Hwy.", isComplete: false },
+                    { id: 2, time: "9:30 AM", title: "ARRIVE Ahmedabad", details: "Car Group ARRIVE Ahmedabad.", isComplete: false },
+                    { id: 3, time: "9:30 AM - 10:15 AM", title: "Stop 1: Himalaya Mall", details: "Meet Local Group (2) at the entrance. Mall opens at 10:00 AM. Good for restrooms/coffee.", isComplete: false },
+                    { id: 4, time: "10:15 AM - 11:30 AM", title: "Stop 2: Sabarmati Riverfront", details: "10:15: Both groups travel to Riverfront (West).", isComplete: false },
+                    { id: 5, time: "11:30 AM - 12:45 PM", title: "Stop 3: Archer Art Gallery", details: "11:30: Both groups travel to Navrangpura. 11:45: Arrive and explore. (Note: Opens at 10:30 AM. Arriving now should mean minimal crowds).", cost: "Free", isComplete: false }
+                ]
+            },
+            {
+                phase: "Phase 2: Afternoon (12:45 PM - 4:30 PM)",
+                items: [
+                    { id: 6, time: "12:45 PM - 2:00 PM", title: "Stop 4: Lunch", details: "12:45: Find a cafe. (You are already in Navrangpura). 1:00: Start lunch. Suggestions: Brewich Cafe, Bluez Restaurant, The Upper Crust.", budget: "₹1,700 for 8 people", isComplete: false },
+                    { id: 7, time: "2:00 PM - 3:45 PM", title: "Stop 5: Sabarmati Ashram", details: "(This is the closest, low-cost option vs. Science City). 2:00: Both groups travel to the Ashram. 2:15: Arrive and explore.", cost: "Free", isComplete: false }
+                ]
+            },
+            {
+                phase: "Phase 3: Departure (4:30 PM)",
+                items: [
+                    { id: 8, time: "3:45 PM - 4:30 PM", title: "Buffer & Goodbyes", details: "Car Group returns to vehicle from the Ashram. Local Group departs.", isComplete: false },
+                    { id: 9, time: "4:30 PM", title: "DEPART for CHARUSAT", details: "Car Group (6) DEPART for CHARUSAT.", isComplete: false },
+                    { id: 10, time: "6:00 PM", title: "(Target) ARRIVE at CHARUSAT", details: "", isComplete: false }
+                ]
+            }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let itineraryData = [];
+        const STORAGE_KEY = 'ahmedabadTripPlanState';
+
+        function loadState() {
+            const savedState = localStorage.getItem(STORAGE_KEY);
+            if (savedState) {
+                itineraryData = JSON.parse(savedState);
+            } else {
+                // Use a deep copy of the default itinerary to avoid mutation
+                itineraryData = JSON.parse(JSON.stringify(defaultItinerary));
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(itineraryData));
+        }
+
+        // --- RENDERING ---
+
+        function renderItinerary() {
+            const container = document.getElementById('itinerary-container');
+            container.innerHTML = ''; // Clear previous render
+
+            let firstIncompleteFound = false;
+
+            itineraryData.forEach(phase => {
+                // Create phase section
+                const phaseElement = document.createElement('section');
+                phaseElement.innerHTML = `<h2 class="text-2xl font-semibold mb-4 text-gray-800">${phase.phase}</h2>`;
+                
+                // Create list for items
+                const listElement = document.createElement('div');
+                listElement.className = 'bg-white rounded-xl shadow-sm divide-y divide-gray-200';
+                
+                phase.items.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'p-4 flex items-start space-x-4 cursor-pointer transition-all duration-200';
+                    itemElement.dataset.id = item.id;
+
+                    // Apply completed styles
+                    if (item.isComplete) {
+                        itemElement.classList.add('item-complete');
+                    }
+
+                    // Highlight first incomplete item
+                    if (!item.isComplete && !firstIncompleteFound) {
+                        itemElement.classList.add('item-current');
+                        firstIncompleteFound = true;
+                    }
+
+                    // Tags (Cost/Budget)
+                    let tags = '';
+                    if (item.cost) {
+                        tags = `<span class="ml-2 inline-block bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${item.cost}</span>`;
+                    }
+                    if (item.budget) {
+                        tags = `<span class="ml-2 inline-block bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${item.budget}</span>`;
+                    }
+
+                    itemElement.innerHTML = `
+                        <div class="custom-checkbox mt-1 ${item.isComplete ? 'custom-checkbox-checked' : ''}">
+                            <svg class="w-4 h-4 text-white ${item.isComplete ? 'block' : 'hidden'}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-blue-600">${item.time}</span>
+                                ${tags}
+                            </div>
+                            <h3 class="text-lg font-semibold item-title">${item.title}</h3>
+                            <p class="text-gray-600 text-sm">${item.details}</p>
+                        </div>
+                    `;
+
+                    // Add click event listener
+                    itemElement.addEventListener('click', () => toggleItemComplete(item.id));
+                    
+                    listElement.appendChild(itemElement);
+                });
+
+                phaseElement.appendChild(listElement);
+                container.appendChild(phaseElement);
+            });
+
+            updateProgress();
+        }
+
+        // --- LOGIC ---
+
+        function toggleItemComplete(id) {
+            let itemFound = null;
+            // Find the item in our nested data structure
+            for (const phase of itineraryData) {
+                const item = phase.items.find(i => i.id === id);
+                if (item) {
+                    item.isComplete = !item.isComplete;
+                    itemFound = item;
+                    break;
+                }
+            }
+
+            if (itemFound) {
+                saveState();
+                renderItinerary(); // Re-render to update UI
+            }
+        }
+
+        function updateProgress() {
+            let totalItems = 0;
+            let completedItems = 0;
+
+            itineraryData.forEach(phase => {
+                totalItems += phase.items.length;
+                completedItems += phase.items.filter(item => item.isComplete).length;
+            });
+
+            const percentage = totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100);
+
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${percentage}%`;
+        }
+
+        // --- INITIALIZATION ---
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderItinerary();
+        });
+
+    </script>
+</body>
+</html>
+
