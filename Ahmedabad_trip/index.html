@@ -70,6 +70,57 @@
             <!-- Phases will be dynamically inserted here -->
         </div>
 
+        <!-- 
+        --- NEW FEATURE: FUEL CALCULATOR ---
+        This section is added as requested.
+        -->
+        <section class="mt-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Fuel Cost Calculator</h2>
+            <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
+                
+                <div>
+                    <label for="fuel-type" class="block text-sm font-medium text-gray-700">Fuel Type</label>
+                    <select id="fuel-type" name="fuel-type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option>CNG (per kg)</option>
+                        <option>Petrol (per litre)</option>
+                        <option>Diesel (per litre)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="fuel-price" class="block text-sm font-medium text-gray-700">Fuel Price (per unit)</label>
+                    <input type="number" name="fuel-price" id="fuel-price" placeholder="e.g., 85.50" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div>
+                    <label for="distance" class="block text-sm font-medium text-gray-700">Distance Covered (km)</label>
+                    <input type="number" name="distance" id="distance" placeholder="e.g., 150" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <div>
+                    <label for="average" class="block text-sm font-medium text-gray-700">Car Average (km per unit)</label>
+                    <input type="number" name="average" id="average" placeholder="e.g., 22" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+
+                <button id="calculate-fuel-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Calculate Fuel Cost
+                </button>
+
+                <!-- Results -->
+                <div id="fuel-results" class="pt-4 border-t border-gray-200 hidden">
+                    <h3 class="text-lg font-medium text-gray-900">Results</h3>
+                    <div class="mt-2 space-y-2">
+                        <p class="text-gray-700"><strong>Total Fuel Cost:</strong> <span id="total-cost-display" class="font-bold text-xl text-blue-600"></span></p>
+                        <p class="text-gray-600"><strong>Devgna's Share:</strong> <span id="devgna-share-display" class="font-semibold"></span></p>
+                        <p class="text-gray-600"><strong>Maitri's Share:</strong> <span id="maitri-share-display" class="font-semibold"></span></p>
+                    </div>
+                    <p id="fuel-error" class="text-red-600 text-sm mt-2 hidden"></p>
+                </div>
+
+            </div>
+        </section>
+        <!-- --- END OF NEW FEATURE --- -->
+
     </div>
 
     <script>
@@ -96,7 +147,7 @@
             {
                 phase: "Phase 3: Departure (4:30 PM)",
                 items: [
-                    { id: 8, time: "3:45 PM - 4:30 PM", title: "Buffer & Goodbyes", details: "Car Group returns to vehicle from the Ashram. Local Group departs.", isComplete: false },
+                    { id: 8, time: "3:45 PM - 4:30 PM", title: "Buffer & Goodbyes", details: "CarGroup returns to vehicle from the Ashram. Local Group departs.", isComplete: false },
                     { id: 9, time: "4:30 PM", title: "DEPART for CHARUSAT", details: "Car Group (6) DEPART for CHARUSAT.", isComplete: false },
                     { id: 10, time: "6:00 PM", title: "(Target) ARRIVE at CHARUSAT", details: "", isComplete: false }
                 ]
@@ -176,6 +227,7 @@
                             </div>
                             <h3 class="text-lg font-semibold item-title">${item.title}</h3>
                             <p class="text-gray-600 text-sm">${item.details}</p>
+
                         </div>
                     `;
 
@@ -236,6 +288,51 @@
             loadState();
             renderItinerary();
         });
+
+        // --- 
+        // --- NEW FEATURE: FUEL CALCULATOR LOGIC ---
+        // --- This script logic is added as requested.
+        // ---
+        document.getElementById('calculate-fuel-btn').addEventListener('click', () => {
+            const price = parseFloat(document.getElementById('fuel-price').value);
+            const distance = parseFloat(document.getElementById('distance').value);
+            const average = parseFloat(document.getElementById('average').value);
+            
+            const resultsContainer = document.getElementById('fuel-results');
+            const totalCostDisplay = document.getElementById('total-cost-display');
+            const devgnaShareDisplay = document.getElementById('devgna-share-display');
+            const maitriShareDisplay = document.getElementById('maitri-share-display');
+            const errorDisplay = document.getElementById('fuel-error');
+
+            // Basic validation
+            if (isNaN(price) || price <= 0 || isNaN(distance) || distance <= 0 || isNaN(average) || average <= 0) {
+                errorDisplay.textContent = 'Please enter valid numbers greater than 0 for all fields.';
+                errorDisplay.classList.remove('hidden');
+                // Clear old results if inputs are invalid
+                totalCostDisplay.textContent = '';
+                devgnaShareDisplay.textContent = '';
+                maitriShareDisplay.textContent = '';
+                return; // Stop execution
+            }
+
+            // If validation passes, hide error message
+            errorDisplay.classList.add('hidden');
+            errorDisplay.textContent = '';
+
+            const totalFuel = distance / average;
+            const totalCost = totalFuel * price;
+            const splitCost = totalCost / 2;
+
+            // Format to 2 decimal places
+            const formatCurrency = (value) => `₹${value.toFixed(2)}`;
+
+            totalCostDisplay.textContent = formatCurrency(totalCost);
+            devgnaShareDisplay.textContent = formatCurrency(splitCost);
+            maitriShareDisplay.textContent = formatCurrency(splitCost);
+
+            resultsContainer.classList.remove('hidden');
+        });
+        // --- END OF NEW SCRIPT LOGIC ---
 
     </script>
 </body>
