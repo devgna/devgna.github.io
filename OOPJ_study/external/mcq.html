@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA327 Java Exam Revision</title>
+    <!-- 
+      Java (CA327) Last-Minute Revision App
+      Created as a single, offline-first HTML file.
+      All CSS, JavaScript, and JSON data are embedded.
+    -->
+    <style>
+        /* 1. Global Styles & Theme */
+        :root {
+            --bg-color: #f4f4f5; /* zinc-100 */
+            --card-bg-color: #ffffff; /* white */
+            --text-color: #18181b; /* zinc-900 */
+            --text-muted-color: #52525b; /* zinc-600 */
+            --border-color: #d4d4d8; /* zinc-300 */
+            --primary-color: #4f46e5; /* indigo-600 */
+            --primary-color-light: #e0e7ff; /* indigo-100 */
+            --correct-bg: #10B981; /* green-500 */
+            --correct-text: #ffffff;
+            --correct-bg-light: #d1fae5; /* green-100 */
+            --correct-text-light: #065f46; /* green-800 */
+            --wrong-bg: #EF4444; /* red-500 */
+            --wrong-text: #ffffff;
+            --wrong-bg-light: #fee2e2; /* red-100 */
+            --wrong-text-light: #b91c1c; /* red-800 */
+            --highlight-bg: #fef9c3; /* yellow-100 */
+            --highlight-text: #713f12; /* yellow-800 */
+            --marked-color: #f59e0b; /* amber-500 */
+        }
+
+        html.dark {
+            --bg-color: #18181b; /* zinc-900 */
+            --card-bg-color: #27272a; /* zinc-800 */
+            --text-color: #f4f4f5; /* zinc-100 */
+            --text-muted-color: #a1a1aa; /* zinc-400 */
+            --border-color: #52525b; /* zinc-600 */
+            --primary-color: #818cf8; /* indigo-400 */
+            --primary-color-light: #3730a3; /* indigo-800 */
+            --correct-bg: #10B981;
+            --correct-text: #ffffff;
+            --correct-bg-light: #052e16; /* green-950 */
+            --correct-text-light: #6ee7b7; /* green-300 */
+            --wrong-bg: #EF4444;
+            --wrong-text: #ffffff;
+            --wrong-bg-light: #450a0a; /* red-950 */
+            --wrong-text-light: #fca5a5; /* red-300 */
+            --highlight-bg: #422006; /* yellow-900 */
+            --highlight-text: #fef3c7; /* yellow-100 */
+            --marked-color: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 2. Header, Navigation & Controls */
+        header {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background-color: var(--card-bg-color);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .tab {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            background-color: transparent;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            background-color: var(--bg-color);
+        }
+
+        .tab.active {
+            background-color: var(--primary-color-light);
+            color: var(--primary-color);
+        }
+
+        .global-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #theme-toggle {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted-color);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 3. Main App Container & Filters */
+        main#app-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+            flex-grow: 1;
+        }
+
+        .filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-controls > * {
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+        .filter-controls input[type="search"],
+        .filter-controls select {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        
+        .filter-controls input[type="search"]:focus,
+        .filter-controls select:focus {
+            outline: 2px solid var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .filter-controls label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .filter-controls label:hover {
+            background-color: var(--bg-color);
+        }
+
+        .filter-controls input[type="checkbox"] {
+            width: 1.15em;
+            height: 1.15em;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        /* 4. MCQ Viewer Card */
+        .card {
+            background-color: var(--card-bg-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        html.dark .card {
+            box-shadow: none;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            min-height: 40px;
+        }
+
+        #question-number {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted-color);
+        }
+
+        #mark-review-btn {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--border-color);
+            transition: color 0.2s ease, transform 0.2s ease;
+            width: 32px;
+            height: 32px;
+        }
+
+        #mark-review-btn.marked {
+            color: var(--marked-color);
+            transform: scale(1.2);
+        }
+
+        #question-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        #question-text code {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            padding: 0.2em 0.4em;
+            margin: 0 2px;
+            font-size: 0.9em;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        #options-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 640px) {
+            #options-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .option {
+            text-align: left;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+
+        .option:hover:not(:disabled) {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color-light);
+        }
+
+        .option:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+
+        .option.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--correct-bg);
+            color: var(--correct-text);
+            font-weight: 600;
+        }
+
+        .option.wrong {
+            background-color: var(--wrong-bg);
+            border-color: var(--wrong-bg);
+            color: var(--wrong-text);
+            font-weight: 600;
+        }
+        
+        .option code {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text);
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+        }
+
+        /* 5. Feedback, Navigation & Footer */
+        #answer-feedback {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        #answer-feedback.correct {
+            background-color: var(--correct-bg-light);
+            color: var(--correct-text-light);
+        }
+
+        #answer-feedback.wrong {
+            background-color: var(--wrong-bg-light);
+            color: var(--wrong-text-light);
+        }
+
+        #copy-notes-btn {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: transparent;
+            color: var(--text-muted-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #copy-notes-btn:hover {
+            background-color: var(--bg-color);
+            border-color: var(--text-muted-color);
+        }
+
+        .navigation-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+        }
+
+        .nav-btn {
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            opacity: 0.9;
+        }
+
+        .nav-btn:disabled {
+            background-color: var(--border-color);
+            color: var(--text-muted-color);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted-color);
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+
+        /* 6. Special Modes */
+
+        /* Memorize Mode */
+        #mcq-viewer.memorize-mode .option {
+            color: transparent;
+            background-color: var(--text-color);
+            border-color: var(--text-color);
+        }
+        
+        html.dark #mcq-viewer.memorize-mode .option {
+             background-color: var(--border-color);
+             border-color: var(--border-color);
+        }
+
+        #mcq-viewer.memorize-mode .option:hover {
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+
+        #mcq-viewer.memorize-mode .option.correct,
+        #mcq-viewer.memorize-mode .option.wrong,
+        #mcq-viewer.memorize-mode .option:disabled {
+            color: var(--wrong-text); /* Use white/light text for both */
+            background-color: var(--card-bg-color); /* Fallback */
+        }
+        
+        #mcq-viewer.memorize-mode .option.correct { 
+            background-color: var(--correct-bg);
+            border-color: var(--correct-bg);
+            color: var(--correct-text);
+        }
+        #mcq-viewer.memorize-mode .option.wrong { 
+            background-color: var(--wrong-bg);
+            border-color: var(--wrong-bg);
+            color: var(--wrong-text);
+        }
+
+        #mcq-viewer.memorize-mode #answer-feedback {
+            visibility: hidden;
+        }
+
+        /* Utility */
+        .hidden {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>CA327 Java Revision</h1>
+        <nav>
+            <button id="tab-all" class="tab active">📘 All MCQs</button>
+            <button id="tab-imp" class="tab">🎯 IMP MCQs</button>
+        </nav>
+        <div class="global-controls">
+            <button id="theme-toggle" title="Toggle light/dark mode">🌙</button>
+        </div>
+    </header>
+
+    <main id="app-container">
+        <div class="filter-controls">
+            <select id="unit-filter" title="Filter by Unit">
+                <option value="all">All Units</option>
+                <option value="Unit 1">Unit 1</option>
+                <option value="Unit 2">Unit 2</option>
+                <option value="Unit 3">Unit 3</option>
+                <option value="Unit 4">Unit 4</option>
+                <option value="Unit 5">Unit 5</option>
+                <option value="Unit 6">Unit 6</option>
+            </select>
+            <input type="search" id="search-bar" placeholder="Search by Q# or keyword...">
+            <label>
+                <input type="checkbox" id="memorize-mode"> 💡 Memorize
+            </label>
+            <label>
+                <input type="checkbox" id="marked-only-mode"> ⭐ Marked Only
+            </label>
+        </div>
+
+        <div id="mcq-viewer">
+            <div id="question-card" class="card">
+                <div class="question-header">
+                    <span id="question-number">Q. 1/80</span>
+                    <button id="mark-review-btn" title="Mark for review">⭐</button>
+                </div>
+                <p id="question-text">Loading question...</p>
+                <div id="options-container">
+                    <!-- Options will be dynamically inserted here -->
+                </div>
+                <div id="answer-feedback" class="hidden"></div>
+                <button id="copy-notes-btn" title="Copy question and answer">📋 Copy Notes</button>
+            </div>
+            <div id="no-results" class="card hidden" style="text-align: center;">
+                <p>No questions match your current filters. Try adjusting your search or unchecking "Marked Only".</p>
+            </div>
+        </div>
+
+        <div id="navigation-controls" class="navigation-controls">
+            <button id="prev-btn" class="nav-btn">⬅️ Previous</button>
+            <button id="next-btn" class="nav-btn">Next ➡️</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>Focus. You've got this.</p>
+    </footer>
+
+    <script>
+        // --- EMBEDDED JSON DATA ---
+
+        // Data extracted from MCQs-Unit 1 to 6.pdf
+        const allMcqsByUnit = [
+            {
+                "unit": "Unit 1",
+                "questions": [
+                    { "id": 1, "question": "Which of the following feature of Java makes 'Write Once Run Anywhere' possible for Java programs?", "options": ["Multithreading", "Extensible", "Platform-independent", "Object-oriented"], "answer": "Platform-independent" },
+                    { "id": 2, "question": "A file C.java has three classes: A, B and C defined inside it. When you compile C.java, what will happen?", "options": ["Compilation error", "Exception", "Three class files- A.class, B.class and C.class will be generated.", "Only one class file C.class will be generated."], "answer": "Three class files- A.class, B.class and C.class will be generated." },
+                    { "id": 3, "question": "Which of the following actually makes Java programs platform-independent?", "options": ["bytecode", ".java file", "IDEs such as Netbeans and Eclipse", "Long syntax of main()"], "answer": "bytecode" },
+                    { "id": 4, "question": "Which of the following command launches JVM?", "options": ["java", "javac", "javap", "javad"], "answer": "java" },
+                    { "id": 5, "question": "Which of the following converts bytecode into native code inside JVM?", "options": ["Only Java interpreter", "Only JIT compiler", "Usually both Java interpreter and JIT compiler", "CPU of the device"], "answer": "Usually both Java interpreter and JIT compiler" },
+                    { "id": 6, "question": "JVM will check bytecode for repeatedly executing parts of code e.g. loops or function calls from loop. Such code is known as", "options": ["bytecode", "hot code", "native code", "executable code"], "answer": "hot code" },
+                    { "id": 7, "question": "With the help of Java you can create classes for novel or advanced functionalities and add them to current Java environment. This makes Java", "options": ["Multithreaded", "Extensible", "Platform-independent", "Object-oriented"], "answer": "Extensible" },
+                    { "id": 8, "question": "I need to get a list of all the data-members, constructors and methods of a built-in class in Java. I need to use", "options": ["javac", "java", "javad", "javap"], "answer": "javap" },
+                    { "id": 9, "question": "Which of the following package must be imported to use basic language features such as System, String etc.?", "options": ["java.lang", "java.util", "java.io", "No need to import any package explicitly"], "answer": "No need to import any package explicitly" },
+                    { "id": 10, "question": "In <code>public static void main(String args[])</code>, what can you replace without causing any syntax error or exception?", "options": ["public", "static", "void", "args"], "answer": "args" },
+                    { "id": 11, "question": "Consider the following command: <code>java Arith 7 * 8</code>. Which of the following combination is true for these command-line arguments?", "options": ["args[0] = java, args[1] = 7, args[2] = * and args[3] = 8", "args[-1] = java, args[0] = 7, args[1] = * and args[2] = 8", "args[0] = \"7\", args[1] = \"*\" and args[2] = \"8\"", "args[0] = 7, args[1] = * and args[2] = 8"], "answer": "args[0] = \"7\", args[1] = \"*\" and args[2] = \"8\"" },
+                    { "id": 12, "question": "Different built-in compiled classes in Java are kept in different ______ which they are all combined into a single file ______.", "options": ["packages, rt.jar", "packages, java.lang", "class files, jvm", ".java files, jre"], "answer": "packages, rt.jar" },
+                    { "id": 13, "question": "Java is primarily used in real-life applications for", "options": ["backend programming", "frontend development", "converting POP into OOP", "hardware interaction"], "answer": "backend programming" }
+                ]
+            },
+            {
+                "unit": "Unit 2",
+                "questions": [
+                    { "id": 14, "question": "Which of the following is not a basic datatype in Java?", "options": ["char", "boolean", "double", "String"], "answer": "String" },
+                    { "id": 15, "question": "What is the value returned by the method f() defined below? <code>public static int f(int x, int y) { return (x>y)? y: x; }</code>", "options": ["The sum of x and y, that is, x+y.", "The difference of x and y, that is, x-y.", "The maximum of x and y, that is, the larger value of x and y.", "The minimum of x and y, that is, the smaller value of x and y."], "answer": "The minimum of x and y, that is, the smaller value of x and y." },
+                    { "id": 16, "question": "Which of the following statement will give compilation error?", "options": ["int a[];", "int a[5];", "int a[] = new int[5];", "int a[] = {1, 2, 3, 4, 5};"], "answer": "int a[5];" },
+                    { "id": 17, "question": "Which of the following is the correct way to check if two String variables have same value?", "options": ["== operator", "equals()", "startsWith() and endsWith()", "All of the given"], "answer": "equals()" },
+                    { "id": 18, "question": "To know the size of an array, ______ is used.", "options": ["length()", "length", "size()", "size"], "answer": "length" },
+                    { "id": 19, "question": "To know the length of a String, ______ is used.", "options": ["length()", "length", "size()", "size"], "answer": "length()" },
+                    { "id": 20, "question": "Design a scenario where using <code>this</code> is essential to differentiate between instance and local variables in a setter method. Which code fragment correctly demonstrates this?", "options": ["void setValue(int value) { value = value; }", "void setValue(int v) { this.v = v; }", "void setValue(int value) { int v = value; }", "void setValue(int value) { super.value = value; }"], "answer": "void setValue(int v) { this.v = v; }" },
+                    { "id": 21, "question": "Which of the following design choices best evaluates good constructor usage in Java class design?", "options": ["Keep all the code only in constructor; initialization, calculations, decision-making everything.", "Minimize constructor logic and put other code in methods when complex.", "Always declare a public default constructor even when unused", "Use constructors to change inherited private fields from superclass"], "answer": "Minimize constructor logic and put other code in methods when complex." },
+                    { "id": 22, "question": "You are asked to create a class Employee that ensures name and salary are initialized only once and never modified thereafter. Which is the best solution?", "options": ["Declare name and salary without final and define a parameterized constructor.", "Declare name and salary as final and define a parameterized constructor.", "Use a setter method to initialize name and salary.", "Declare name and salary as private and define a parameterized constructor."], "answer": "Declare name and salary as final and define a parameterized constructor." },
+                    { "id": 23, "question": "If an object is passed as a parameter to a method in Java, which statement best explains what happens internally?", "options": ["A copy of the entire object is passed to the method", "The reference to the object is copied and passed to the method", "Both the original and the parameter share separate copies of the object's data", "The object's reference is passed by reference"], "answer": "The reference to the object is copied and passed to the method" },
+                    { "id": 24, "question": "You are designing a method that updates multiple attributes of a Car object (like color and mileage) passed as a parameter. To ensure changes persist after the method call, which design strategy should you choose?", "options": ["Create a new Car object inside the method and assign new values", "Modify the fields of the existing Car object passed as a parameter", "Pass all attributes separately as primitive parameters", "Return a deep copy of the object from the method each time"], "answer": "Modify the fields of the existing Car object passed as a parameter" },
+                    { "id": 25, "question": "Which statement best explains the purpose and behavior of a <code>static</code> initialization block in Java?", "options": ["It executes each time an object of the class is created to initialize instance variables.", "It runs once when the class is first loaded, typically used for initializing static data.", "It executes after the main method begins, ensuring all objects are initialized.", "It is used to initialize non-static variables before the constructor executes."], "answer": "It runs once when the class is first loaded, typically used for initializing static data." },
+                    { "id": 26, "question": "You are tasked with designing a library that handles data encryption and decryption. To ensure clarity and maintainability, which of the following package structures would be the best choice?", "options": ["encryption, decryption as two flat packages under the root.", "crypto.encryption, crypto.decryption, crypto.utils under a common parent.", "core, utils with encryption and decryption mixed in each.", "security single package holding all classes for simpler access."], "answer": "crypto.encryption, crypto.decryption, crypto.utils under a common parent." },
+                    { "id": 27, "question": "Which situation is most likely to trigger the Java Garbage Collector to run?", "options": ["When all objects in the heap have been used once.", "When the JVM detects unreachable objects and requires free memory.", "When the programmer explicitly calls System.exit().", "When a primitive variable like int or double goes out of scope."], "answer": "When the JVM detects unreachable objects and requires free memory." }
+                ]
+            },
+            {
+                "unit": "Unit 3",
+                "questions": [
+                    { "id": 28, "question": "Java does not directly support ______ inheritance.", "options": ["multilevel", "multiple", "hierarchical", "hybrid"], "answer": "multiple" },
+                    { "id": 29, "question": "<code>class Y { } class X extends Y {} class Z extends X {}</code> Here, class ______ is both a base class as well as a derived class.", "options": ["no", "X", "Y", "Z"], "answer": "X" },
+                    { "id": 30, "question": "By default, the ______ built-in class automatically becomes base class of any class in Java.", "options": ["Object", "no", "String", "System"], "answer": "Object" },
+                    { "id": 31, "question": "I have created a class named SmartCode. However, I want to prevent its inheritance. Which of the following is the correct way to do so?", "options": ["final class SmartCode { }", "private class SmartCode {}", "static class SmartCode {}", "finally class SmartCode {}"], "answer": "final class SmartCode { }" },
+                    { "id": 32, "question": "Which of the following is used to call constructor of a base class called Star in its derived class?", "options": ["super.Star()", "Star.super()", "super()", "base()"], "answer": "super()" },
+                    { "id": 33, "question": "Which of the following is used to call method called test() of a base class called Star in its derived class?", "options": ["super.test()", "Star.super()", "super()", "base()"], "answer": "super.test()" },
+                    { "id": 34, "question": "I have created a class named SmartCode. However, I want to prevent overriding of a method called reset(). Which keyword will prevent overriding (but not inheritance) of this method?", "options": ["private", "static", "final", "finally"], "answer": "final" },
+                    { "id": 35, "question": "<code>class Device { void switchOn() {} void switchOff() {} void reset(); }</code> When I try to compile this code, I am getting a compilation error. What is the fix?", "options": ["Put abstract before class Device", "Put abstract before void reset();", "Put abstract before all void in all the methods", "Put abstract before class Device and void reset();"], "answer": "Put abstract before class Device and void reset();" },
+                    { "id": 36, "question": "<code>interface A {} interface B extends A {} class X {} class Y extends X implements B {}</code> Here, class Y is going to get features from", "options": ["interface A", "interface B", "class X", "interface A, B and class X"], "answer": "interface A, B and class X" },
+                    { "id": 37, "question": "Binding the method body to method call at runtime is known as", "options": ["Runtime polymorphism", "Late binding", "Dynamic method dispatch", "All of the given"], "answer": "All of the given" },
+                    { "id": 38, "question": "A class without name is known as ______ class.", "options": ["abstract", "anonymous", "interface", "singleton"], "answer": "anonymous" },
+                    { "id": 39, "question": "Method overloading is an example of", "options": ["compile-time polymorphism", "run-time polymorphism", "inheritance", "boxing-unboxing"], "answer": "compile-time polymorphism" },
+                    { "id": 40, "question": "An interface can extend", "options": ["a class", "an interface", "either a class or an interface at a time.", "both-a class as well as an interface."], "answer": "an interface" }
+                ]
+            },
+            {
+                "unit": "Unit 4",
+                "questions": [
+                    { "id": 41, "question": "A Java developer saves a class Demo.java in <code>C:\\projects\\demo\\</code>. To execute it from any location, the correct step is to:", "options": ["Copy Demo.class to C:\\Windows\\System32\\", "Add C:\\projects\\demo to the system's CLASSPATH", "Add C:\\projects\\ to PATH variable", "Run the file directly using java Demo.java"], "answer": "Add C:\\projects\\demo to the system's CLASSPATH" },
+                    { "id": 42, "question": "Which code correctly converts an <code>int</code> value to an <code>Integer</code> object and back to <code>int</code>?", "options": ["Integer obj = i; int j = obj;", "Integer obj = new Integer(); int j = obj;", "int obj = Integer(i); int j = obj;", "Integer obj = parseInt(i); int j = toInt(obj);"], "answer": "Integer obj = i; int j = obj;" },
+                    { "id": 43, "question": "Given: <code>// In package pack1 \n public class A { protected int x=10; } \n // In package pack2 \n import pack1.A; \n public class B extends A { void display() { System.out.println(x); } }</code> Which statement best explains the access behavior?", "options": ["Compilation error, protected cannot be accessed in another package.", "It will work because B inherits from A.", "protected can be accessed only by objects of A.", "Works only if both classes are in the same package."], "answer": "It will work because B inherits from A." },
+                    { "id": 44, "question": "You want to design a class that is visible only within its package and cannot be inherited. Which definition achieves that?", "options": ["public final class Helper {}", "protected final class Helper {}", "final class Helper {}", "private final class Helper {}"], "answer": "final class Helper {}" },
+                    { "id": 45, "question": "A developer modifies the CLASSPATH to include too many absolute directories. What is the most likely issue?", "options": ["Faster class loading due to parallel search.", "Slower performance.", "JVM compiles all classes automatically.", "No impact as JVM ignores the CLASSPATH variable."], "answer": "Slower performance." },
+                    { "id": 46, "question": "Among the following, which statement best evaluates the use of wrapper classes?", "options": ["They slow performance due to object creation but are necessary for generic collections.", "They are faster than primitive types.", "They are deprecated in Java 11 and replaced with value types.", "They can store both primitive and reference values."], "answer": "They slow performance due to object creation but are necessary for generic collections." },
+                    { "id": 47, "question": "Analyze the following code: <code>Integer a=1000, b=1000; System.out.println(a==b); Integer c=100, d=100; System.out.println(c==d);</code> What will be the output?", "options": ["true and true", "true and false", "false and true", "false and false"], "answer": "false and true" },
+                    { "id": 48, "question": "What happens if you use <code>import java.util.*;</code> and <code>import java.sql.*;</code> in the same program containing Date references?", "options": ["The compiler automatically resolves to java.util.Date.", "The compiler asks for fully qualified class names due to ambiguity.", "The JVM decides which class to load at runtime.", "The import with the shorter package name takes precedence."], "answer": "The compiler asks for fully qualified class names due to ambiguity." },
+                    { "id": 49, "question": "A developer stores millions of small numeric values (0-100) in an <code>ArrayList&lt;Integer&gt;</code> instead of a primitive <code>int[]</code>. Evaluate this design choice.", "options": ["Appropriate, as wrapper classes offer faster arithmetic operations.", "Inefficient, as it incurs unnecessary object creation and memory overhead.", "Required, since int[] cannot hold values under 128.", "Optimal, because autoboxing minimizes object allocation automatically."], "answer": "Inefficient, as it incurs unnecessary object creation and memory overhead." },
+                    { "id": 50, "question": "Consider: <code>import static java.lang.Math.*; public class Test { public static void main(String[] args) { System.out.println(sqrt(25)); } }</code> Analyze the correctness of this code.", "options": ["Compilation error - static imports not allowed for built-in packages.", "Works correctly and prints 5.0.", "Compilation error - must reference as Math.sqrt(25).", "Works only if Math is instantiated first."], "answer": "Works correctly and prints 5.0." },
+                    { "id": 51, "question": "A codebase heavily relies on <code>import java.util.*;</code> across multiple files. Evaluate this practice.", "options": ["Improves readability and reduces typing effort.", "Decreases performance because more classes are loaded.", "Reduces code clarity and may cause naming conflicts.", "Required for using more than one class from a package."], "answer": "Reduces code clarity and may cause naming conflicts." },
+                    { "id": 52, "question": "What is the primary purpose of wrapper classes in Java?", "options": ["To make primitive data types run faster by wrapping them in optimized code.", "To convert primitive data types into objects so they can be used in collections and support object-oriented features.", "To protect primitive data types from being modified by other parts of the program.", "To automatically convert all primitive types to strings for easier printing"], "answer": "To convert primitive data types into objects so they can be used in collections and support object-oriented features." }
+                ]
+            },
+            {
+                "unit": "Unit 5",
+                "questions": [
+                    { "id": 53, "question": "How many exceptions can be thrown by a code at the same time?", "options": ["One or at most two.", "Only one.", "It depends on the code.", "Many"], "answer": "Only one." },
+                    { "id": 54, "question": "How many catch blocks are executed when an exception occurs?", "options": ["One or at most two.", "Only one.", "It depends on the code.", "many"], "answer": "Only one." },
+                    { "id": 55, "question": "An all-in-one catch block takes an object of ______ class.", "options": ["Object", "System", "Exception", "Error"], "answer": "Exception" },
+                    { "id": 56, "question": "Which of the following keyword is used to declare that the code may throw a checked exception?", "options": ["try", "catch", "throws", "throw"], "answer": "throws" },
+                    { "id": 57, "question": "Which of the following keyword is used to throw a user-defined exception?", "options": ["try", "catch", "throws", "throw"], "answer": "throw" },
+                    { "id": 58, "question": "A user-defined exception class must extend", "options": ["Exception class", "Throwable class", "either Exception or Throwable class.", "Object class."], "answer": "either Exception or Throwable class." },
+                    { "id": 59, "question": "Select odd one out.", "options": ["ClassNotFoundException", "SQLException", "IOException", "InputMismatchException"], "answer": "InputMismatchException" },
+                    { "id": 60, "question": "By default, Java programs are", "options": ["Single-threaded", "Multi-threaded", "Unthreaded", "Complex- We can not say if they will be single-threaded or multi-threaded."], "answer": "Single-threaded" },
+                    { "id": 61, "question": "Which of the following is true?", "options": ["Thread classes define the tasks whereas their objects i.e. threads perform the tasks.", "Thread objects define the tasks whereas Thread classes perform the tasks.", "Thread classes and thread objects are same.", "start() and run() are same."], "answer": "Thread classes define the tasks whereas their objects i.e. threads perform the tasks." },
+                    { "id": 62, "question": "I need to create a class that represents a thread. My class should either extend ______ class or implement ______ interface.", "options": ["Object, Runnable", "Runnable, Thread", "Thread, Runnable", "Thread, Serializable"], "answer": "Thread, Runnable" },
+                    { "id": 63, "question": "Thread class implements ______ interface.", "options": ["Serializable", "no", "Threadable", "Runnable"], "answer": "Runnable" },
+                    { "id": 64, "question": "I have written correct code for multithreading. However, I call <code>run()</code> directly on the thread objects instead of calling <code>start()</code>. What will happen?", "options": ["Compilation error", "An exception will be thrown", "The program will still run in multi-threaded mode.", "The program will still run in single-threaded mode."], "answer": "The program will still run in single-threaded mode." },
+                    { "id": 65, "question": "I want to change ID of a thread. How can I do that?", "options": ["Using setPriority()", "Using setID()", "Using setName()", "You can not change ID of a thread."], "answer": "You can not change ID of a thread." },
+                    { "id": 66, "question": "I want a thread to print all the alphabets. Which is the correct place to write code for it?", "options": ["Constructor", "start()", "run()", "main()"], "answer": "run()" },
+                    { "id": 67, "question": "I want that my thread class X should inherit features from a class named Y. Which of the following is the only correct way to do so?", "options": ["class X extends Y implements Runnable", "class X extends Y, Thread", "class X extends Thread implements Y", "class X extends Y implements Thread"], "answer": "class X extends Y implements Runnable" },
+                    { "id": 68, "question": "I have three threads t1, t2 and t3. They must complete their tasks in the same sequence. What is the solution?", "options": ["Use join() method", "Call start() on each in that sequence.", "Create them in that sequence and then call start() on each of them in that sequence.", "There is no solution."], "answer": "Use join() method" }
+                ]
+            },
+            {
+                "unit": "Unit 6",
+                "questions": [
+                    { "id": 69, "question": "A developer observes performance degradation in a Java application using an <code>ArrayList</code> to store frequently inserted elements at random positions. After analysis, which design modification is most appropriate?", "options": ["Replace ArrayList with a LinkedList to improve random access performance.", "Replace ArrayList with a LinkedList to optimize insertion and deletion operations.", "Convert the ArrayList to a synchronized Vector to prevent concurrent modification.", "Wrap the existing ArrayList with Collections.unmodifiableList() to prevent errors."], "answer": "Replace ArrayList with a LinkedList to optimize insertion and deletion operations." },
+                    { "id": 70, "question": "You are tasked with evaluating a data structure to model a browser's history feature (previous/next). Which justification best supports selecting a <code>LinkedList</code>?", "options": ["LinkedList supports O(1) random access to any element, ideal for browsing history.", "LinkedList maintains sequential order and supports bidirectional traversal with low overhead.", "LinkedList automatically prevents concurrent modifications without external synchronization.", "LinkedList internally resizes dynamically, minimizing memory fragmentation."], "answer": "LinkedList maintains sequential order and supports bidirectional traversal with low overhead." },
+                    { "id": 71, "question": "You are building a spell-checker that needs to store 500,000 dictionary words. The application must quickly check if a word exists (lookups) and occasionally add new words. Which <code>Set</code> implementation is most suitable?", "options": ["TreeSet", "LinkedHashSet", "HashSet", "Map"], "answer": "HashSet" },
+                    { "id": 72, "question": "You are developing a hospital emergency room system to process patients based on severity levels (1=Critical, 3=Non-urgent). Patients with the same severity should be treated in FIFO order. Which would be the best choice?", "options": ["PriorityQueue", "PriorityQueue and a custom comparator including arrival timestamp", "HashSet", "TreeSet"], "answer": "PriorityQueue and a custom comparator including arrival timestamp" },
+                    { "id": 73, "question": "You are working on a student management system where student records need to be stored in a thread-safe manner. Multiple threads may simultaneously add new student records or retrieve existing records by index. Which is the best choice?", "options": ["ArrayList", "Vector", "Vector and a synchronized block to add students", "LinkedList"], "answer": "Vector" },
+                    { "id": 74, "question": "Which of the following statements correctly describes the purpose of the <code>Iterator</code> interface in Java?", "options": ["Iterator is used to sort elements in a collection in ascending order.", "Iterator provides a way to traverse through elements of a collection one by one without exposing the underlying structure.", "Iterator is used to add elements to a collection in a specific order.", "Iterator automatically removes duplicate elements from a collection"], "answer": "Iterator provides a way to traverse through elements of a collection one by one without exposing the underlying structure." },
+                    { "id": 75, "question": "If an <code>Iterator</code> is iterating over an <code>ArrayList</code> named K and the elements are added to K during iteration,", "options": ["it will work without any problem", "compilation error occurs", "ConcurrentModificationException is thrown", "it depends on the version of Java used"], "answer": "ConcurrentModificationException is thrown" },
+                    { "id": 76, "question": "Requirement 1: Track which students attended class today (just need to know if a student attended or not). Requirement 2: Track how many classes each student has attended this semester (need to store a count for each student). Which data structure is most appropriate?", "options": ["Use Set for Requirement 1 and Set for Requirement 2", "Use Map for Requirement 1 and Map for Requirement 2", "Use Set for Requirement 1 and Map for Requirement 2", "Use Map for Requirement 1 and Set for Requirement 2"], "answer": "Use Set for Requirement 1 and Map for Requirement 2" },
+                    { "id": 77, "question": "Which situation would best justify using a <code>HashMap</code> in a Java program?", "options": ["When you need to store elements in a fixed sequence of insertion", "When you need to store key-value pairs and retrieve values quickly using keys", "When you need to maintain a sorted order of keys automatically", "When you need to store duplicate keys and values freely"], "answer": "When you need to store key-value pairs and retrieve values quickly using keys" },
+                    { "id": 78, "question": "Which statement correctly describes the Java Collections Framework?", "options": ["It defines a unified architecture for storing and manipulating groups of objects.", "It is a single class providing all data structures.", "It only supports arrays and linked lists.", "It replaces all primitive data types with object wrappers."], "answer": "It defines a unified architecture for storing and manipulating groups of objects." },
+                    { "id": 79, "question": "In which situation would using a <code>Deque</code> (Double-Ended Queue) be the most appropriate choice in Java?", "options": ["When elements need to be inserted and removed only from one end", "When elements must be stored in sorted order automatically", "When you need to add or remove elements efficiently from both ends of the collection", "When duplicate elements must be automatically prevented"], "answer": "When you need to add or remove elements efficiently from both ends of the collection" },
+                    { "id": 80, "question": "Which statement best analyzes the relationship and difference among <code>NavigableMap</code>, <code>SortedMap</code>, and <code>TreeMap</code> in Java?", "options": ["NavigableMap is unrelated to SortedMap and is implemented only by HashMap.", "SortedMap extends NavigableMap to provide additional navigation methods.", "NavigableMap extends SortedMap, and TreeMap is its main implementation providing forward and backward navigation of keys.", "TreeMap extends NavigableMap but removes all sorting functionality for performance."], "answer": "NavigableMap extends SortedMap, and TreeMap is its main implementation providing forward and backward navigation of keys." }
+                ]
+            }
+        ];
+
+        // --- APPLICATION LOGIC ---
+
+        // Global state object
+        let state = {
+            currentTab: 'all', // 'all' or 'imp'
+            currentQuestionIndex: 0,
+            displayedQuestions: [], // The filtered list of questions
+            markedForReview: [], // Array of question IDs
+            memorizeMode: false,
+            currentFilter: {
+                unit: 'all',
+                search: '',
+                markedOnly: false
+            }
+        };
+
+        // Flattened question arrays
+        const allQuestions = [];
+        const impQuestions = [];
+
+        // Top 40 IMP MCQs (Based on Sessional Paper and Core Concepts)
+        const impMcqIds = [
+            1, 3, 4, 9, 11, // Unit 1: Core Java, JVM, main()
+            14, 16, 17, 19, 20, 22, 25, 27, // Unit 2: Basics, String, Array, this, final, static, GC
+            28, 29, 30, 32, 34, 35, 36, 37, 39, // Unit 3: Inheritance, super, final, abstract, interface, poly
+            41, 42, 47, 48, 52, // Unit 4: CLASSPATH, Wrappers, Integer Cache, import
+            54, 56, 57, 59, 60, 62, 64, 66, 68, // Unit 5: Exceptions, Threads (start/run, join)
+            70, 71, 73, 74, 75, 76, 77, 80 // Unit 6: Collections (LinkedList, Set/Map, Vector, Iterator, HashMap, TreeMap)
+        ]; // Total 40 questions
+
+        // DOM Element selectors
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => document.querySelectorAll(selector);
+
+        const dom = {
+            tabAll: $('#tab-all'),
+            tabImp: $('#tab-imp'),
+            themeToggle: $('#theme-toggle'),
+            unitFilter: $('#unit-filter'),
+            searchBar: $('#search-bar'),
+            memorizeMode: $('#memorize-mode'),
+            markedOnlyMode: $('#marked-only-mode'),
+            mcqViewer: $('#mcq-viewer'),
+            questionCard: $('#question-card'),
+            questionNumber: $('#question-number'),
+            markReviewBtn: $('#mark-review-btn'),
+            questionText: $('#question-text'),
+            optionsContainer: $('#options-container'),
+            answerFeedback: $('#answer-feedback'),
+            copyNotesBtn: $('#copy-notes-btn'),
+            noResults: $('#no-results'),
+            navigationControls: $('#navigation-controls'),
+            prevBtn: $('#prev-btn'),
+            nextBtn: $('#next-btn')
+        };
+
+        /**
+         * Initialize the application
+         */
+        function init() {
+            flattenData();
+            loadState();
+            applyTheme();
+            applyFilters();
+            showQuestion(state.currentQuestionIndex);
+            updateMemorizeMode();
+            addEventListeners();
+        }
+
+        /**
+         * Flatten the unit-based data into simple arrays
+         */
+        function flattenData() {
+            allMcqsByUnit.forEach(unit => {
+                unit.questions.forEach(q => {
+                    const questionData = { ...q, unit: unit.unit };
+                    allQuestions.push(questionData);
+                    
+                    if (impMcqIds.includes(q.id)) {
+                        impQuestions.push(questionData);
+                    }
+                });
+            });
+        }
+
+        /**
+         * Add all event listeners
+         */
+        function addEventListeners() {
+            dom.tabAll.addEventListener('click', () => switchTab('all'));
+            dom.tabImp.addEventListener('click', () => switchTab('imp'));
+            dom.themeToggle.addEventListener('click', toggleTheme);
+            dom.unitFilter.addEventListener('change', handleFilterChange);
+            dom.searchBar.addEventListener('input', handleFilterChange);
+            dom.markedOnlyMode.addEventListener('change', handleFilterChange);
+            dom.memorizeMode.addEventListener('change', toggleMemorizeMode);
+            dom.prevBtn.addEventListener('click', () => navigateQuestion(-1));
+            dom.nextBtn.addEventListener('click', () => navigateQuestion(1));
+            dom.markReviewBtn.addEventListener('click', toggleMarkForReview);
+            dom.copyNotesBtn.addEventListener('click', copyNotes);
+            dom.optionsContainer.addEventListener('click', handleOptionClick);
+        }
+
+        /**
+         * Load state from localStorage
+         */
+        function loadState() {
+            try {
+                const marked = localStorage.getItem('ca327_marked');
+                const memorize = localStorage.getItem('ca327_memorize');
+                const lastQ = localStorage.getItem('ca327_lastQ');
+                
+                if (marked) {
+                    state.markedForReview = JSON.parse(marked);
+                }
+                if (memorize) {
+                    state.memorizeMode = JSON.parse(memorize);
+                }
+                if (lastQ) {
+                    state.currentQuestionIndex = parseInt(lastQ, 10);
+                }
+            } catch (e) {
+                console.error("Failed to load state from localStorage", e);
+                state.markedForReview = [];
+                state.memorizeMode = false;
+                state.currentQuestionIndex = 0;
+            }
+        }
+
+        /**
+         * Save state to localStorage
+         */
+        function saveState() {
+             try {
+                localStorage.setItem('ca327_marked', JSON.stringify(state.markedForReview));
+                localStorage.setItem('ca327_memorize', JSON.stringify(state.memorizeMode));
+                localStorage.setItem('ca327_lastQ', state.currentQuestionIndex.toString());
+            } catch (e) {
+                console.error("Failed to save state to localStorage", e);
+            }
+        }
+
+        /**
+         * Switch between 'All MCQs' and 'IMP MCQs'
+         */
+        function switchTab(tabName) {
+            state.currentTab = tabName;
+            state.currentQuestionIndex = 0; // Reset index
+            
+            dom.tabAll.classList.toggle('active', tabName === 'all');
+            dom.tabImp.classList.toggle('active', tabName === 'imp');
+            
+            applyFilters();
+            showQuestion(0);
+        }
+
+        /**
+         * Handle any change in the filter controls
+         */
+        function handleFilterChange() {
+            state.currentFilter.unit = dom.unitFilter.value;
+            state.currentFilter.search = dom.searchBar.value.toLowerCase();
+            state.currentFilter.markedOnly = dom.markedOnlyMode.checked;
+            
+            state.currentQuestionIndex = 0; // Reset index
+            applyFilters();
+            showQuestion(0);
+        }
+
+        /**
+         * Apply filters to the base question list
+         */
+        function applyFilters() {
+            const baseList = state.currentTab === 'all' ? allQuestions : impQuestions;
+            
+            state.displayedQuestions = baseList.filter(q => {
+                const unitMatch = state.currentFilter.unit === 'all' || q.unit === state.currentFilter.unit;
+                const searchMatch = !state.currentFilter.search ||
+                                    q.question.toLowerCase().includes(state.currentFilter.search) ||
+                                    q.id.toString() === state.currentFilter.search;
+                const markedMatch = !state.currentFilter.markedOnly || state.markedForReview.includes(q.id);
+                
+                return unitMatch && searchMatch && markedMatch;
+            });
+        }
+
+        /**
+         * Display a question by its index in `state.displayedQuestions`
+         */
+        function showQuestion(index) {
+            if (state.displayedQuestions.length === 0) {
+                dom.questionCard.classList.add('hidden');
+                dom.navigationControls.classList.add('hidden'); // Hide nav buttons too
+                dom.noResults.classList.remove('hidden');
+                return;
+            }
+
+            dom.questionCard.classList.remove('hidden');
+            dom.navigationControls.classList.remove('hidden');
+            dom.noResults.classList.add('hidden');
+
+            // Ensure index is valid
+            if (index < 0) index = 0;
+            if (index >= state.displayedQuestions.length) index = state.displayedQuestions.length - 1;
+            
+            state.currentQuestionIndex = index;
+            const q = state.displayedQuestions[index];
+
+            if (!q) {
+                console.error("Question not found at index", index);
+                return; // Should not happen if list is not empty
+            }
+
+            dom.questionNumber.textContent = `Q. ${q.id} (Displaying ${index + 1}/${state.displayedQuestions.length})`;
+            dom.questionText.innerHTML = q.question; // Use innerHTML to render <code> tags
+            
+            dom.markReviewBtn.classList.toggle('marked', state.markedForReview.includes(q.id));
+            
+            dom.optionsContainer.innerHTML = ''; // Clear old options
+            q.options.forEach(option => {
+                const optionBtn = document.createElement('button');
+                optionBtn.className = 'option';
+                optionBtn.innerHTML = option; // Use innerHTML for potential <code>
+                optionBtn.dataset.answer = option;
+                dom.optionsContainer.appendChild(optionBtn);
+            });
+            
+            dom.answerFeedback.classList.add('hidden');
+            dom.answerFeedback.textContent = '';
+            
+            dom.prevBtn.disabled = (index === 0);
+            dom.nextBtn.disabled = (index === state.displayedQuestions.length - 1);
+            
+            saveState();
+        }
+
+        /**
+         * Handle clicking on an answer option
+         */
+        function handleOptionClick(e) {
+            const clickedOption = e.target.closest('.option');
+            if (!clickedOption || clickedOption.disabled) return;
+            
+            const q = state.displayedQuestions[state.currentQuestionIndex];
+            const selectedAnswer = clickedOption.dataset.answer;
+            const correctAnswer = q.answer;
+            const isCorrect = (selectedAnswer === correctAnswer);
+            
+            // Show feedback
+            dom.answerFeedback.classList.remove('hidden');
+            if (isCorrect) {
+                dom.answerFeedback.textContent = '✅ Correct!';
+                dom.answerFeedback.className = 'correct';
+            } else {
+                dom.answerFeedback.innerHTML = `❌ Wrong. The correct answer is: <br><strong>${correctAnswer}</strong>`;
+                dom.answerFeedback.className = 'wrong';
+            }
+            
+            // Disable all options and highlight
+            $$('.option').forEach(btn => {
+                btn.disabled = true;
+                if (btn.dataset.answer === correctAnswer) {
+                    btn.classList.add('correct');
+                } else if (btn === clickedOption) {
+                    btn.classList.add('wrong');
+                }
+            });
+        }
+
+        /**
+         * Navigate to the previous or next question
+         */
+        function navigateQuestion(direction) {
+            const newIndex = state.currentQuestionIndex + direction;
+            if (newIndex >= 0 && newIndex < state.displayedQuestions.length) {
+                showQuestion(newIndex);
+            }
+        }
+
+        /**
+         * Toggle the 'Mark for Review' status
+         */
+        function toggleMarkForReview() {
+            const q = state.displayedQuestions[state.currentQuestionIndex];
+            if (!q) return;
+            
+            const qId = q.id;
+            const indexInMarked = state.markedForReview.indexOf(qId);
+            
+            if (indexInMarked > -1) {
+                state.markedForReview.splice(indexInMarked, 1);
+                dom.markReviewBtn.classList.remove('marked');
+            } else {
+                state.markedForReview.push(qId);
+                dom.markReviewBtn.classList.add('marked');
+            }
+            
+            saveState();
+
+            // If user is in "Marked Only" mode, filtering might hide the current question
+            if (state.currentFilter.markedOnly && indexInMarked > -1) {
+                // Re-apply filters which will remove this question
+                applyFilters();
+                // Show question at same index (or last if index is now out of bounds)
+                const newIndex = Math.min(state.currentQuestionIndex, state.displayedQuestions.length - 1);
+                showQuestion(newIndex);
+            }
+        }
+
+        /**
+         * Toggle the memorize mode
+         */
+        function toggleMemorizeMode() {
+            state.memorizeMode = dom.memorizeMode.checked;
+            updateMemorizeMode();
+            saveState();
+        }
+
+        /**
+         * Apply memorize mode CSS class
+         */
+        function updateMemorizeMode() {
+            dom.mcqViewer.classList.toggle('memorize-mode', state.memorizeMode);
+            dom.memorizeMode.checked = state.memorizeMode;
+        }
+
+        /**
+         * Copy current question and answer to clipboard
+         */
+        function copyNotes() {
+            const q = state.displayedQuestions[state.currentQuestionIndex];
+            if (!q) return;
+
+            const textToCopy = `Q: ${q.question.replace(/<[^>]+>/g, '')}\n\nA: ${q.answer}\n\n(From Unit: ${q.unit})`;
+            
+            // Use fallback for clipboard API
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            textArea.style.position = 'fixed'; // Avoid scrolling
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            
+            textArea.select();
+            textArea.setSelectionRange(0, 99999); // For mobile
+            
+            try {
+                document.execCommand('copy');
+                dom.copyNotesBtn.textContent = '✅ Copied!';
+            } catch (err) {
+                dom.copyNotesBtn.textContent = '❌ Failed';
+                console.error('Failed to copy text: ', err);
+            }
+            
+            document.body.removeChild(textArea);
+            
+            setTimeout(() => {
+                dom.copyNotesBtn.textContent = '📋 Copy Notes';
+            }, 2000);
+        }
+
+        /**
+         * Toggle light/dark theme
+         */
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            dom.themeToggle.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('ca327_theme', isDark ? 'dark' : 'light');
+        }
+
+        /**
+         * Apply saved theme on load
+         */
+        function applyTheme() {
+            const savedTheme = localStorage.getItem('ca327_theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                dom.themeToggle.textContent = '☀️';
+            } else {
+                document.documentElement.classList.remove('dark');
+                dom.themeToggle.textContent = '🌙';
+            }
+        }
+
+        // --- START THE APP ---
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
