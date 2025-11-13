@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shayona Windows - Inventory Manager Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <!-- JSZip for Zipping files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver for saving Blobs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        :root {
+            --base-size: 16px;
+        }
+        html { font-size: var(--base-size); transition: font-size 0.2s; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Mobile adjustments */
+        @media (max-width: 640px) {
+            .mobile-hide { display: none; }
+            .mobile-card { display: block; }
+            .desktop-table { display: none; }
+            
+            .modal-panel {
+                transform: translateY(100%);
+                border-radius: 1.5rem 1.5rem 0 0;
+            }
+            .modal-active .modal-panel {
+                transform: translateY(0);
+            }
+        }
+
+        /* Desktop Modal Animation */
+        @media (min-width: 641px) {
+            .mobile-card { display: none; }
+            .desktop-table { display: table; }
+            
+            .modal-panel {
+                opacity: 0;
+                transform: scale(0.95);
+                border-radius: 0.75rem;
+            }
+            .modal-active .modal-panel {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-backdrop {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+            pointer-events: none;
+        }
+        .modal-active .modal-backdrop {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-panel {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .editable-cell { cursor: pointer; transition: background 0.2s; }
+        .editable-cell:hover { background-color: #eff6ff; } 
+        .editable-cell input { width: 100%; padding: 4px; border: 1px solid #3b82f6; border-radius: 4px; font-size: 0.875rem; outline: none; }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px; width: 16px;
+            border-radius: 50%; background: #3b82f6;
+            cursor: pointer; margin-top: -6px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px;
+            cursor: pointer; background: #e2e8f0;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-[100] transform transition-all duration-300 translate-x-full opacity-0">
+        <div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <i id="toast-icon" class="fas fa-check-circle text-green-400"></i>
+            <span id="toast-msg">Operation successful</span>
+            <div id="toast-action" class="ml-2 pl-2 border-l border-slate-600"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-md shrink-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-cube text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight tracking-tight">Shayona Windows</h1>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Inventory Manager</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openExportModal()" class="hidden sm:flex bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded text-xs border border-slate-700 transition-colors items-center">
+                    <i class="fas fa-file-export mr-2 text-blue-400"></i> Export Data
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Top Tabs -->
+    <div class="bg-white border-b border-slate-200 px-4 overflow-x-auto no-scrollbar shrink-0">
+        <div class="max-w-7xl mx-auto flex space-x-6">
+            <button onclick="switchMainTab('analytics')" class="main-tab active py-3 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-blue-600 data-[active=true]:text-blue-600 data-[active=true]:border-blue-600 transition-all whitespace-nowrap" data-tab="analytics">
+                <i class="fas fa-chart-pie mr-2"></i>Analytics
+            </button>
+            <button onclick="switchMainTab('profiles')" class="main-tab py-3 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-blue-600 data-[active=true]:text-blue-600 data-[active=true]:border-blue-600 transition-all whitespace-nowrap" data-tab="profiles">
+                <i class="fas fa-layer-group mr-2"></i>Profiles Stock
+            </button>
+            <button onclick="switchMainTab('hardware')" class="main-tab py-3 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-blue-600 data-[active=true]:text-blue-600 data-[active=true]:border-blue-600 transition-all whitespace-nowrap" data-tab="hardware">
+                <i class="fas fa-tools mr-2"></i>Hardware Stock
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 pb-32 sm:pb-10 relative z-10 bg-slate-50">
+        <div class="max-w-7xl mx-auto h-full">
+            
+            <!-- VIEW: ANALYTICS -->
+            <div id="view-analytics" class="tab-content active space-y-6">
+                <!-- Primary Stats Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-start">
+                            <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Inventory Value</div>
+                            <span id="badge-val-change" class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">+0%</span>
+                        </div>
+                        <div id="stat-total-value" class="text-2xl font-bold text-slate-800">₹0</div>
+                        <div class="text-xs text-slate-400 mt-1">Calculated from current stock</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                         <div class="flex justify-between items-start">
+                            <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Qty</div>
+                            <span id="badge-qty-change" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">+0%</span>
+                        </div>
+                        <div id="stat-total-qty" class="text-2xl font-bold text-blue-600">0</div>
+                        <div class="text-xs text-slate-400 mt-1">Units in stock</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                         <div class="flex justify-between items-start">
+                            <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Catalog Stats</div>
+                            <i class="fas fa-book text-slate-200"></i>
+                        </div>
+                        <div id="stat-catalog-count" class="text-2xl font-bold text-purple-600">0</div>
+                        <div class="text-xs text-slate-400 mt-1">Active SKUs in system</div>
+                    </div>
+                </div>
+
+                <!-- Charts Area Row 1 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 relative">
+                        <h3 class="text-sm font-bold text-slate-700 mb-4">Inventory Value Trend (30 Days)</h3>
+                        <div class="h-64">
+                            <canvas id="chart-trend"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <h3 class="text-sm font-bold text-slate-700 mb-4">Stock Distribution (By Category)</h3>
+                        <div class="h-64 flex justify-center">
+                            <canvas id="chart-distribution"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insights Row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Avg. Unit Price</div>
+                        <div id="stat-avg-price" class="text-lg font-bold text-slate-700 mt-1">₹0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Critical Low Stock</div>
+                        <div id="stat-low-stock" class="text-lg font-bold text-red-600 mt-1">0</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Top Color (Profiles)</div>
+                        <div id="stat-top-color" class="text-lg font-bold text-slate-700 mt-1 truncate">None</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Most Valuable Item</div>
+                        <div id="stat-high-item" class="text-sm font-bold text-blue-600 mt-1 truncate">None</div>
+                        <div id="stat-high-val" class="text-xs text-slate-400">₹0</div>
+                    </div>
+                </div>
+                
+                <!-- Top Items Chart -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-700 mb-4">Top 5 High Value Items</h3>
+                    <div class="h-56">
+                        <canvas id="chart-top-items"></canvas>
+                    </div>
+                </div>
+                <br><br><br>
+            </div>
+
+            <!-- VIEW: PROFILES -->
+            <div id="view-profiles" class="tab-content">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="relative flex-1 max-w-md">
+                        <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="search-profiles" onkeyup="renderInventory('profile')" placeholder="Search profiles..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 text-sm shadow-sm">
+                    </div>
+                    <div class="text-xs text-slate-500 ml-4 hidden sm:block">Showing <span id="count-profiles">0</span> entries</div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden desktop-table w-full">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-100 text-slate-600 font-medium border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3">Code</th>
+                                <th class="px-4 py-3">Description</th>
+                                <th class="px-4 py-3">Color</th>
+                                <th class="px-4 py-3 text-right">Price</th>
+                                <th class="px-4 py-3 text-right">Qty</th>
+                                <th class="px-4 py-3 text-right">Total</th>
+                                <th class="px-4 py-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body-profile" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+                <div id="cards-profile" class="mobile-card space-y-3"></div>
+            </div>
+
+            <!-- VIEW: HARDWARE -->
+            <div id="view-hardware" class="tab-content">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="relative flex-1 max-w-md">
+                        <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="search-hardware" onkeyup="renderInventory('hardware')" placeholder="Search hardware..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-orange-500 text-sm shadow-sm">
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden desktop-table w-full">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-orange-50 text-orange-800 font-medium border-b border-orange-100">
+                            <tr>
+                                <th class="px-4 py-3">Type</th>
+                                <th class="px-4 py-3">Description</th>
+                                <th class="px-4 py-3 text-right">Unit Price</th>
+                                <th class="px-4 py-3 text-right">Qty</th>
+                                <th class="px-4 py-3 text-right">Total</th>
+                                <th class="px-4 py-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body-hardware" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+                <div id="cards-hardware" class="mobile-card space-y-3"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FLOATING ACTION BUTTON (Mobile) -->
+    <button onclick="openAddModal()" class="sm:hidden fixed bottom-20 right-4 bg-blue-600 text-white w-14 h-14 rounded-full shadow-2xl shadow-blue-600/40 flex items-center justify-center z-40 hover:scale-105 transition-transform">
+        <i class="fas fa-plus text-xl"></i>
+    </button>
+
+    <!-- MODAL: EXPORT MANAGER -->
+    <div id="modal-export" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
+        <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('export')"></div>
+        <div class="modal-panel bg-white w-full sm:w-[500px] rounded-t-2xl sm:rounded-xl shadow-2xl pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-file-export text-blue-500 mr-2"></i>Export Data</h2>
+                    <p class="text-xs text-slate-500">Select sections to download</p>
+                </div>
+                <button onclick="closeModal('export')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200"><i class="fas fa-times text-slate-500"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+                <!-- Section Selection -->
+                <div class="space-y-3 mb-6">
+                    <label class="flex items-center p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="checkbox" id="chk-exp-stats" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" checked>
+                        <div class="ml-3">
+                            <div class="text-sm font-bold text-slate-700">Summary Statistics & Charts</div>
+                            <div class="text-xs text-slate-400">Include Analytics charts in PDF</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="checkbox" id="chk-exp-profiles" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" checked>
+                        <div class="ml-3">
+                            <div class="text-sm font-bold text-slate-700">Profile Inventory</div>
+                            <div class="text-xs text-slate-400">List of all profile stock</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="checkbox" id="chk-exp-hardware" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" checked>
+                        <div class="ml-3">
+                            <div class="text-sm font-bold text-slate-700">Hardware Inventory</div>
+                            <div class="text-xs text-slate-400">List of all hardware stock</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                        <input type="checkbox" id="chk-exp-catalog" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div class="ml-3">
+                            <div class="text-sm font-bold text-slate-700">Catalog Price List</div>
+                            <div class="text-xs text-slate-400">Base prices for all items</div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Export Options -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
+                    <div class="text-xs font-bold text-slate-500 uppercase mb-2">Output Preference</div>
+                    <div class="flex gap-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="export-mode" value="combined" class="text-blue-600 focus:ring-blue-500" checked>
+                            <span class="ml-2 text-sm text-slate-700">Combined File</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="export-mode" value="separate" class="text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-slate-700">Separate Files (ZIP)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="generateExport('pdf')" class="flex items-center justify-center py-3 border border-red-200 bg-red-50 text-red-700 font-bold rounded-lg hover:bg-red-100 transition-colors">
+                        <i class="fas fa-file-pdf mr-2"></i> Export PDF
+                    </button>
+                    <button onclick="generateExport('csv')" class="flex items-center justify-center py-3 border border-green-200 bg-green-50 text-green-700 font-bold rounded-lg hover:bg-green-100 transition-colors">
+                        <i class="fas fa-file-csv mr-2"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT ITEM -->
+    <div id="modal-add" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+        <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('add')"></div>
+        <div class="modal-panel bg-white w-full sm:w-[600px] max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col pointer-events-auto">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
+                <div>
+                    <h2 id="modal-title" class="text-lg font-bold text-slate-800">Add Inventory</h2>
+                    <p class="text-xs text-slate-500">Fill in the details below</p>
+                </div>
+                <button onclick="closeModal('add')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors">
+                    <i class="fas fa-times text-slate-500"></i>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div id="type-switcher" class="flex bg-slate-100 p-1 rounded-lg mb-6">
+                    <button onclick="switchAddType('profile')" class="flex-1 py-2 text-sm font-medium rounded-md transition-all text-slate-600 data-[active=true]:bg-white data-[active=true]:text-blue-600 data-[active=true]:shadow-sm" id="btn-type-profile" data-active="true">
+                        <i class="fas fa-layer-group mr-1"></i> Profile
+                    </button>
+                    <button onclick="switchAddType('hardware')" class="flex-1 py-2 text-sm font-medium rounded-md transition-all text-slate-600 data-[active=true]:bg-white data-[active=true]:text-orange-600 data-[active=true]:shadow-sm" id="btn-type-hardware" data-active="false">
+                        <i class="fas fa-tools mr-1"></i> Hardware
+                    </button>
+                </div>
+
+                <input type="hidden" id="edit-id" value="">
+
+                <!-- FORM: PROFILE -->
+                <div id="form-profile" class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Profile Type</label>
+                        <div class="relative">
+                            <select id="input-profile-desc" onchange="handleProfileChange()" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none">
+                                <option value="">-- Select Profile --</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-3 top-4 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+                    <div id="group-profile-color" class="opacity-50 pointer-events-none transition-opacity">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Color</label>
+                        <div class="grid grid-cols-2 gap-2" id="color-options-container"></div>
+                    </div>
+                </div>
+
+                <!-- FORM: HARDWARE -->
+                <div id="form-hardware" class="hidden space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hardware Type</label>
+                        <input type="text" id="input-hw-type" list="hw-types-list" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Handle, Lock, Roller">
+                        <datalist id="hw-types-list"></datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Description / Name</label>
+                        <input type="text" id="input-hw-desc" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="e.g. Touch Lock with Key">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Unit Price (₹)</label>
+                        <input type="number" id="input-hw-price" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-5 border-t border-slate-100">
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Quantity</label>
+                            <input type="number" id="input-qty" min="1" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-lg font-semibold" placeholder="0">
+                        </div>
+                        <div id="price-display-area" class="flex-1 bg-slate-50 rounded-lg border border-slate-200 flex flex-col justify-center items-end px-4">
+                            <span class="text-xs text-slate-500">Unit Price</span>
+                            <span id="display-final-price" class="text-lg font-bold text-slate-700">₹0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-save" onclick="saveItem()" class="w-full mt-6 bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-lg font-bold shadow-lg shadow-slate-500/20 transition-all">
+                    Save Entry
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SETTINGS -->
+    <div id="modal-settings" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+        <div class="modal-backdrop absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('settings')"></div>
+        <div class="modal-panel bg-white w-full sm:w-[600px] max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col pointer-events-auto">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800">Settings</h2>
+                <button onclick="closeModal('settings')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-6">
+                
+                <!-- Appearance Settings -->
+                <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-4">
+                    <h3 class="font-bold text-slate-700 text-sm flex items-center"><i class="fas fa-paint-brush mr-2 text-blue-500"></i>Appearance</h3>
+                    
+                    <!-- UI Scale -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-500 mb-2">
+                            <span>Interface Scale</span>
+                            <span id="lbl-scale">100%</span>
+                        </div>
+                        <input type="range" min="12" max="20" value="16" step="0.5" oninput="updateUIScale(this.value)" class="w-full">
+                    </div>
+
+                    <!-- Text Size -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-500 mb-2">
+                            <span>Text Size</span>
+                            <span id="lbl-text">Normal</span>
+                        </div>
+                        <input type="range" min="0.875" max="1.25" value="1" step="0.0625" oninput="updateTextSize(this.value)" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Mobile Export Button -->
+                <div class="sm:hidden">
+                     <button onclick="closeModal('settings'); openExportModal();" class="w-full flex items-center justify-center p-3 border border-slate-200 rounded-lg bg-white hover:bg-blue-50 text-blue-600 font-bold transition-colors shadow-sm">
+                        <i class="fas fa-file-export mr-2"></i> Open Export Manager
+                     </button>
+                </div>
+
+                <!-- Data Management -->
+                <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+                    <h3 class="font-bold text-slate-700 text-sm mb-3">Data Management</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="downloadBackup()" class="p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-400 text-sm">
+                            <i class="fas fa-download text-blue-500 mr-2"></i> Backup Data
+                        </button>
+                        <label class="p-3 bg-white border border-slate-200 rounded-lg hover:border-green-400 text-sm cursor-pointer flex items-center justify-center">
+                            <i class="fas fa-upload text-green-500 mr-2"></i> Restore Data
+                            <input type="file" class="hidden" accept=".json" onchange="restoreBackup(this)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Import CSV -->
+                <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+                    <h3 class="font-bold text-slate-700 text-sm mb-3">Import Catalog (CSV)</h3>
+                    <div class="space-y-3">
+                        <select id="import-color-select" class="w-full p-2 text-sm border border-slate-300 rounded bg-white">
+                            <option value="Renolit Anthracite Grey">Anthracite Grey</option>
+                            <option value="Renolit Mahagony">Mahogany</option>
+                            <option value="Renolit Rustic Oak">Rustic Oak</option>
+                            <option value="Renolit Golden Oak">Golden Oak</option>
+                            <option value="Renolit Walnut">Walnut</option>
+                            <option value="Renolit Black">Black</option>
+                            <option value="VEKA White">VEKA White</option>
+                        </select>
+                        <input type="file" id="file-csv-import" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white file:text-blue-700 hover:file:bg-blue-50">
+                        
+                        <div id="import-preview-container" class="hidden mt-2">
+                            <div class="text-xs font-bold text-slate-600 mb-1">Preview (First 5 rows)</div>
+                            <div class="overflow-x-auto border border-slate-200 rounded mb-2">
+                                <table class="w-full text-xs text-left" id="import-preview-table">
+                                    <thead class="bg-slate-100 font-semibold"><tr><th class="p-1">Code</th><th class="p-1">Desc</th><th class="p-1">Price</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <button id="btn-confirm-import" onclick="confirmCSVImport()" class="w-full py-2 bg-green-600 text-white rounded text-sm font-bold hover:bg-green-700">Confirm Import</button>
+                        </div>
+
+                        <button id="btn-preview-import" onclick="previewCSVImport()" class="w-full py-2 bg-blue-600 text-white rounded text-sm font-medium">Preview Import</button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 flex justify-between items-center">
+                    <span class="text-xs text-red-500">Danger Zone</span>
+                    <button onclick="clearAllData()" class="text-red-600 text-xs font-bold border border-red-200 px-3 py-1 rounded hover:bg-red-50">Reset All Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav (Mobile) -->
+    <nav class="sm:hidden bg-white border-t border-slate-200 fixed bottom-0 inset-x-0 z-30 pb-safe h-16">
+        <div class="grid grid-cols-4 h-full">
+            <button onclick="switchMainTab('analytics')" class="nav-btn text-slate-400 hover:text-blue-600 active" data-tab="analytics">
+                <i class="fas fa-chart-pie mb-1 block text-lg"></i><span class="text-[10px]">Stats</span>
+            </button>
+            <button onclick="switchMainTab('profiles')" class="nav-btn text-slate-400 hover:text-blue-600" data-tab="profiles">
+                <i class="fas fa-layer-group mb-1 block text-lg"></i><span class="text-[10px]">Profiles</span>
+            </button>
+            <button onclick="switchMainTab('hardware')" class="nav-btn text-slate-400 hover:text-blue-600" data-tab="hardware">
+                <i class="fas fa-tools mb-1 block text-lg"></i><span class="text-[10px]">Hardware</span>
+            </button>
+            <button onclick="openModal('settings')" class="nav-btn text-slate-400 hover:text-blue-600">
+                <i class="fas fa-cog mb-1 block text-lg"></i><span class="text-[10px]">Settings</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Desktop Add Button -->
+    <button onclick="openAddModal()" class="hidden sm:flex fixed bottom-8 right-8 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-transform hover:scale-105 font-bold items-center gap-2 z-40">
+        <i class="fas fa-plus"></i> Add Item
+    </button>
+    <button onclick="openModal('settings')" class="hidden sm:flex fixed bottom-8 left-8 bg-slate-800 text-white w-12 h-12 rounded-full shadow-lg hover:bg-slate-700 items-center justify-center z-40">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <script>
+        // --- CONSTANTS & STATE ---
+        const STORAGE_KEY_INV = 'upvc_pro_inv_v3';
+        const STORAGE_KEY_CAT = 'upvc_pro_cat_v3';
+        const STORAGE_KEY_HW = 'upvc_pro_hw_v3';
+        const STORAGE_KEY_HIST = 'upvc_pro_hist_v3';
+        const STORAGE_KEY_PREFS = 'upvc_pro_prefs';
+
+        const initialCatalog = [
+            { code: '61101-11023', desc: 'Frame Profile', color: 'Renolit Anthracite Grey', price: 631 },
+            { code: '61101-16123', desc: 'Frame with Grill & Mesh', color: 'Renolit Anthracite Grey', price: 1000 },
+            { code: '41101-11000', desc: 'Frame Profile', color: 'VEKA White', price: 271 },
+            { code: '61101-11073', desc: 'Frame Profile', color: 'Renolit Mahagony', price: 631 }
+        ];
+
+        let state = {
+            inventory: [], 
+            catalog: [],
+            hardwareTypes: ['Handle', 'Lock', 'Roller', 'Hinge', 'Fastener'],
+            history: [] 
+        };
+
+        let prefs = { uiScale: 16, textSize: 1 };
+
+        let charts = {}; 
+        let currentEditId = null;
+        let currentAddType = 'profile';
+        let selectedCatalogItem = null;
+        let importStagedData = [];
+        let undoBuffer = null, undoTimer = null;
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            applyPrefs();
+            renderAll();
+            initCharts();
+        });
+
+        // --- DATA & PREFS ---
+        function loadData() {
+            const inv = localStorage.getItem(STORAGE_KEY_INV);
+            const cat = localStorage.getItem(STORAGE_KEY_CAT);
+            const hw = localStorage.getItem(STORAGE_KEY_HW);
+            const hist = localStorage.getItem(STORAGE_KEY_HIST);
+            const p = localStorage.getItem(STORAGE_KEY_PREFS);
+
+            state.inventory = inv ? JSON.parse(inv) : [];
+            state.catalog = cat ? JSON.parse(cat) : [...initialCatalog];
+            state.hardwareTypes = hw ? JSON.parse(hw) : state.hardwareTypes;
+            state.history = hist ? JSON.parse(hist) : generateDummyHistory(); // Sim history if empty
+            if(p) prefs = JSON.parse(p);
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY_INV, JSON.stringify(state.inventory));
+            localStorage.setItem(STORAGE_KEY_CAT, JSON.stringify(state.catalog));
+            localStorage.setItem(STORAGE_KEY_HW, JSON.stringify(state.hardwareTypes));
+            
+            // Record history snapshot
+            const today = new Date().toISOString().split('T')[0];
+            const lastEntry = state.history[state.history.length - 1];
+            const currentVal = state.inventory.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            
+            if (!lastEntry || lastEntry.date !== today) {
+                state.history.push({ date: today, value: currentVal });
+                if(state.history.length > 30) state.history.shift(); // Keep last 30
+                localStorage.setItem(STORAGE_KEY_HIST, JSON.stringify(state.history));
+            } else {
+                lastEntry.value = currentVal; // Update today's value
+                localStorage.setItem(STORAGE_KEY_HIST, JSON.stringify(state.history));
+            }
+
+            updateAnalytics();
+        }
+
+        function savePrefs() {
+            localStorage.setItem(STORAGE_KEY_PREFS, JSON.stringify(prefs));
+        }
+
+        // Dummy history generator for first run
+        function generateDummyHistory() {
+            let arr = [];
+            let val = 50000;
+            for(let i=29; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                val += (Math.random() * 4000 - 1500);
+                if(val < 0) val = 0;
+                arr.push({ date: d.toISOString().split('T')[0], value: Math.round(val) });
+            }
+            return arr;
+        }
+
+        // --- UI SCALING ---
+        function updateUIScale(val) {
+            prefs.uiScale = val;
+            document.documentElement.style.setProperty('--base-size', val + 'px');
+            document.getElementById('lbl-scale').textContent = Math.round((val/16)*100) + '%';
+            savePrefs();
+        }
+
+        function updateTextSize(val) {
+            prefs.textSize = val;
+            document.body.style.fontSize = val + 'rem'; // Scales relative to base-size
+            const labels = { '0.875': 'Small', '0.9375': 'Small', '1': 'Normal', '1.0625': 'Large', '1.125': 'Large', '1.25': 'Extra Large' };
+            document.getElementById('lbl-text').textContent = labels[val] || 'Custom';
+            savePrefs();
+        }
+
+        function applyPrefs() {
+            updateUIScale(prefs.uiScale);
+            document.querySelector('input[type=range][max="20"]').value = prefs.uiScale;
+            
+            updateTextSize(prefs.textSize);
+            document.querySelector('input[type=range][max="1.25"]').value = prefs.textSize;
+        }
+
+        // --- TAB LOGIC ---
+        function switchMainTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tabName}`).classList.add('active');
+            
+            document.querySelectorAll('.main-tab').forEach(el => {
+                el.setAttribute('data-active', el.dataset.tab === tabName);
+                if(el.dataset.tab === tabName) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                if(el.dataset.tab === tabName) el.classList.add('text-blue-600', 'active');
+                else el.classList.remove('text-slate-400', 'text-blue-600', 'active');
+                if(el.dataset.tab !== tabName) el.classList.add('text-slate-400');
+            });
+
+            if(tabName === 'analytics') updateCharts();
+        }
+
+        // --- ANALYTICS ---
+        function initCharts() {
+            // 1. Trend Chart
+            const ctxTrend = document.getElementById('chart-trend').getContext('2d');
+            charts.trend = new Chart(ctxTrend, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Value (₹)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { beginAtZero: true, grid: { display: false } } } }
+            });
+
+            // 2. Dist Chart
+            const ctxDist = document.getElementById('chart-distribution').getContext('2d');
+            charts.dist = new Chart(ctxDist, {
+                type: 'doughnut',
+                data: { labels: ['Profiles', 'Hardware'], datasets: [{ data: [0, 0], backgroundColor: ['#3b82f6', '#f97316'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
+
+            // 3. Top Items
+            const ctxTop = document.getElementById('chart-top-items').getContext('2d');
+            charts.top = new Chart(ctxTop, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Total Value (₹)', data: [], backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function updateAnalytics() {
+            const totalValue = state.inventory.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            const totalQty = state.inventory.reduce((s, i) => s + i.qty, 0);
+            
+            document.getElementById('stat-total-value').textContent = `₹${totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+            document.getElementById('stat-total-qty').textContent = totalQty;
+            document.getElementById('stat-catalog-count').textContent = state.catalog.length;
+
+            // Percent Changes (vs previous day in history)
+            const historyLen = state.history.length;
+            if(historyLen >= 2) {
+                const prevVal = state.history[historyLen - 2].value;
+                const pct = prevVal === 0 ? 0 : ((totalValue - prevVal) / prevVal) * 100;
+                const badge = document.getElementById('badge-val-change');
+                badge.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+                badge.className = `text-[10px] px-1.5 py-0.5 rounded font-bold ${pct >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            }
+
+            // Advanced Stats
+            const avgPrice = totalQty > 0 ? (totalValue / totalQty) : 0;
+            document.getElementById('stat-avg-price').textContent = `₹${avgPrice.toFixed(0)}`;
+            document.getElementById('stat-low-stock').textContent = state.inventory.filter(i => i.qty <= 3).length;
+            
+            // Top Color Logic
+            const colorMap = {};
+            state.inventory.filter(i => i.type === 'profile').forEach(i => { colorMap[i.color] = (colorMap[i.color]||0) + i.qty; });
+            const topColor = Object.keys(colorMap).reduce((a, b) => colorMap[a] > colorMap[b] ? a : b, 'None');
+            document.getElementById('stat-top-color').textContent = topColor;
+
+            // High Value Item
+            const highItem = state.inventory.reduce((prev, curr) => ((prev.price * prev.qty) > (curr.price * curr.qty)) ? prev : curr, { desc: 'None', price: 0, qty: 0 });
+            document.getElementById('stat-high-item').textContent = highItem.desc;
+            document.getElementById('stat-high-val').textContent = `₹${(highItem.price * highItem.qty).toLocaleString()}`;
+
+            // Update Charts
+            if(charts.trend) {
+                charts.trend.data.labels = state.history.map(h => h.date.substring(5)); // mm-dd
+                charts.trend.data.datasets[0].data = state.history.map(h => h.value);
+                charts.trend.update();
+            }
+
+            if(charts.dist) {
+                const profileVal = state.inventory.filter(i => i.type === 'profile').reduce((s,i) => s + (i.price*i.qty), 0);
+                const hwVal = state.inventory.filter(i => i.type === 'hardware').reduce((s,i) => s + (i.price*i.qty), 0);
+                charts.dist.data.datasets[0].data = [profileVal, hwVal];
+                charts.dist.update();
+            }
+
+            if(charts.top) {
+                const sorted = [...state.inventory].sort((a,b) => (b.price * b.qty) - (a.price * a.qty)).slice(0, 5);
+                charts.top.data.labels = sorted.map(i => i.desc.substring(0, 15));
+                charts.top.data.datasets[0].data = sorted.map(i => i.price * i.qty);
+                charts.top.update();
+            }
+        }
+
+        // --- RENDERERS & CRUD (Existing Logic Maintained) ---
+        function renderAll() {
+            renderInventory('profile');
+            renderInventory('hardware');
+            updateAnalytics();
+            populateDropdowns();
+        }
+
+        function renderInventory(type) {
+            const isProfile = type === 'profile';
+            const tableBody = document.getElementById(isProfile ? 'table-body-profile' : 'table-body-hardware');
+            const cardContainer = document.getElementById(isProfile ? 'cards-profile' : 'cards-hardware');
+            const searchInput = document.getElementById(isProfile ? 'search-profiles' : 'search-hardware');
+            const term = searchInput.value.toLowerCase();
+            
+            const items = state.inventory.filter(item => {
+                if (item.type !== type) return false;
+                return (item.desc.toLowerCase().includes(term) || (item.code && item.code.toLowerCase().includes(term)) || (item.color && item.color.toLowerCase().includes(term)) || (item.hwType && item.hwType.toLowerCase().includes(term)));
+            });
+
+            if(isProfile) document.getElementById('count-profiles').textContent = items.length;
+            tableBody.innerHTML = ''; cardContainer.innerHTML = '';
+
+            items.forEach(item => {
+                const total = item.price * item.qty;
+                const isLowStock = item.qty <= 3;
+                const rowClass = `hover:bg-blue-50 transition-colors border-b border-slate-50 ${isLowStock ? 'bg-red-50' : ''}`;
+                const tr = document.createElement('tr');
+                tr.className = rowClass;
+                
+                const fmt = (n) => n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+                const label = isProfile ? `<span class="px-2 py-1 rounded text-[10px] font-bold ${getColorClass(item.color)} border border-slate-200">${item.color}</span>` : `<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">${item.hwType}</span>`;
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500">${isProfile ? item.code : label}</td>
+                    <td class="px-4 py-3 font-medium text-slate-800">${item.desc}</td>
+                    <td class="px-4 py-3">${isProfile ? label : `<span class="text-xs text-slate-400">-</span>`}</td>
+                    <td class="px-4 py-3 text-right text-slate-600 editable-cell" onclick="makeEditable(this, '${item.id}', 'price')">₹${fmt(item.price)}</td>
+                    <td class="px-4 py-3 text-right font-bold ${isProfile?'text-blue-700':'text-orange-700'} editable-cell" onclick="makeEditable(this, '${item.id}', 'qty')">${item.qty}</td>
+                    <td class="px-4 py-3 text-right font-medium">₹${fmt(total)}</td>
+                    <td class="px-4 py-3 text-center space-x-1">
+                        <button onclick="editItem('${item.id}')" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteItem('${item.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+
+                // Mobile Card
+                const card = document.createElement('div');
+                card.className = `bg-white p-4 rounded-lg shadow-sm border ${isLowStock ? 'border-red-200' : 'border-slate-200'}`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div><div class="font-bold text-slate-800 text-sm">${item.desc}</div><div class="text-xs font-mono text-slate-400 mt-1">${isProfile ? item.code : item.hwType}</div></div>
+                        ${label}
+                    </div>
+                    <div class="flex justify-between items-end mt-3 pt-3 border-t border-slate-100">
+                        <div><div class="text-xs text-slate-500">₹${fmt(item.price)} x ${item.qty}</div><div class="font-bold text-slate-800 text-lg">₹${fmt(total)}</div></div>
+                        <div class="flex gap-2">
+                            <button onclick="editItem('${item.id}')" class="p-2 bg-blue-50 text-blue-600 rounded-md"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteItem('${item.id}')" class="p-2 bg-red-50 text-red-600 rounded-md"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+                cardContainer.appendChild(card);
+            });
+        }
+
+        function getColorClass(c) {
+            if(!c) return ''; const l = c.toLowerCase();
+            if (l.includes('anthracite')) return 'bg-slate-700 text-white';
+            if (l.includes('white')) return 'bg-white text-slate-800';
+            if (l.includes('mahagony') || l.includes('mahogany')) return 'bg-red-900 text-white';
+            if (l.includes('oak')) return 'bg-amber-700 text-white';
+            if (l.includes('black')) return 'bg-black text-white';
+            if (l.includes('walnut')) return 'bg-amber-900 text-white';
+            return 'bg-slate-100 text-slate-600';
+        }
+
+        // --- EDITING & FORMS ---
+        function makeEditable(cell, id, field) {
+            if (cell.querySelector('input')) return;
+            const originalText = cell.innerText.replace(/₹|,/g, '').trim();
+            cell.innerHTML = `<input type="number" id="edit-${id}-${field}" value="${originalText}">`;
+            const input = cell.querySelector('input'); input.focus();
+            const save = () => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val) && val >= 0) {
+                    const idx = state.inventory.findIndex(i => i.id === id);
+                    if (idx > -1) { state.inventory[idx][field] = val; saveData(); renderAll(); showToast("Updated"); }
+                } else renderAll();
+            };
+            input.addEventListener('blur', save); input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); });
+        }
+
+        function openAddModal() {
+            currentEditId = null;
+            document.getElementById('modal-title').textContent = "Add Inventory";
+            document.getElementById('btn-save').textContent = "Save Entry";
+            resetForm(); openModal('add'); switchAddType('profile');
+        }
+
+        function switchAddType(type) {
+            currentAddType = type;
+            document.getElementById('btn-type-profile').setAttribute('data-active', type === 'profile');
+            document.getElementById('btn-type-hardware').setAttribute('data-active', type === 'hardware');
+            document.getElementById('form-profile').classList.toggle('hidden', type !== 'profile');
+            document.getElementById('form-hardware').classList.toggle('hidden', type !== 'hardware');
+            document.getElementById('price-display-area').classList.toggle('hidden', type !== 'profile');
+            if(type==='profile') populateDropdowns();
+        }
+
+        function populateDropdowns() {
+            const pSelect = document.getElementById('input-profile-desc');
+            if(pSelect.options.length <= 1) {
+                [...new Set(state.catalog.map(i => i.desc))].sort().forEach(d => {
+                    const opt = document.createElement('option'); opt.value = d; opt.textContent = d; pSelect.appendChild(opt);
+                });
+            }
+            const dl = document.getElementById('hw-types-list'); dl.innerHTML = '';
+            state.hardwareTypes.forEach(t => { const opt = document.createElement('option'); opt.value = t; dl.appendChild(opt); });
+        }
+
+        function handleProfileChange() {
+            const desc = document.getElementById('input-profile-desc').value;
+            const colorContainer = document.getElementById('color-options-container');
+            const groupColor = document.getElementById('group-profile-color');
+            colorContainer.innerHTML = ''; groupColor.classList.add('opacity-50', 'pointer-events-none');
+            selectedCatalogItem = null; document.getElementById('display-final-price').textContent = '₹0';
+            if(!desc) return;
+            
+            const matches = state.catalog.filter(i => i.desc === desc);
+            [...new Set(matches.map(i => i.color))].forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = `p-2 rounded text-xs border border-slate-200 ${getColorClass(c)} hover:ring-2 ring-blue-400`;
+                btn.textContent = c;
+                btn.onclick = () => {
+                     Array.from(colorContainer.children).forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
+                     btn.classList.add('ring-2', 'ring-blue-500');
+                     selectedCatalogItem = state.catalog.find(i => i.desc === desc && i.color === c);
+                     if(selectedCatalogItem) document.getElementById('display-final-price').textContent = '₹' + selectedCatalogItem.price;
+                };
+                colorContainer.appendChild(btn);
+            });
+            groupColor.classList.remove('opacity-50', 'pointer-events-none');
+        }
+
+        function saveItem() {
+            const qty = parseInt(document.getElementById('input-qty').value);
+            if(!qty || qty <= 0) { showToast("Invalid quantity", "error"); return; }
+            let newItem = { id: currentEditId || crypto.randomUUID(), type: currentAddType, qty: qty, date: new Date().toISOString() };
+
+            if(currentAddType === 'profile') {
+                if(!selectedCatalogItem) { showToast("Select Profile & Color", "error"); return; }
+                newItem = { ...newItem, code: selectedCatalogItem.code, desc: selectedCatalogItem.desc, color: selectedCatalogItem.color, price: selectedCatalogItem.price };
+            } else {
+                const hwType = document.getElementById('input-hw-type').value.trim();
+                const hwDesc = document.getElementById('input-hw-desc').value.trim();
+                const hwPrice = parseFloat(document.getElementById('input-hw-price').value);
+                if(!hwType || !hwDesc || isNaN(hwPrice)) { showToast("Fill all fields", "error"); return; }
+                newItem = { ...newItem, hwType, desc: hwDesc, price: hwPrice };
+                if(!state.hardwareTypes.includes(hwType)) state.hardwareTypes.push(hwType);
+            }
+
+            if (!currentEditId) {
+                const existing = state.inventory.find(i => i.type === newItem.type && i.desc === newItem.desc && (newItem.type==='profile' ? i.color === newItem.color : i.hwType === newItem.hwType));
+                if (existing) { existing.qty += newItem.qty; showToast("Merged existing"); saveData(); renderAll(); closeModal('add'); return; }
+            }
+
+            if(currentEditId) {
+                const idx = state.inventory.findIndex(i => i.id === currentEditId);
+                if(idx > -1) state.inventory[idx] = { ...state.inventory[idx], ...newItem };
+                showToast("Updated");
+            } else { state.inventory.push(newItem); showToast("Added"); }
+            saveData(); renderAll(); closeModal('add');
+        }
+
+        function editItem(id) {
+            const item = state.inventory.find(i => i.id === id); if(!item) return;
+            currentEditId = id;
+            document.getElementById('modal-title').textContent = "Edit Item"; document.getElementById('btn-save').textContent = "Update Item";
+            openModal('add'); switchAddType(item.type); document.getElementById('input-qty').value = item.qty;
+            if(item.type === 'profile') {
+                document.getElementById('input-profile-desc').value = item.desc;
+                handleProfileChange();
+                setTimeout(() => { Array.from(document.getElementById('color-options-container').children).find(b => b.textContent === item.color)?.click(); }, 50);
+            } else {
+                document.getElementById('input-hw-type').value = item.hwType;
+                document.getElementById('input-hw-desc').value = item.desc;
+                document.getElementById('input-hw-price').value = item.price;
+            }
+        }
+
+        function deleteItem(id) {
+            const idx = state.inventory.findIndex(i => i.id === id); if (idx === -1) return;
+            undoBuffer = { ...state.inventory[idx] }; state.inventory.splice(idx, 1);
+            saveData(); renderAll();
+            showToast("Deleted", "neutral", `<button onclick="undoDelete()" class="text-blue-300 font-bold underline text-xs uppercase">Undo</button>`);
+            if(undoTimer) clearTimeout(undoTimer); undoTimer = setTimeout(() => { undoBuffer = null; }, 5000);
+        }
+
+        function undoDelete() { if(undoBuffer) { state.inventory.push(undoBuffer); undoBuffer = null; saveData(); renderAll(); showToast("Restored"); } }
+        
+        function resetForm() {
+            document.getElementById('input-qty').value = ''; document.getElementById('input-profile-desc').value = '';
+            document.getElementById('color-options-container').innerHTML = ''; document.getElementById('input-hw-type').value = '';
+            document.getElementById('input-hw-desc').value = ''; document.getElementById('input-hw-price').value = '';
+            document.getElementById('display-final-price').textContent = '₹0'; selectedCatalogItem = null;
+        }
+
+        // --- MODAL UTILS ---
+        function openModal(id) { const m=document.getElementById('modal-'+id); m.classList.remove('pointer-events-none'); m.classList.add('modal-active'); }
+        function closeModal(id) { const m=document.getElementById('modal-'+id); m.classList.remove('modal-active'); setTimeout(()=>m.classList.add('pointer-events-none'),300); }
+        function openExportModal() { openModal('export'); }
+
+        // --- NEW EXPORT LOGIC ---
+        async function generateExport(format) {
+            const includeStats = document.getElementById('chk-exp-stats').checked;
+            const includeProfiles = document.getElementById('chk-exp-profiles').checked;
+            const includeHW = document.getElementById('chk-exp-hardware').checked;
+            const includeCatalog = document.getElementById('chk-exp-catalog').checked;
+            const mode = document.querySelector('input[name="export-mode"]:checked').value;
+            const dateStr = new Date().toISOString().split('T')[0];
+
+            if(!includeStats && !includeProfiles && !includeHW && !includeCatalog) {
+                showToast("Select at least one section", "error"); return;
+            }
+
+            showToast("Generating export...", "neutral");
+            
+            // --- PDF GENERATION ---
+            if (format === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const zip = new JSZip();
+                
+                // Helper: Generate single PDF blob
+                const generatePDFBlob = (sections) => {
+                    const doc = new jsPDF();
+                    let yPos = 15;
+
+                    // Header
+                    doc.setFontSize(18); doc.text("Shayona Windows Inventory", 14, yPos);
+                    doc.setFontSize(10); doc.setTextColor(100); yPos+=6;
+                    doc.text(`Report generated on ${new Date().toLocaleString()}`, 14, yPos); yPos+=10;
+                    doc.setLineWidth(0.5); doc.line(14, yPos, 196, yPos); yPos+=10;
+
+                    // 1. STATS (Charts)
+                    if(sections.includes('stats')) {
+                        doc.setFontSize(14); doc.setTextColor(0); doc.text("Statistics Summary", 14, yPos); yPos+=10;
+                        
+                        // Text Stats
+                        const totalVal = state.inventory.reduce((s, i) => s + (i.price*i.qty), 0);
+                        doc.setFontSize(10); 
+                        doc.text(`Total Value: Rs. ${totalVal.toLocaleString()}`, 14, yPos);
+                        doc.text(`Total Qty: ${state.inventory.reduce((s,i)=>s+i.qty,0)} units`, 80, yPos); yPos+=15;
+
+                        // Charts
+                        if(charts.trend) {
+                            const trendImg = charts.trend.toBase64Image();
+                            doc.addImage(trendImg, 'PNG', 14, yPos, 180, 80); yPos+=85;
+                        }
+                        if(yPos > 250) { doc.addPage(); yPos=20; }
+                        if(charts.dist) {
+                            const distImg = charts.dist.toBase64Image();
+                            doc.addImage(distImg, 'PNG', 14, yPos, 80, 80); 
+                        }
+                        if(charts.top) {
+                            const topImg = charts.top.toBase64Image();
+                            doc.addImage(topImg, 'PNG', 100, yPos, 90, 80); yPos+=90;
+                        }
+                        if(yPos > 250) { doc.addPage(); yPos=20; }
+                    }
+
+                    // 2. PROFILES
+                    if(sections.includes('profiles')) {
+                        doc.setFontSize(14); doc.text("Profiles Inventory", 14, yPos); yPos+=5;
+                        const rows = state.inventory.filter(i=>i.type==='profile').map(i=>[i.code, i.desc, i.color, i.qty, i.price, (i.price*i.qty)]);
+                        doc.autoTable({
+                            startY: yPos, head: [['Code', 'Description', 'Color', 'Qty', 'Price', 'Total']],
+                            body: rows, headStyles: {fillColor: [59, 130, 246]},
+                            margin: {top: 20}
+                        });
+                        yPos = doc.lastAutoTable.finalY + 15;
+                    }
+
+                    // 3. HARDWARE
+                    if(sections.includes('hardware')) {
+                        if(yPos > 250) { doc.addPage(); yPos=20; }
+                        doc.setFontSize(14); doc.text("Hardware Inventory", 14, yPos); yPos+=5;
+                        const rows = state.inventory.filter(i=>i.type==='hardware').map(i=>[i.hwType, i.desc, i.qty, i.price, (i.price*i.qty)]);
+                        doc.autoTable({
+                            startY: yPos, head: [['Type', 'Description', 'Qty', 'Price', 'Total']],
+                            body: rows, headStyles: {fillColor: [249, 115, 22]},
+                            margin: {top: 20}
+                        });
+                        yPos = doc.lastAutoTable.finalY + 15;
+                    }
+
+                    // 4. CATALOG
+                    if(sections.includes('catalog')) {
+                        if(yPos > 250) { doc.addPage(); yPos=20; }
+                        doc.setFontSize(14); doc.text("Catalog Price List", 14, yPos); yPos+=5;
+                        const rows = state.catalog.map(i=>[i.code||'-', i.desc, i.color, i.price]);
+                        doc.autoTable({
+                            startY: yPos, head: [['Code', 'Desc', 'Color', 'Price']],
+                            body: rows, headStyles: {fillColor: [100, 116, 139]},
+                            margin: {top: 20}
+                        });
+                    }
+
+                    return doc.output('blob');
+                };
+
+                if (mode === 'separate') {
+                    if(includeStats) zip.file(`Stats_${dateStr}.pdf`, generatePDFBlob(['stats']));
+                    if(includeProfiles) zip.file(`Profiles_${dateStr}.pdf`, generatePDFBlob(['profiles']));
+                    if(includeHW) zip.file(`Hardware_${dateStr}.pdf`, generatePDFBlob(['hardware']));
+                    if(includeCatalog) zip.file(`Catalog_${dateStr}.pdf`, generatePDFBlob(['catalog']));
+                    
+                    const content = await zip.generateAsync({type:"blob"});
+                    saveAs(content, `Shayona_Inventory_Separate_${dateStr}.zip`);
+                } else {
+                    // Combined
+                    const sections = [];
+                    if(includeStats) sections.push('stats');
+                    if(includeProfiles) sections.push('profiles');
+                    if(includeHW) sections.push('hardware');
+                    if(includeCatalog) sections.push('catalog');
+                    const blob = generatePDFBlob(sections);
+                    saveAs(blob, `Shayona_Inventory_Combined_${dateStr}.pdf`);
+                }
+            } 
+            // --- CSV GENERATION ---
+            else {
+                const zip = new JSZip();
+                
+                const getCSV = (data, headers) => {
+                    let csv = headers.join(",") + "\n";
+                    data.forEach(row => {
+                        csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",") + "\n";
+                    });
+                    return csv;
+                };
+
+                const parts = [];
+
+                if(includeStats) {
+                    const data = [
+                        ['Metric', 'Value'],
+                        ['Total Value', state.inventory.reduce((s,i)=>s+(i.price*i.qty),0)],
+                        ['Total Qty', state.inventory.reduce((s,i)=>s+i.qty,0)],
+                        ['Snapshot Date', dateStr]
+                    ];
+                    const csv = getCSV(data, ['Metric', 'Value']);
+                    if(mode==='separate') zip.file(`Stats_${dateStr}.csv`, csv);
+                    else parts.push("\n--- STATS ---\n" + csv);
+                }
+
+                if(includeProfiles) {
+                    const data = state.inventory.filter(i=>i.type==='profile').map(i=>[i.code, i.desc, i.color, i.qty, i.price, i.qty*i.price]);
+                    const csv = getCSV(data, ['Code','Desc','Color','Qty','Price','Total']);
+                    if(mode==='separate') zip.file(`Profiles_${dateStr}.csv`, csv);
+                    else parts.push("\n--- PROFILES ---\n" + csv);
+                }
+
+                if(includeHW) {
+                    const data = state.inventory.filter(i=>i.type==='hardware').map(i=>[i.hwType, i.desc, i.qty, i.price, i.qty*i.price]);
+                    const csv = getCSV(data, ['Type','Desc','Qty','Price','Total']);
+                    if(mode==='separate') zip.file(`Hardware_${dateStr}.csv`, csv);
+                    else parts.push("\n--- HARDWARE ---\n" + csv);
+                }
+
+                if(includeCatalog) {
+                    const data = state.catalog.map(i=>[i.code, i.desc, i.color, i.price]);
+                    const csv = getCSV(data, ['Code','Desc','Color','Price']);
+                    if(mode==='separate') zip.file(`Catalog_${dateStr}.csv`, csv);
+                    else parts.push("\n--- CATALOG ---\n" + csv);
+                }
+
+                if(mode === 'separate') {
+                    const content = await zip.generateAsync({type:"blob"});
+                    saveAs(content, `Shayona_CSV_Data_${dateStr}.zip`);
+                } else {
+                    const blob = new Blob([parts.join("\n")], {type: "text/csv;charset=utf-8"});
+                    saveAs(blob, `Shayona_Combined_Data_${dateStr}.csv`);
+                }
+            }
+
+            closeModal('export');
+            showToast("Export Downloaded");
+        }
+
+        // --- IMPORT/BACKUP UTILS ---
+        function downloadBackup() {
+            const dataStr = JSON.stringify(state);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            saveAs(blob, `Shayona_Backup_${new Date().toISOString().split('T')[0]}.json`);
+        }
+
+        function restoreBackup(input) {
+            const file = input.files[0]; if(!file) return;
+            const r = new FileReader();
+            r.onload = (e) => {
+                try { const d = JSON.parse(e.target.result); if(d.inventory) { state = d; saveData(); renderAll(); showToast("Restored"); } } 
+                catch(e) { showToast("Invalid File", "error"); }
+            };
+            r.readAsText(file);
+        }
+
+        function previewCSVImport() {
+            const file = document.getElementById('file-csv-import').files[0]; if(!file) { showToast("Select file", "error"); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split('\n');
+                importStagedData = [];
+                const color = document.getElementById('import-color-select').value;
+                const tbody = document.querySelector('#import-preview-table tbody'); tbody.innerHTML = '';
+                let pCount = 0;
+                lines.forEach(line => {
+                    const c = line.split(',').map(x=>x.trim().replace(/"/g,''));
+                    if(c.length>8 && c[2].length>3 && !isNaN(parseFloat(c[8]))) {
+                        const item = { code: c[2], desc: c[3], color: color, price: parseFloat(c[8]) };
+                        importStagedData.push(item);
+                        if(pCount<5) { tbody.insertAdjacentHTML('beforeend', `<tr><td class="p-1 border-b">${item.code}</td><td class="p-1 border-b truncate max-w-[150px]">${item.desc}</td><td class="p-1 border-b">${item.price}</td></tr>`); pCount++; }
+                    }
+                });
+                document.getElementById('import-preview-container').classList.remove('hidden');
+                document.getElementById('btn-preview-import').classList.add('hidden');
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmCSVImport() {
+            if(!importStagedData.length) return;
+            state.catalog.push(...importStagedData); saveData(); populateDropdowns(); showToast(`Imported ${importStagedData.length} items`);
+            document.getElementById('import-preview-container').classList.add('hidden');
+            document.getElementById('btn-preview-import').classList.remove('hidden');
+            document.getElementById('file-csv-import').value = ''; importStagedData = [];
+        }
+
+        function clearAllData() { if(confirm("Delete ALL data? Cannot undo.")) { localStorage.clear(); location.reload(); } }
+        function showToast(msg,type="success",actionHtml="") {
+            const t=document.getElementById('toast'); document.getElementById('toast-msg').textContent=msg; document.getElementById('toast-action').innerHTML=actionHtml;
+            document.getElementById('toast-icon').className = type==='error'?'fas fa-exclamation-circle text-red-400':(type==='neutral'?'fas fa-info-circle text-blue-400':'fas fa-check-circle text-green-400');
+            t.classList.remove('translate-x-full','opacity-0'); setTimeout(()=>t.classList.add('translate-x-full','opacity-0'),4000);
+        }
+    </script>
+</body>
+</html>
