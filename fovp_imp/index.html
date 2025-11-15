@@ -3,390 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CA 328 Cheat Sheet</title>
-    <!-- Using Inter font for readability -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    
+    <title>CA328 Question Bank Cheat Sheet</title>
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             line-height: 1.6;
-            background-color: #f8f9fa;
-            color: #212529;
+            background-color: #f4f4f4;
+            color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
 
-        .container {
-            max-width: 800px;
+        .page {
+            max-width: 8.5in;
+            min-height: 11in;
             margin: 20px auto;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 30px 40px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 1in;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             text-align: center;
-            color: #007bff;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
+            color: #2c3e50;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
         }
 
         h2 {
-            color: #007bff;
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 8px;
-            margin-top: 40px;
+            color: #34495e;
+            border-bottom: 1px solid #bdc3c7;
+            padding-top: 15px;
+        }
+
+        .question-block {
             margin-bottom: 20px;
         }
 
-        .qa-pair {
-            margin-bottom: 30px;
+        .question-text {
+            font-weight: bold;
+            color: #000;
         }
 
-        .question {
-            font-weight: 600;
-            color: #343a40;
-            margin-bottom: 12px;
-            font-size: 1.1rem;
+        .answer-text {
+            margin-left: 20px;
+            padding-left: 15px;
+            border-left: 3px solid #ecf0f1;
         }
 
-        .answer {
-            padding: 15px 20px;
-            border-left: 4px solid #007bff;
-            background-color: #fdfdfd;
-            border-radius: 0 5px 5px 0;
-            color: #495057;
-        }
-
-        .answer ul {
+        .answer-text ul {
             padding-left: 20px;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-
-        .answer li {
-            margin-bottom: 8px;
         }
         
-        .answer table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        
-        .answer th, .answer td {
-            border: 1px solid #dee2e6;
-            padding: 8px 12px;
-            text-align: left;
-        }
-        
-        .answer th {
-            background-color: #f1f3f5;
-            font-weight: 600;
+        .answer-text li {
+            margin-bottom: 5px;
         }
 
-        code, pre {
-            background: #f1f3f5;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.95em;
+        code {
+            font-family: Consolas, 'Courier New', monospace;
+            background-color: #ecf0f1;
+            padding: 2px 5px;
+            border-radius: 3px;
         }
 
-        pre {
-            padding: 10px 15px;
-            overflow-x: auto;
-            white-space: pre-wrap; /* Allows wrapping for long code lines */
-            word-wrap: break-word;
-        }
-
-        /* Print-specific styles */
         @media print {
             body {
                 background-color: #ffffff;
-                color: #000;
+            }
+            .page {
+                width: 100%;
                 margin: 0;
                 padding: 0;
-            }
-
-            .container {
-                max-width: 100%;
-                margin: 0;
                 border: none;
                 box-shadow: none;
-                padding: 10px;
             }
-            
-            h1 {
-                font-size: 1.5rem;
-                color: #000;
-                border-bottom: 2px solid #000;
+            h1, h2 {
+                page-break-after: avoid;
             }
-
-            h2 {
-                font-size: 1.25rem;
-                color: #000;
-                border-bottom: 1px solid #000;
-                /* Avoid page breaks right after a heading */
-                page-break-after: avoid; 
-            }
-            
-            .qa-pair {
-                /* Try to keep questions and answers together */
-                page-break-inside: avoid; 
-            }
-
-            .answer {
-                border-left: 3px solid #000;
-                background-color: #fff;
-                color: #000;
-            }
-            
-            .answer table, .answer th, .answer td {
-                border: 1px solid #000;
-            }
-            
-            code, pre {
-                background: #eee;
-                color: #000;
-                border: 1px solid #ccc;
+            .question-block {
+                page-break-inside: avoid;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>CA 328: Visual Programming Cheat Sheet</h1>
-        <p style="text-align: center; font-style: italic; margin-bottom: 30px;">Top 5 Questions from each unit, based on the provided Question Bank and PPTs.</p>
+    <div class="page">
+        <h1>CA328: Fundamental of Visual Programming - Cheat Sheet</h1>
 
-        <!-- Unit 1 -->
+        <!-- ==================== UNIT 1 ==================== -->
         <h2>Unit 1: Introduction to .NET Framework</h2>
 
-        <div class="qa-pair">
-            <p class="question">1. Define the Common Language Runtime (CLR) in the .NET Framework. Explain its role in the execution of .NET applications.</p>
-            <div class="answer">
-                <p>The <strong>Common Language Runtime (CLR)</strong> is the "heart" or "core component" of the .NET Framework. It is the execution engine that manages running applications.</p>
-                <p><strong>Key Roles:</strong></p>
+        <div class="question-block">
+            <p class="question-text">1. Define the Common Language Runtime (CLR) in the .NET Framework. Explain its role in the execution of .NET applications.</p>
+            <div class="answer-text">
+                <p>The <strong>CLR (Common Language Runtime)</strong> is the core component and execution engine of the .NET Framework. It's responsible for managing the execution of .NET applications.</p>
+                <p><strong>Roles:</strong></p>
                 <ul>
-                    <li><strong>Code Execution:</strong> It loads and executes .NET applications.</li>
-                    <li><strong>JIT Compilation:</strong> It converts the intermediate code (MSIL) into native machine code (code the CPU understands) using a <strong>Just-In-Time (JIT)</strong> compiler.</li>
-                    <li><strong>Memory Management:</strong> It automatically manages memory using the <strong>Garbage Collector (GC)</strong>, which frees memory from objects that are no longer needed.</li>
-                    <li><strong>Security:</strong> Enforces code access security (CAS) to prevent unauthorized operations.</li>
-                    <li><strong>Exception Handling:</strong> Provides a standard way to handle errors (exceptions) across different languages.</li>
-                    <li><strong>Type Safety:</strong> Enforces type rules via the Common Type System (CTS).</li>
+                    <li><strong>Code Execution:</strong> It converts intermediate code (MSIL/CIL) into native machine code using a Just-In-Time (JIT) compiler.</li>
+                    <li><strong>Memory Management:</strong> Automatically manages memory, most notably through <strong>Garbage Collection (GC)</strong>, which reclaims memory from unreferenced objects.</li>
+                    <li><strong>Security:</strong> Enforces code and access security (e.g., Code Access Security).</li>
+                    <li><strong>Exception Handling:</strong> Manages exceptions (errors) that occur during execution.</li>
+                    <li><strong>Type Safety:</strong> Ensures that code is type-safe and prevents memory corruption.</li>
+                    <li><strong>Thread Management:</strong> Provides services for managing application threads.</li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">2. What is the Common Type System (CTS) in .NET? How does it contribute to the language interoperability in .NET?</p>
-            <div class="answer">
-                <p>The <strong>Common Type System (CTS)</strong> describes the set of all data types that can be used in different .NET languages.</p>
-                <p><strong>Contribution to Interoperability:</strong></p>
-                <p>The CTS ensures that data types defined in one language can be understood by another. It provides a common standard.</p>
+        <div class="question-block">
+            <p class="question-text">2. List and briefly describe core components of the .NET Framework with neat diagram.</p>
+            <div class="answer-text">
+                <p>The two main components are:</p>
+                <ol>
+                    <li>
+                        <strong>Common Language Runtime (CLR):</strong> The execution engine that handles running applications. It provides services like JIT compilation, memory management (GC), security, and exception handling.
+                    </li>
+                    <li>
+                        <strong>Framework Class Library (FCL) / Base Class Library (BCL):</strong> A comprehensive library of reusable classes, interfaces, and value types. It provides common functionalities for tasks like string manipulation (<code>System.String</code>), data access (<code>System.Data</code>), file I/O (<code>System.IO</code>), web development (<code>System.Web</code>), and more.
+                    </li>
+                </ol>
+                <p>These components are supported by:</p>
                 <ul>
-                    <li><strong>Example:</strong> A <code>int</code> in C# and an <code>Integer</code> in VB.NET both map to the same CTS type: <code>System.Int32</code>.</li>
-                    <li>Because both languages use this common type, they can easily interact, pass data to each other, and even inherit classes from one another.</li>
+                    <li><strong>Common Type System (CTS):</strong> Defines how types are declared, used, and managed.</li>
+                    <li><strong>Common Language Specification (CLS):</strong> A subset of CTS that defines rules for language interoperability.</li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">3. Explain the significance of Garbage Collection in .NET. How does it improve memory management?</p>
-            <div class="answer">
-                <p><strong>Garbage Collection (GC)</strong> is the .NET Framework's <strong>automatic memory manager</strong>. Its significance is that it frees programmers from having to manually allocate and de-allocate memory.</p>
+        <div class="question-block">
+            <p class="question-text">3. What is the Common Type System (CTS) in .NET? How does it contribute to the language interoperability in .NET?</p>
+            <div class="answer-text">
+                <p>The <strong>CTS (Common Type System)</strong> is a standard that describes all data types (e.g., integers, strings, classes, structures) and how they are declared, used, and managed in the CLR.</p>
+                <p>It contributes to language interoperability by providing a single, common model for data types. This ensures that objects written in different .NET languages can interact with each other. For example, a C# <code>int</code> and a VB.NET <code>Integer</code> both map to the same CTS type (<code>System.Int32</code>), allowing them to be passed between a C# and VB.NET class seamlessly.</p>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">4. Compare and contrast the roles of the Common Language Specification (CLS) and the Common Type System (CTS) in .NET.</p>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Common Type System (CTS):</strong>
+                        <ul>
+                            <li><strong>Role:</strong> Defines *all* possible data types and rules for the .NET framework. It's the complete set of types.</li>
+                            <li><strong>Scope:</strong> Comprehensive (e.g., it includes types like <code>System.UInt32</code> - unsigned integer).</li>
+                        </ul>
+                    </li>
+                    <li><strong>Common Language Specification (CLS):</strong>
+                        <ul>
+                            <li><strong>Role:</strong> A *subset* of the CTS. It's a "gentleman's agreement" or set of rules that a language must follow to be considered ".NET compliant" and fully interoperable with other .NET languages.</li>
+                            <li><strong>Scope:</strong> More restrictive. For example, the CLS does not include unsigned integers, as not all languages (like VB.NET) support them. Code that only uses CLS-compliant features is guaranteed to work with any other CLS-compliant language.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Contrast:</strong> CTS defines *what* is possible. CLS defines *what* you should use for maximum interoperability.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">5. Explain the significance of Garbage Collection in .NET. How does it improve memory management?</p>
+            <div class="answer-text">
+                <p><strong>Garbage Collection (GC)</strong> is the automatic memory manager in the CLR. Its significance is that it removes the burden of manual memory management from the developer.</p>
                 <p><strong>How it improves memory management:</strong></p>
                 <ul>
-                    <li><strong>Prevents Memory Leaks:</strong> The GC periodically runs and checks for "unreferenced objects" (objects in memory that the application is no longer using).</li>
-                    <li><strong>Reclaims Memory:</strong> It automatically reclaims the memory used by these objects, making it available for new objects.</li>
-                    <li><strong>Increases Stability:</strong> By handling memory automatically, it reduces common programming errors (like "dangling pointers" or forgetting to free memory) that lead to application crashes.</li>
+                    <li>It runs as a background process, checking for objects in the managed heap that are no longer being used (i.e., have no active references).</li>
+                    <li>When it finds such objects, it automatically reclaims the memory they were using.</li>
+                    <li>This prevents common programming errors like <strong>memory leaks</strong> (where memory is allocated but never freed) and improves application stability.</li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">4. Explain the differences between managed code and unmanaged code.</p>
-            <div class="answer">
+        <div class="question-block">
+            <p class="question-text">6. Describe the .NET Framework architecture and explain its main components. Include a labeled diagram to support your explanation.</p>
+            <div class="answer-text">
+                <p>The .NET Framework architecture is a layered model:</p>
+                <ul>
+                    <li><strong>Top Layer (Languages):</strong> Various programming languages like C#, VB.NET, J#, etc.</li>
+                    <li><strong>Second Layer (Common Language Specification):</strong> Ensures languages can interoperate.</li>
+                    <li><strong>Third Layer (Framework Class Library):</strong> A vast library of code for common tasks, divided into namespaces:
+                        <ul>
+                            <li><code>System.Web</code> (for Web Forms, Web Services)</li>
+                            <li><code>System.Windows.Forms</code> (for Windows Forms applications)</li>
+                            <li><code>System.Data</code> (for ADO.NET data access)</li>
+                            <li><code>System.Xml</code> (for XML processing)</li>
+                            <li>And many more base classes (<code>System</code>, <code>System.IO</code>, etc.)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Bottom Layer (Common Language Runtime - CLR):</strong> The "engine" that manages code at execution time. It includes:
+                        <ul>
+                            <li>Garbage Collection (GC)</li>
+                            <li>Just-In-Time (JIT) Compilers</li>
+                            <li>Code Manager & Security</li>
+                            <li>Common Type System (CTS)</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p>This entire structure sits on top of the Operating System.</p>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">7. Explain the differences between managed code and unmanaged code in your own words using diagram.</p>
+            <div class="answer-text">
                 <ul>
                     <li><strong>Managed Code:</strong>
                         <ul>
-                            <li>This is code that runs *inside* the .NET Common Language Runtime (CLR).</li>
-                            <li>Examples: C#, VB.NET.</li>
-                            <li><strong>Benefits:</strong> It gets all the services from the CLR, such as automatic garbage collection, type safety, and security.</li>
-                            <li>It is first compiled to MSIL (Microsoft Intermediate Language).</li>
+                            <li><strong>Definition:</strong> Code that is executed *by* the Common Language Runtime (CLR). Examples include C# and VB.NET.</li>
+                            <li><strong>Execution:</strong> The source code is first compiled into an intermediate language (MSIL). The CLR then JIT-compiles this MSIL to native machine code at runtime.</li>
+                            <li><strong>Benefits:</strong> The CLR provides services like automatic garbage collection, type safety, and security. The developer doesn't need to manage memory directly.</li>
                         </ul>
                     </li>
                     <li><strong>Unmanaged Code:</strong>
                         <ul>
-                            <li>This is code that runs *outside* the CLR, directly on the operating system (CPU).</li>
-                            <li>Examples: C, C++.</li>
-                            <li><strong>Responsibilities:</strong> The programmer is fully responsible for all memory management (allocating and freeing memory), type safety, and security.</li>
+                            <li><strong>Definition:</strong> Code that is executed *directly by the operating system (CPU)*, not by the CLR. Examples include C or C++ compiled to native machine code.</li>
+                            <li><strong>Execution:</strong> The source code is compiled directly into a native executable (.exe or .dll).</li>
+                            <li><strong>Benefits:</strong> Can offer direct, low-level access to hardware. The developer is responsible for all memory management (allocation and de-allocation), which is more complex and can lead to errors like memory leaks.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Skipping to Q14 for brevity as others are similar/repetitive -->
+
+        <div class="question-block">
+            <p class="question-text">14. Evaluate the role of the Common Language Runtime (CLR) in .NET framework... Compare and contrast its Just-In-Time (JIT) compilation approach with other traditional execution models...</p>
+            <div class="answer-text">
+                <p><strong>Role of CLR:</strong> (See Q1) The CLR is the execution engine that manages .NET applications, providing services like JIT compilation, memory management (GC), security, and exception handling.</p>
+                <p><strong>JIT vs. Traditional Models:</strong></p>
+                <ul>
+                    <li><strong>Traditional (Precompiled Native Code, e.g., C++):</strong>
+                        <ul>
+                            <li><strong>How it works:</strong> The *entire* application is compiled into machine code for a specific CPU/OS *before* it is distributed.</li>
+                            <li><strong>Advantages:</strong> Can have a very fast startup time since no compilation is needed at runtime.</li>
+                            <li><strong>Disadvantages:</strong> The compiled code is not portable; you must create a different executable for each platform (Windows-x86, Windows-x64, Linux, etc.).</li>
+                        </ul>
+                    </li>
+                    <li><strong>CLR (Just-In-Time Compilation - JIT):</strong>
+                        <ul>
+                            <li><strong>How it works:</strong> The application is distributed as intermediate language (MSIL). When the application is run, the CLR's JIT compiler converts the MSIL into native machine code *on the fly*, method by method, as it's needed.</li>
+                            <li><strong>Advantages:</strong>
+                                <ol>
+                                    <li><strong>Portability:</strong> The same MSIL assembly can run on any platform that has a .NET CLR, as the JIT will compile it for the local machine.</li>
+                                    <li><strong>Optimization:</strong> The JIT can potentially optimize code based on the *actual* runtime environment and CPU.</li>
+                                </ol>
+                            </li>
+                            <li><strong>Disadvantages:</strong>
+                                <ol>
+                                    <li><strong>Slight Startup Cost:</strong> There is a small performance hit the first time a method is called because it needs to be JIT-compiled. (This is often negligible).</li>
+                                </ol>
+                            </li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">5. Evaluate the role of the CLR's Just-In-Time (JIT) compilation approach.</p>
-            <div class="answer">
-                <p>The JIT (Just-In-Time) compiler is a key part of the CLR's execution model. It balances portability with performance.</p>
-                <p><strong>Execution Process:</strong></p>
-                <ol>
-                    <li><strong>Compile-Time:</strong> Your C# code is compiled into <strong>MSIL</strong> (Microsoft Intermediate Language). This MSIL is platform-independent.</li>
-                    <li><strong>Run-Time:</strong> When you run the application, the CLR's JIT compiler loads the MSIL.</li>
-                    <li><strong>JIT Compilation:</strong> Right before a method is executed *for the first time*, the JIT compiler converts that method's MSIL into native machine code (code the CPU can execute directly).</li>
-                    <li><strong>Caching:</strong> This native code is then cached in memory. The *next* time that method is called, the CLR executes the cached native code directly, skipping compilation.</li>
-                </ol>
-                <p><strong>Advantages:</strong></p>
+        <div class="question-block">
+            <p class="question-text">15. Evaluate the significance of MSIL (Microsoft Intermediate Language)... How does MSIL contribute to platform independence...</p>
+            <div class="answer-text">
+                <p><strong>Significance of MSIL (or CIL):</strong> MSIL is a CPU-independent set of instructions. It is the low-level language that all .NET compilers (C#, VB.NET, etc.) compile their source code *into*.</p>
+                <p><strong>Contribution to Platform Independence:</strong></p>
                 <ul>
-                    <li><strong>Portability:</strong> The same MSIL file can run on any device (Windows, Linux, Mac) that has a compatible .NET CLR.</li>
-                    <li><strong>Performance:</strong> It's faster than pure interpretation because the code is compiled to native. It can also optimize code at runtime based on the specific machine.</li>
+                    <li>MSIL is not tied to any specific CPU or Operating System.</li>
+                    <li>An application compiled into MSIL can be run on *any* platform (Windows, Linux, macOS) that has a compatible .NET runtime (like the CLR or .NET Core).</li>
+                    <li>On that platform, the runtime's <strong>JIT (Just-In-Time) compiler</strong> takes the platform-independent MSIL and compiles it into the *native machine code* for that specific environment.</li>
+                    <li>This "compile-once, run-anywhere" model is the key to .NET's platform independence.</li>
                 </ul>
+                <p><strong>Benefits:</strong> Portability, language interoperability (all languages compile to the same MSIL).</p>
+                <p><strong>Challenges:</strong> Requires a runtime to be installed on the target machine. A very slight performance cost on the first run for JIT compilation.</p>
             </div>
         </div>
 
-        <!-- Unit 2 -->
+        <!-- ==================== UNIT 2 ==================== -->
         <h2>Unit 2: Basics of Object-Oriented programming using C#</h2>
 
-        <div class="qa-pair">
-            <p class="question">1. List and describe the four main principles of Object-Oriented Programming.</p>
-            <div class="answer">
+        <div class="question-block">
+            <p class="question-text">1. List and describe the four main principles of Object-Oriented Programming.</p>
+            <div class="answer-text">
                 <ol>
-                    <li><strong>Encapsulation:</strong> The practice of binding data (variables/fields) and the methods (functions) that operate on that data into a single unit, called a <code>class</code>. It hides the internal complexity from the outside world (e.g., using <code>private</code> fields) and exposes only necessary functionality (e.g., using <code>public</code> methods).</li>
-                    <li><strong>Inheritance:</strong> The mechanism that allows a new class (child class or derived class) to "acquire" or "inherit" the properties and methods of an existing class (parent class or base class). This promotes code reusability.</li>
-                    <li><strong>Polymorphism:</strong> (Meaning "many forms"). The ability for methods or objects to take on different forms.
+                    <li><strong>Encapsulation:</strong> The practice of bundling data (fields/attributes) and the methods (functions) that operate on that data into a single unit, called a class. It also involves hiding the internal state of an object from the outside world using access modifiers (like <code>private</code>), only exposing what is necessary through public methods or properties (data hiding).</li>
+                    <li><strong>Inheritance:</strong> A mechanism that allows a new class (the *derived* or *child* class) to acquire the properties and methods of an existing class (the *base* or *parent* class). This promotes code reusability.</li>
+                    <li><strong>Polymorphism:</strong> Literally "many forms." The ability of an object or method to take on different forms. It is achieved in two ways:
                         <ul>
-                            <li><strong>Method Overloading (Compile-Time):</strong> Having multiple methods with the *same name* but *different parameters* (different type or number of arguments).</li>
-                            <li><strong>Method Overriding (Run-Time):</strong> A child class provides its *own specific implementation* of a method that is already defined in its parent class.</li>
+                            <li><strong>Compile-Time (Method Overloading):</strong> Creating multiple methods with the same name but different parameters (number or type of arguments).</li>
+                            <li><strong>Run-Time (Method Overriding):</strong> A derived class provides a specific implementation for a method that is already defined in its base class (using <code>virtual</code> and <code>override</code> keywords).</li>
                         </ul>
                     </li>
-                    <li><strong>Abstraction:</strong> Hiding the complex implementation details and showing only the essential features of an object. It focuses on *what* an object does, not *how* it does it. (e.g., you press the 'on' button on a TV, you don't need to know how the circuits work).</li>
+                    <li><strong>Abstraction:</strong> Hiding complex implementation details and showing only the essential features of an object to the user. This is achieved using <code>abstract</code> classes and <code>interfaces</code>, which define *what* an object can do but not *how* it does it.</li>
                 </ol>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">2. What are Boxing and Unboxing in C#? Provide examples.</p>
-            <div class="answer">
-                <p>Boxing and Unboxing are processes that allow Value Types and Reference Types to work together.</p>
+        <div class="question-block">
+            <p class="question-text">2. What are Boxing and Unboxing in C#? Provide examples to differentiate between the two.</p>
+            <div class="answer-text">
                 <ul>
-                    <li><strong>Boxing:</strong> The process of converting a <strong>Value Type</strong> (like <code>int</code>, <code>double</code>, <code>struct</code>) into a <strong>Reference Type</strong> (like <code>object</code>). This is an <strong>implicit</strong> (automatic) conversion. The value is "boxed" and stored on the heap.</li>
-                    <li><strong>Unboxing:</strong> The process of converting the <strong>Reference Type</strong> (<code>object</code>) back into a <strong>Value Type</strong> (<code>int</code>). This is an <strong>explicit</strong> (manual) conversion and requires a cast.</li>
+                    <li><strong>Boxing:</strong> The process of converting a <strong>value type</strong> (like <code>int</code>, <code>struct</code>) into a <strong>reference type</strong> (<code>object</code>). This is an <em>implicit</em> (automatic) conversion. The value is "boxed" by wrapping it in a new object instance on the managed heap.
+                        <br>
+                        <code>int myInt = 123;</code><br>
+                        <code>object myObj = myInt; // Implicit boxing</code>
+                    </li>
+                    <li><strong>Unboxing:</strong> The process of converting the <code>object</code> type back to its original <strong>value type</strong>. This is an <em>explicit</em> conversion and requires a cast.
+                        <br>
+                        <code>int myNewInt = (int)myObj; // Explicit unboxing</code>
+                    </li>
                 </ul>
-                <pre><code>// 1. A Value Type
-int myValue = 123;
-
-// 2. Boxing: myValue (on the stack) is "boxed" 
-// and copied to myObject (on the heap). This is implicit.
-object myObject = myValue;
-
-// 3. Unboxing: myObject is "unboxed" back to
-// an int. This is explicit and requires a cast.
-int myUnboxedValue = (int)myObject;
-</code></pre>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">3. Explain the concept of Checked and Unchecked Blocks in C#. Why are these important for handling overflow?</p>
-            <div class="answer">
-                <p>These blocks control how C# handles <strong>arithmetic overflow</strong> for integer types (e.g., an <code>int</code> value going above 2,147,483,647).</p>
+        <div class="question-block">
+            <p class="question-text">3. Explain the concept of Checked and Unchecked Blocks in C#. Why are these important for handling overflow?</p>
+            <div class="answer-text">
+                <p><code>checked</code> and <code>unchecked</code> are keywords that control how C# handles <strong>arithmetic overflow</strong> for integral types (like <code>int</code>, <code>long</code>).</p>
                 <ul>
-                    <li><strong><code>checked</code> block:</strong>
-                        <ul>
-                            <li>This block *enforces* overflow checking at runtime.</li>
-                            <li>If an operation inside this block overflows, it will throw an <strong><code>OverflowException</code></strong>.</li>
-                            <li>Use this when you need to ensure your calculations are arithmetically correct and stop the program if they are not.</li>
-                        </ul>
+                    <li><strong><code>checked</code> block:</strong> Forces the runtime to check for an overflow. If a calculation exceeds the maximum or minimum value of the data type, an <code>OverflowException</code> is thrown.
+                        <br>
+                        <code>int i = int.MaxValue;</code><br>
+                        <code>checked { int j = i + 1; } // Throws OverflowException</code>
                     </li>
-                    <li><strong><code>unchecked</code> block:</strong>
-                        <ul>
-                            <li>This block *disables* overflow checking.</li>
-                            <li>If an operation overflows, the value is simply <strong>truncated</strong> (it "wraps around," usually to a large negative number) and no exception is thrown.</li>
-                            <li>This is the <strong>default behavior</strong> in C# for most operations.</li>
-                        </ul>
+                    <li><strong><code>unchecked</code> block:</strong> (This is the default behavior in C#). It <em>ignores</em> overflow. If a value exceeds the limit, it simply "wraps around" (truncates the result).
+                        <br>
+                        <code>int i = int.MaxValue;</code><br>
+                        <code>unchecked { int j = i + 1; } // j becomes int.MinValue</code>
                     </li>
                 </ul>
-                <pre><code>int maxInt = int.MaxValue;
+                <p><strong>Importance:</strong> They are important for numerical safety. You use <code>checked</code> in financial or scientific calculations where an incorrect, wrapped-around value would be disastrous. You use <code>unchecked</code> when you are certain an overflow won't happen or if you specifically *want* the wrap-around behavior (e.g., in some graphics or hashing algorithms).</p>
+            </div>
+        </div>
 
-try
+        <div class="question-block">
+            <p class="question-text">4. How does C# handle type casting? Differentiate between implicit and explicit casting with examples.</p>
+            <div class="answer-text">
+                <p>Type casting (or conversion) is converting a variable from one data type to another.</p>
+                <ul>
+                    <li><strong>Implicit Casting (Safe):</strong> This is an automatic conversion done by the compiler when there is *no risk of data loss*. This typically happens when converting from a smaller, less precise type to a larger, more precise one.
+                        <br>
+                        <code>int myInt = 100;</code><br>
+                        <code>double myDouble = myInt; // Implicit cast from int to double</code>
+                    </li>
+                    <li><strong>Explicit Casting (Unsafe):</strong> This requires the programmer to manually specify the conversion using parentheses <code>(type)</code>. It is required when there *is* a risk of data loss or the conversion might fail. This happens when converting from a larger type to a smaller one.
+                        <br>
+                        <code>double myDouble = 100.75;</code><br>
+                        <code>int myInt = (int)myDouble; // Explicit cast. 'myInt' is now 100. The .75 is lost.</code>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="question-block">
+            <p class="question-text">5. Create a C# class using auto-implemented properties... Also, write methods to get and set these properties.</p>
+            <div class="answer-text">
+                <p><strong>Auto-Implemented Properties</strong> are a shortcut for creating properties when no extra logic is needed in the <code>get</code> or <code>set</code> accessors. The compiler creates a private backing field automatically.</p>
+                <p>The question asks for *both* auto-properties and get/set *methods*, which is redundant, but here is how you would do each:</p>
+                <p><strong>Using Auto-Implemented Properties (Modern C#):</strong></p>
+                <code>
+<pre>
+public class Book
 {
-    // This will THROW an exception
-    checked
+    // Auto-implemented properties
+    public string Title { get; set; }
+    public string Author { get; set; }
+    public decimal Price { get; set; }
+}
+</pre>
+                </code>
+                <p><strong>Using Get/Set Methods (Older style, not recommended unless required):</strong></p>
+                <code>
+<pre>
+public class Book
+{
+    private string title; // Private backing field
+    
+    // Public method to get the title
+    public string GetTitle()
     {
-        int x = maxInt + 1; 
+        return this.title;
     }
+    
+    // Public method to set the title
+    public void SetTitle(string title)
+    {
+        this.title = title;
+    }
+    
+    // ... (repeat for Author and Price)
 }
-catch (OverflowException ex)
-{
-    Console.WriteLine("Checked block overflowed!");
-}
-
-// This will NOT throw. 'y' will be -2147483648
-unchecked
-{
-    int y = maxInt + 1;
-}
-</code></pre>
+</pre>
+                </code>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">4. How does C# handle type casting? Differentiate between implicit and explicit casting with examples.</p>
-            <div class="answer">
-                <p>Type casting is converting a variable from one data type to another.</p>
+        <div class="question-block">
+            <p class="question-text">9. Declare and use both value types and reference types in a C# program. Demonstrate how they behave differently in memory...</p>
+            <div class="answer-text">
                 <ul>
-                    <li><strong>Implicit Casting (Automatic):</strong>
+                    <li><strong>Value Types:</strong>
                         <ul>
-                            <li>Done automatically by the C# compiler.</li>
-                            <li>This is only allowed when the conversion is <strong>safe</strong> and there is <strong>no risk of data loss</strong>.</li>
-                            <li>This typically involves converting from a "smaller" type to a "larger" type (e.g., <code>int</code> to <code>double</code>).</li>
-                            <li><strong>Example:</strong> <code>int myInt = 100; double myDouble = myInt; // Automatic</code></li>
+                            <li><strong>Examples:</strong> <code>int</code>, <code>double</code>, <code>bool</code>, <code>char</code>, <code>struct</code>, <code>enum</code>.</li>
+                            <li><strong>Memory:</strong> Stored directly on the <strong>stack</strong> (if a local variable) or inline within the containing object.</li>
+                            <li><strong>Behavior:</strong> When you assign a value type to another variable, the value is <strong>copied</strong>. They are two independent copies.
+                                <br>
+                                <code>int a = 10;</code><br>
+                                <code>int b = a; // 'b' gets a *copy* of 10</code><br>
+                                <code>a = 20; // 'a' is 20, but 'b' is still 10</code>
+                            </li>
                         </ul>
                     </li>
-                    <li><strong>Explicit Casting (Manual):</strong>
+                    <li><strong>Reference Types:</strong>
                         <ul>
-                            <li>Must be done manually by the programmer using the cast operator <code>(type)</code>.</li>
-                            <li>This is required when there is a <strong>risk of data loss</strong> (e.g., loss of precision or magnitude).</li>
-                            <li>This typically involves converting from a "larger" type to a "smaller" type (e.g., <code>double</code> to <code>int</code>).</li>
-                            <li><strong>Example:</strong> <code>double myDouble = 9.78; int myInt = (int)myDouble; // Manual cast. myInt is now 9</code></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="qa-pair">
-            <p class="question">5. Explain how a multi-dimensional array is declared and used in C#. Also, explain the concept of jagged arrays.</p>
-            <div class="answer">
-                <ul>
-                    <li><strong>Multi-dimensional Array (Rectangular):</strong>
-                        <ul>
-                            <li>An array with more than one dimension, fixed in a grid-like (table) structure where each row has the same number of columns.</li>
-                            <li><strong>Declaration:</strong> <code>datatype[,] arrayName = new datatype[rows, columns];</code></li>
-                            <li><strong>Example:</strong> <code>int[,] matrix = new int[3, 3];</code></li>
-                            <li><strong>Usage:</strong> <code>matrix[0, 1] = 5; // Access row 0, column 1</code></li>
-                        </ul>
-                    </li>
-                    <li><strong>Jagged Array (Array of Arrays):</strong>
-                        <ul>
-                            <li>An array whose elements are *other arrays*.</li>
-                            <li>The key difference is that each inner array can have a <strong>different length</strong>.</li>
-                            <li><strong>Declaration:</strong> <code>datatype[][] arrayName = new datatype[rows][];</code></li>
-                            <li><strong>Example:</strong>
-<pre><code>int[][] jagged = new int[3][]; // An array of 3 arrays
-jagged[0] = new int[2]; // Row 0 has 2 elements
-jagged[1] = new int[5]; // Row 1 has 5 elements
-jagged[2] = new int[3]; // Row 2 has 3 elements
-jagged[1][3] = 10; // Access row 1, element 3
-</code></pre>
+                            <li><strong>Examples:</strong> <code>string</code>, <code>object</code>, <code>class</code>, <code>array</code>, <code>delegate</code>.</li>
+                            <li><strong>Memory:</strong> The actual object is stored on the <strong>heap</strong>. The variable on the stack only holds a *reference* (a memory address) to that object.</li>
+                            <li><strong>Behavior:</strong> When you assign a reference type, only the *reference* is <strong>copied</strong>, not the object itself. Both variables point to the *same* object on the heap.
+                                <br>
+                                <code>int[] arrA = { 1, 2, 3 };</code><br>
+                                <code>int[] arrB = arrA; // 'arrB' gets a *copy* of the reference</code><br>
+                                <code>arrA[0] = 99; // 'arrA[0]' is 99, and 'arrB[0]' is ALSO 99</code>
                             </li>
                         </ul>
                     </li>
@@ -394,500 +425,412 @@ jagged[1][3] = 10; // Access row 1, element 3
             </div>
         </div>
 
-        <!-- Unit 3 -->
-        <h2>Unit 3: Building desktop application (Windows Forms)</h2>
+        <!-- ==================== UNIT 3 ==================== -->
+        <h2>Unit 3: Building desktop application</h2>
 
-        <div class="qa-pair">
-            <p class="question">1. What is the role of the MessageBox class in Windows Forms?</p>
-            <div class="answer">
-                <p>The <code>MessageBox</code> class is used to display a pre-built dialog box (a popup window) to the user. It is a <strong>modal</strong> window, which means the user must interact with it (click a button) before they can return to the main application.</p>
-                <p><strong>Its roles are:</strong></p>
+        <div class="question-block">
+            <p class="question-text">1. Define a Windows Forms Application and list some commonly used Windows Forms Controls.</p>
+            <div class="answer-text">
+                <p>A <strong>Windows Forms Application</strong> is a type of desktop application for Windows that uses a graphical user interface (GUI). The application is built using a primary <strong>Form</strong> (which represents a window) and various <strong>Controls</strong> that are placed on the form to allow user interaction.</p>
+                <p><strong>Commonly Used Controls:</strong></p>
                 <ul>
-                    <li><strong>To Show Information:</strong> Display a simple message to the user (e.g., "Operation Complete").</li>
-                    <li><strong>To Ask Questions:</strong> Get a simple response from the user (e.g., "Are you sure you want to delete?") by showing buttons like <code>YesNo</code>, <code>YesNoCancel</code>, or <code>OKCancel</code>.</li>
-                    <li><strong>To Show Errors/Warnings:</strong> Display a message with a specific icon (like <code>Error</code>, <code>Warning</code>, <code>Information</code>) to alert the user.</li>
+                    <li><code>Label</code>: Displays static text.</li>
+                    <li><code>TextBox</code>: Allows the user to input text.</li>
+                    <li><code>Button</code>: A clickable button that performs an action.</li>
+                    <li><code>ListBox</code>: Displays a list of items for selection.</li>
+                    <li><code>ComboBox</code>: A drop-down list that combines a <code>TextBox</code> with a <code>ListBox</code>.</li>
+                    <li><code>CheckBox</code>: A box that can be checked or unchecked (for non-exclusive options).</li>
+                    <li><code>RadioButton</code>: A button (usually in a group) where only one option can be selected.</li>
+                    <li><code>PictureBox</code>: Displays an image.</li>
+                    <li><code>Panel</code> / <code>GroupBox</code>: Container controls used to group other controls together.</li>
+                    <li><code>ErrorProvider</code>: Displays an error icon next to a control.</li>
+                    <li><code>ToolTipProvider</code>: Shows a small pop-up hint when hovering over a control.</li>
                 </ul>
-                <p>You don't create an instance of it. You use the static <code>Show()</code> method:
-                <br><code>MessageBox.Show("Hello World", "My Caption", MessageBoxButtons.OK, MessageBoxIcon.Information);</code></p>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">2. Explain the difference between a TextBox and a ListBox control in Windows Forms.</p>
-            <div class="answer">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>TextBox</th>
-                            <th>ListBox</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Purpose</strong></td>
-                            <td>To get text <strong>input</strong> from a user, or display text.</td>
-                            <td>To display a <strong>list of items</strong> for the user to <strong>select</strong>.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Content</strong></td>
-                            <td>A single string of text (<code>.Text</code> property).</td>
-                            <td>A collection of items (<code>.Items</code> property).</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Key Feature</strong></td>
-                            <td>Can be <code>MultiLine</code> or have a <code>PasswordChar</code>.</td>
-                            <td>Can allow single or multiple selections (<code>.SelectionMode</code> property).</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Example Use</strong></td>
-                            <td>Username, Password, Address, Notes.</td>
-                            <td>List of countries, available hobbies, items in a cart.</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="question-block">
+            <p class="question-text">2. What is the role of the MessageBox class in Windows Forms?</p>
+            <div class="answer-text">
+                <p>The <code>MessageBox</code> class is used to display a pre-built <strong>modal dialog box</strong> (a pop-up window). Its role is to present a message, question, or warning to the user.</p>
+                <p>It is "modal," meaning it blocks the user from interacting with the main application form until they click one of its buttons (like OK, Yes/No, Cancel).</p>
+                <p>It is called using the static <code>Show()</code> method:
+                <br>
+                <code>MessageBox.Show("Hello World", "Welcome", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);</code></p>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">3. Explain the role of the ErrorProvider control in Windows Forms. How does it help in form validation?</p>
-            <div class="answer">
-                <p>The <code>ErrorProvider</code> is a non-visual component that provides a user-friendly way to show validation errors.</p>
-                <p><strong>Role & How it Helps:</strong></p>
-                <ol>
-                    <li>You drag an <code>ErrorProvider</code> from the Toolbox onto your form (it sits in the component tray).</li>
-                    <li>When you validate user input (e.g., in a button click or a control's <code>Validating</code> event), you check if the data is bad.</li>
-                    <li><strong>If input is invalid:</strong> You call the <code>SetError()</code> method.
-                        <br><code>errorProvider1.SetError(textBox1, "Name cannot be empty!");</code>
-                    </li>
-                    <li>This makes a small, blinking error icon (e.g., <strong>!</strong>) appear next to <code>textBox1</code>. When the user hovers over the icon, they see the error message ("Name cannot be empty!") as a tooltip.</li>
-                    <li><strong>If input is valid:</strong> You clear the error by passing an empty string.
-                        <br><code>errorProvider1.SetError(textBox1, "");</code>
-                    </li>
-                </ol>
-                <p>It's better than a <code>MessageBox</code> because it doesn't interrupt the user's workflow and can show multiple errors on the form at once.</p>
-            </div>
-        </div>
-
-        <div class="qa-pair">
-            <p class="question">4. Evaluate the use of container controls (like Panel and GroupBox) in organizing controls in a Windows Form.</p>
-            <div class="answer">
-                <p>Container controls are used to group other controls together. This is essential for layout management and a clean UI.</p>
+        <div class="question-block">
+            <p class="question-text">3. Explain the difference between a TextBox and a ListBox control in Windows Forms.</p>
+            <div class="answer-text">
                 <ul>
-                    <li><strong><code>GroupBox</code>:</strong>
+                    <li><strong>TextBox:</strong>
                         <ul>
-                            <li><strong>Purpose:</strong> Visually groups related controls.</li>
-                            <li><strong>Features:</strong> It has a <code>Text</code> property that creates a caption and draws a border around the controls.</li>
-                            <li><strong>Main Use:</strong> Its most important functional use is to group <code>RadioButton</code>s. Only one <code>RadioButton</code> inside a <code>GroupBox</code> can be selected at a time.</li>
+                            <li><strong>Purpose:</strong> Primarily for <strong>user input</strong>.</li>
+                            <li><strong>Interaction:</strong> The user types free-form text directly into the control.</li>
+                            <li><strong>Use:</strong> Used for names, passwords, search queries, multi-line notes, etc.</li>
                         </ul>
                     </li>
-                    <li><strong><code>Panel</code>:</strong>
+                    <li><strong>ListBox:</strong>
                         <ul>
-                            <li><strong>Purpose:</strong> A more general-purpose container for grouping controls.</li>
-                            <li><strong>Features:</strong> It's invisible by default (no border). Its main power comes from:
-                                <ul>
-                                    <li><strong>Movement:</strong> Moving the <code>Panel</code> moves all controls inside it.</li>
-                                    <li><strong>Visibility:</strong> Setting <code>panel1.Visible = false</code> hides the panel and *all* its child controls.</li>
-                                    <li><strong>Scrolling:</strong> Can provide scrollbars (<code>AutoScroll = true</code>) if the content inside is too large.</li>
-                                </ul>
-                            </li>
+                            <li><strong>Purpose:</strong> Primarily for <strong>item selection</strong>.</li>
+                            <li><strong>Interaction:</strong> The user is presented with a list of pre-defined items and can click to select one or more items from the list. The user cannot type new items into it.</li>
+                            <li><strong>Use:</strong> Used for selecting from a list of options, like states, days of the week, or available items.</li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">5. Understanding the Life-cycle of a Form.</p>
-            <div class="answer">
-                <p>The form life-cycle is the sequence of events that are raised from the moment a form is created until it is destroyed. Understanding this is key to knowing *where* to put your code.</p>
-                <p><strong>Key Events in Order:</strong></p>
+        <div class="question-block">
+            <p class="question-text">4. Explain the role of the ErrorProvider control in Windows Forms. How does it help in form validation?</p>
+            <div class="answer-text">
+                <p>The <strong>ErrorProvider</strong> control is a non-visual component used to show validation errors to the user without using an intrusive <code>MessageBox</code>.</p>
+                <p><strong>Role in validation:</strong></p>
+                <ul>
+                    <li>When a user's input in a control (like a <code>TextBox</code>) is invalid, you use the <code>ErrorProvider</code>'s <code>SetError()</code> method.</li>
+                    <li>This places a small, blinking error icon (e.g., a red circle with an "!") next to the invalid control.</li>
+                    <li>When the user hovers over the icon, a <code>ToolTip</code> appears showing the specific error message you set.</li>
+                    <li>This provides a clean, user-friendly way to indicate *which* field has an error and *why*. You clear the error by calling <code>SetError()</code> with an empty string.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">9. Evaluate the use of container controls (like Panel and GroupBox) in organizing controls in a Windows Form...</p>
+            <div class="answer-text">
+                <p>Container controls are essential for good UI layout and management.</p>
+                <ul>
+                    <li><strong>Panel:</strong>
+                        <ul>
+                            <li><strong>Purpose:</strong> A simple container for grouping controls. It's often used for functional grouping.</li>
+                            <li><strong>Features:</strong> It can have borders, and its <code>AutoScroll</code> property is very useful for creating scrollable regions if the content is too large for the form. It's the base for other layout panels.</li>
+                        </ul>
+                    </li>
+                    <li><strong>GroupBox:</strong>
+                        <ul>
+                            <li><strong>Purpose:</strong> Visually groups controls. It draws a border around its child controls and has a <code>Text</code> property that acts as a caption or title for the group.</li>
+                            <li><strong>Features:</strong> Excellent for visually separating related items, such as a group of <code>RadioButton</code> controls, to make the UI clear and easy to understand.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p><strong>Benefits:</strong> They improve UI by (1) creating a clear visual hierarchy, (2) allowing you to move, hide, or disable all controls within the container at once by moving/hiding/disabling the container, and (3) organizing radio buttons into distinct functional groups.</p>
+            </div>
+        </div>
+        
+        <div class="question-block">
+            <p class="question-text">11. Evaluate the use of the PictureBox control... How does its SizeMode property impact image display...</p>
+            <div class="answer-text">
+                <p>The <strong>PictureBox</strong> control is used to display images (BMP, JPEG, GIF, PNG, etc.). Its <code>SizeMode</code> property is critical for controlling how the image is displayed within the control's bounds:</p>
+                <ul>
+                    <li><strong><code>Normal</code>:</strong> The image is placed in the top-left corner. If the image is larger than the <code>PictureBox</code>, it is clipped. (Best for 1:1 display).</li>
+                    <li><strong><code>StretchImage</code>:</strong> The image is stretched or shrunk to fit the exact size of the <code>PictureBox</code>. This can distort the image's aspect ratio. (Good for simple borders, bad for photos).</li>
+                    <li><strong><code>AutoSize</code>:</strong> The <code>PictureBox</code> control itself resizes to fit the full size of the image.</li>
+                    <li><strong><code>CenterImage</code>:</strong> The image is centered within the <code>PictureBox</code>. If the image is larger, it is clipped.</li>
+                    <li><strong><code>Zoom</code>:</strong> The image is stretched or shrunk to fit the <code>PictureBox</code>, but it *maintains* its original aspect ratio. This is often the best choice for displaying photos, as it ensures the image fits without distortion.</li>
+                </ul>
+            </div>
+        </div>
+
+
+        <!-- ==================== UNIT 4 ==================== -->
+        <h2>Unit 4: Web Programming Fundamentals</h2>
+
+        <div class="question-block">
+            <p class="question-text">1. What is the role of HTTP Request and HTTP Response in web programming?</p>
+            <div class="answer-text">
+                <p>They are the foundation of client-server communication on the web.</p>
+                <ul>
+                    <li><strong>HTTP Request:</strong> A message sent *from the client* (like a web browser) *to the server*. It asks the server to perform an action. For example, "GET me the homepage" or "POST this form data."</li>
+                    <li><strong>HTTP Response:</strong> A message sent *from the server* back *to the client* in response to a request. It contains the data the client asked for (like the HTML of a webpage) and a status code (like 200 OK or 404 Not Found).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">2. List the main stages of the ASP.NET Page Life Cycle.</p>
+            <div class="answer-text">
+                <p>The main stages are:</p>
                 <ol>
-                    <li><strong><code>Load</code>:</strong> Fires *before* the form is displayed for the first time. This is the most common place to write initialization code, like populating ListBoxes or setting initial text.</li>
-                    <li><strong><code>Activated</code>:</strong> Fires when the form gains focus (e.g., the user clicks on it).</li>
-                    <li><strong><code>Shown</code>:</strong> Fires *after* the form has been displayed for the first time.</li>
-                    <li><strong><code>Paint</code>:</strong> Fires whenever the form (or part of it) needs to be redrawn.</li>
-                    <li><strong><code>Deactivate</code>:</strong> Fires when the form loses focus (e.g., the user clicks on another application).</li>
-                    <li><strong><code>Closing</code>:</strong> Fires *just before* the form closes (e.g., user clicks the 'X' button). You can *cancel* the close in this event (e.g., to ask "Are you sure you want to exit?").</li>
-                    <li><strong><code>Closed</code>:</strong> Fires *after* the form has been closed and destroyed. Use this for final cleanup.</li>
+                    <li><strong>PreInit:</strong> Create dynamic controls, set master page.</li>
+                    <li><strong>Init:</strong> Initialize controls (UniqueID is set).</li>
+                    <li><strong>InitComplete:</strong> Initialization is finished.</li>
+                    <li><strong>PreLoad:</strong> Load ViewState and postback data into controls.</li>
+                    <li><strong>Load:</strong> The <code>Page_Load</code> event fires. The page and controls are fully loaded.</li>
+                    <li><strong>Control PostBack Event(s):</strong> Events that caused the postback (e.g., <code>Button_Click</code>) are handled.</li>
+                    <li><strong>LoadComplete:</strong> All loading is done.</li>
+                    <li><strong>PreRender:</strong> Final chance to make changes to the page or controls.</li>
+                    <li><strong>SaveStateComplete:</strong> ViewState and control state are saved.</li>
+                    <li><strong>Render:</strong> The page is rendered into HTML to be sent to the browser.</li>
+                    <li><strong>Unload:</strong> Cleanup (e.g., close database connections).</li>
                 </ol>
             </div>
         </div>
 
-        <!-- Unit 4 -->
-        <h2>Unit 4: Web Programming Fundamentals (ASP.NET)</h2>
-
-        <div class="qa-pair">
-            <p class="question">1. What is the role of HTTP Request and HTTP Response in web programming?</p>
-            <div class="answer">
-                <p>They are the two halves of the communication between a <strong>client</strong> (like your web browser) and a <strong>server</strong> (the website's host).</p>
+        <div class="question-block">
+            <p class="question-text">3. What is the difference between GET and POST methods in HTTP?</p>
+            <div class="answer-text">
                 <ul>
-                    <li><strong>HTTP Request:</strong>
+                    <li><strong>GET Method:</strong>
                         <ul>
-                            <li>A message sent *by the client* (browser) *to the server*.</li>
-                            <li>It asks the server to do something, such as:
-                                <ul>
-                                    <li>"GET me the contents of /default.aspx" (when you visit a page).</li>
-                                    <li>"POST this form data to /login.aspx" (when you click a login button).</li>
-                                </ul>
-                            </li>
+                            <li>Sends data as part of the <strong>URL query string</strong> (e.g., <code>page.aspx?id=123</code>).</li>
+                            <li>Data is visible in the URL, browser history, and server logs.</li>
+                            <li><strong>Less secure.</strong></li>
+                            <li>Has a size limit (approx. 2048 characters).</li>
+                            <li>Can be cached and bookmarked.</li>
+                            <li>Used for retrieving data (e.g., search queries, page navigation).</li>
                         </ul>
                     </li>
-                    <li><strong>HTTP Response:</strong>
+                    <li><strong>POST Method:</strong>
                         <ul>
-                            <li>A message sent *by the server* *back to the client* in reply.</li>
-                            <li>It contains the result of the request, such as:
-                                <ul>
-                                    <li>The HTML, CSS, and JavaScript for the page ("200 OK").</li>
-                                    <li>An error message ("404 Not Found").</li>
-                                </ul>
-                            </li>
+                            <li>Sends data in the <strong>body</strong> of the HTTP request.</li>
+                            <li>Data is *not* visible in the URL.</li>
+                            <li><strong>More secure.</strong></li>
+                            <li>No size limit.</li>
+                            <li>Not cached or bookmarked.</li>
+                            <li>Used for submitting data (e.g., forms, file uploads, updates).</li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">2. List the main stages of the ASP.NET Page Life Cycle.</p>
-            <div class="answer">
-                <p>The Page Life Cycle is the series of steps an ASP.NET page goes through on the server every time it's requested.</p>
-                <p><strong>Key Stages (in order):</strong></p>
+        <div class="question-block">
+            <p class="question-text">4. Explain how form submission works in an ASP.NET Web Form. What is the significance of the runat="server" attribute?</p>
+            <div class="answer-text">
+                <p>In ASP.NET, a page (often) posts back to itself. All server controls are wrapped in a single <code>&lt;form&gt;</code> tag.</p>
+                <p>The <strong><code>runat="server"</code></strong> attribute is the most important part. It tells ASP.NET that:</p>
                 <ol>
-                    <li><strong><code>PreInit</code>:</strong> The very first step. Used to create dynamic controls or set the master page.</li>
-                    <li><strong><code>Init</code>:</strong> Controls are initialized and their UniqueIDs are set.</li>
-                    <li><strong><code>InitComplete</code>:</strong> All initialization is finished.</li>
-                    <li><strong><code>PreLoad</code>:</strong> The page's ViewState (old values) and postback data (new values from the form) are loaded into the controls.</li>
-                    <li><strong><code>Load</code>:</strong> The <strong><code>Page_Load</code></strong> event fires. This is the most common place to put code (e.g., set control properties, connect to a database *if not a postback*).</li>
-                    <li><strong>Control PostBack Event(s):</strong> The specific event that caused the postback fires (e.g., <code>Button1_Click</code>).</li>
-                    <li><strong><code>LoadComplete</code>:</strong> All loading and events are done.</li>
-                    <li><strong><code>PreRender</code>:</strong> The "last chance" to make any changes to the page or its controls before it gets rendered into HTML.</li>
-                    <li><strong><code>SaveStateComplete</code>:</strong> The final values of the controls are saved to ViewState.</li>
-                    <li><strong><code>Render</code>:</strong> The page and its controls are "drawn" as HTML, which is then sent to the browser.</li>
-                    <li><strong><code>UnLoad</code>:</strong> The very last step. Used for cleanup, like closing database connections or files.</li>
+                    <li>The form and its contents should be processed <strong>on the server</strong>.</li>
+                    <li>All controls inside it (like <code>&lt;asp:Button&gt;</code>) are <strong>server controls</strong>, not plain HTML.</li>
+                    <li>This allows them to have properties, raise server-side events (like <code>OnClick</code>), and maintain their state across postbacks (using ViewState).</li>
                 </ol>
+                <p>When a button is clicked, the form is POSTed back to the server, ASP.NET rebuilds the page, loads the ViewState, and then fires the specific server-side event (e.g., <code>Button1_Click</code>) that caused the submission.</p>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">3. What is the difference between GET and POST methods in HTTP?</p>
-            <div class="answer">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>GET</th>
-                            <th>POST</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Data Location</strong></td>
-                            <td>Data is appended to the URL (in the query string).</td>
-                            <td>Data is sent in the <strong>body</strong> of the HTTP request.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Visibility</strong></td>
-                            <td><strong>Visible</strong> in the URL, browser history, and server logs.</td>
-                            <td><strong>Not visible</strong> in the URL.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Security</strong></td>
-                            <td><strong>Less secure.</strong> NEVER use for passwords or sensitive data.</td>
-                            <td><strong>More secure.</strong> This is the standard for form submissions.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Data Limit</strong></td>
-                            <td>Limited by the maximum URL length (approx 2000 chars). Only ASCII.</td>
-                            <td>No real limit on size. Can send binary data (like files).</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Caching</strong></td>
-                            <td>Can be cached and bookmarked.</td>
-                            <td>Cannot be cached or bookmarked.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>On Reload</strong></td>
-                            <td>Harmless. Just requests the same URL.</td>
-                            <td>Browser warns "Are you sure you want to resubmit the form?".</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="qa-pair">
-            <p class="question">4. Explain... the significance of the <code>runat="server"</code> attribute?</p>
-            <div class="answer">
-                <p>The <code>runat="server"</code> attribute is the magic instruction that connects your ASP.NET page's HTML to the server-side code.</p>
-                <p><strong>Significance:</strong></p>
+        <div class="question-block">
+            <p class="question-text">5. Describe the validation controls in ASP.NET. How do they help in ensuring data integrity on forms?</p>
+            <div class="answer-text">
+                <p>Validation controls are special ASP.NET controls that check user input for errors *before* the form is processed on the server. They ensure data integrity by preventing bad data from being submitted.</p>
+                <p><strong>Main Validation Controls:</strong></p>
                 <ul>
-                    <li><strong>It tells ASP.NET:</strong> "This is not regular HTML. This is a <strong>server control</strong>."</li>
-                    <li><strong>Enables Server-Side Access:</strong> It allows you to access and program the control in your C# code-behind (e.g., <code>TextBox1.Text = "Hello";</code>). Without it, <code>TextBox1</code> wouldn't exist on the server.</li>
-                    <li><strong>Enables Events:</strong> It allows the control to raise server-side events (like <code>Button1.Click</code>).</li>
-                    <li><strong>Maintains State:</strong> It allows ASP.NET to automatically save and restore the control's value during a postback (using ViewState).</li>
+                    <li><strong><code>RequiredFieldValidator</code>:</strong> Ensures the user does not leave a control (like a <code>TextBox</code>) empty.</li>
+                    <li><strong><code>RangeValidator</code>:</strong> Checks that a user's input falls within a specified range (e.g., a number between 1 and 100, or a date).</li>
+                    <li><strong><code>CompareValidator</code>:</strong> Compares the user's input against a fixed value or the value of another control (e.g., to check if "Password" and "Confirm Password" match).</li>
+                    <li><strong><code>RegularExpressionValidator</code>:</strong> Checks that the input matches a specific pattern (a "regex"), such as a pattern for an email address, phone number, or zip code.</li>
+                    <li><strong><code>CustomValidator</code>:</strong> Allows you to write your own custom validation logic on the server-side (and optionally on the client-side).</li>
+                    <li><strong><code>ValidationSummary</code>:</strong> Collects all error messages from the other validators on the page and displays them in a single, consolidated list or message box.</li>
                 </ul>
-                <p>The <code>&lt;form&gt;</code> tag <strong>must</strong> have <code>runat="server"</code> for any server controls inside it (like <code>&lt;asp:Button&gt;</code> or <code>&lt;asp:TextBox&gt;</code>) to work.</p>
             </div>
         </div>
-
-        <div class="qa-pair">
-            <p class="question">5. Describe the validation controls in ASP.NET. How do they help in ensuring data integrity?</p>
-            <div class="answer">
-                <p>Validation controls are a set of special controls that automatically check user input. They ensure data integrity by preventing bad or incomplete data from being submitted to the server.</p>
-                <p><strong>Key Validation Controls:</strong></p>
+        
+        <div class="question-block">
+            <p class="question-text">6. What is the role of the web.config file in an ASP.NET application? How does it differ from machine.config?</p>
+            <div class="answer-text">
+                <p><strong><code>web.config</code>:</strong></p>
                 <ul>
-                    <li><strong><code>RequiredFieldValidator</code>:</strong> Checks that the user did not leave a control (like a TextBox) empty.</li>
-                    <li><strong><code>RangeValidator</code>:</strong> Checks that the user's input falls within a specified minimum and maximum (e.g., a number between 1 and 100, or a date in the past).</li>
-                    <li><strong><code>CompareValidator</code>:</strong> Compares the input of one control to another (e.g., <code>txtPassword</code> must equal <code>txtConfirmPassword</code>) or to a fixed value.</li>
-                    <li><strong><code>RegularExpressionValidator</code>:</strong> Checks that the input matches a specific pattern (a "regular expression"). This is used for emails, phone numbers, postcodes, etc.</li>
-                    <li><strong><code>CustomValidator</code>:</strong> Lets you write your own validation logic in code for complex rules (e.g., "check if this username already exists in the database").</li>
-                    <li><strong><code>ValidationSummary</code>:</strong> Does not perform validation, but it collects all the error messages from the other validators on the page and displays them in a single, neat list.</li>
+                    <li>An XML file that contains configuration settings for a *specific* ASP.NET web application.</li>
+                    <li>It is located in the application's root directory (and can also be in sub-directories).</li>
+                    <li>Used to store settings like:
+                        <ul>
+                            <li>Database connection strings.</li>
+                            <li>Session state configuration.</li>
+                            <li>Custom error pages.</li>
+                            <li>Security and authorization rules.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p><strong>Difference from <code>machine.config</code>:</strong></p>
+                <ul>
+                    <li><strong><code>machine.config</code>:</strong> This is the *master* configuration file for the *entire machine* (server). It contains default settings for *all* .NET applications (web and desktop) running on that server.</li>
+                    <li><strong><code>web.config</code>:</strong> This file is for *one application* and its settings *override* the settings from <code>machine.config</code>.</li>
+                    <li><strong>Hierarchy:</strong> Settings are inherited. The final configuration for an app is a combination of <code>machine.config</code> (lowest priority) + any <code>web.config</code> files in parent folders + the app's own <code>web.config</code> (highest priority).</li>
                 </ul>
             </div>
         </div>
 
-        <!-- Unit 5 -->
+        <!-- ==================== UNIT 5 ==================== -->
         <h2>Unit 5: Database Connectivity through ADO.NET</h2>
 
-        <div class="qa-pair">
-            <p class="question">1. Differentiate between Connected and Disconnected environments in ADO.NET.</p>
-            <div class="answer">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>Connected Environment</th>
-                            <th>Disconnected Environment</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Main Class</strong></td>
-                            <td><code>DataReader</code> (e.g., <code>SqlDataReader</code>)</td>
-                            <td><code>DataSet</code> & <code>DataAdapter</code> (e.g., <code>SqlDataAdapter</code>)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Connection</strong></td>
-                            <td>Maintains an <strong>open, constant connection</strong> to the DB.</td>
-                            <td>Connects, gets the data, and <strong>immediately disconnects</strong>.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Data Access</strong></td>
-                            <td><strong>Read-only</strong>, <strong>forward-only</strong> stream of data.</td>
-                            <td>Full in-memory copy. Can read, write, update, delete, move forward/backward.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Memory Use</strong></td>
-                            <td>Low (only one record in memory at a time).</td>
-                            <td>High (holds all data in the <code>DataSet</code>).</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Performance</strong></td>
-                            <td><strong>Very fast</strong> for reading large amounts of data.</td>
-                            <td>Slower initial load, but flexible.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Scalability</strong></td>
-                            <td>Low (holds a connection open, which is a limited resource).</td>
-                            <td><strong>High</strong> (doesn't hold connections, so many users can be served).</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="question-block">
+            <p class="question-text">1. Define ADO.NET and explain its importance in database connectivity.</p>
+            <div class="answer-text">
+                <p><strong>ADO.NET (ActiveX Data Objects .NET)</strong> is the data-access technology/framework within the .NET Framework. Its importance is providing a standard, object-oriented set of classes for .NET applications to connect to, retrieve, and manipulate data from various data stores (like SQL Server, Oracle, XML, etc.).</p>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">2. What are the key components of the ADO.NET Object Model?</p>
-            <div class="answer">
-                <p>The model is split into two main parts: the <strong>.NET Data Provider</strong> (the "bridge" to the DB) and the <strong><code>DataSet</code></strong> (the "in-memory" data).</p>
-                <p><strong>.NET Data Provider Components:</strong></p>
+        <div class="question-block">
+            <p class="question-text">2. What are the key components of the ADO.NET Object Model?</p>
+            <div class="answer-text">
+                <p>The model is split into two main parts:</p>
+                <ol>
+                    <li><strong>.NET Data Provider (Connected Model):</strong>
+                        <ul>
+                            <li><strong><code>Connection</code></strong> (e.g., <code>SqlConnection</code>): Establishes the connection to the database.</li>
+                            <li><strong><code>Command</code></strong> (e.g., <code>SqlCommand</code>): Executes an SQL statement (SELECT, INSERT, etc.).</li>
+                            <li><strong><code>DataReader</code></strong> (e.g., <code>SqlDataReader</code>): A fast, forward-only, read-only stream of data from a query.</li>
+                            <li><strong><code>DataAdapter</code></strong> (e.g., <code>SqlDataAdapter</code>): The bridge between the database and the DataSet. It uses <code>Command</code> objects to fill a <code>DataSet</code> and to update the database.</li>
+                        </ul>
+                    </li>
+                    <li><strong>DataSet (Disconnected Model):</strong>
+                        <ul>
+                            <li><strong><code>DataSet</code>:</strong> An in-memory, disconnected cache of data. It can hold one or more <code>DataTable</code> objects.</li>
+                            <li><strong><code>DataTable</code>:</strong> Represents a single table of data in memory, containing <code>DataRow</code> and <code>DataColumn</code> collections.</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">3. Differentiate between Connected and Disconnected environments in ADO.NET.</p>
+            <div class="answer-text">
                 <ul>
-                    <li><strong><code>Connection</code> (e.g., <code>SqlConnection</code>):</strong> Manages the connection to the database (handles the connection string, opening, and closing).</li>
-                    <li><strong><code>Command</code> (e.g., <code>SqlCommand</code>):</strong> Represents a SQL statement (<code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>) or a stored procedure to be executed.</li>
-                    <li><strong><code>DataReader</code> (e.g., <code>SqlDataReader</code>):</strong> (Connected model) Reads a high-speed, forward-only, read-only stream of data directly from the database.</li>
-                    <li><strong><code>DataAdapter</code> (e.g., <code>SqlDataAdapter</code>):</strong> (Disconnected model) The "bridge" that retrieves data from the DB to <code>Fill</code> a <code>DataSet</code>, and pushes changes from the <code>DataSet</code> back to the DB using <code>Update</code>.</li>
-                </ul>
-                <p><strong>Disconnected Component:</strong></p>
-                <ul>
-                    <li><strong><code>DataSet</code>:</strong> An in-memory, disconnected copy of the database. It contains <code>DataTable</code>s, <code>DataRow</code>s, <code>DataColumn</code>s, and <code>DataRelation</code>s. It has no knowledge of the database it came from.</li>
+                    <li><strong>Connected Environment:</strong>
+                        <ul>
+                            <li>Requires a <strong>constant, open connection</strong> to the database.</li>
+                            <li>Uses a <strong><code>DataReader</code></strong> to get a fast, read-only, forward-only stream of data.</li>
+                            <li><strong>Pros:</strong> Very fast for reading data; data is always current.</li>
+                            <li><strong>Cons:</strong> Holds database connections open, which uses resources and is less scalable. Data is read-only.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Disconnected Environment:</strong>
+                        <ul>
+                            <li>Connects briefly to the database to <strong>fill a <code>DataSet</code></strong> (an in-memory copy), and then <strong>disconnects</strong>.</li>
+                            <li>The application works with the local <code>DataSet</code>.</li>
+                            <li>Uses a <strong><code>DataAdapter</code></strong> to later reconnect and push any changes (INSERTs, UPDATEs, DELETEs) from the <code>DataSet</code> back to the database.</li>
+                            <li><strong>Pros:</strong> Highly scalable (doesn't hold connections), flexible (can work offline, can hold multiple tables).</li>
+                            <li><strong>Cons:</strong> Data can become stale (out of date); more memory usage.</li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">3. Explain how the DataReader object works in ADO.NET. Why is it used in a connected environment?</p>
-            <div class="answer">
-                <p>The <code>DataReader</code> provides a high-performance, forward-only, read-only "stream" of data from a database.</p>
+        <div class="question-block">
+            <p class="question-text">4. Explain how the DataReader object works in ADO.NET. Why is it used in a connected environment?</p>
+            <div class="answer-text">
+                <p>The <strong><code>DataReader</code></strong> (e.g., <code>SqlDataReader</code>) provides a way to read a stream of data from a database. It is created by calling <code>ExecuteReader()</code> on a <code>Command</code> object.</p>
                 <p><strong>How it works:</strong></p>
-                <ol>
-                    <li>You create a <code>Connection</code> and <code>Command</code> object.</li>
-                    <li>You call <code>connection.Open()</code>.</li>
-                    <li>You call <code>command.ExecuteReader()</code>, which returns a <code>SqlDataReader</code>.</li>
-                    <li>You use a <code>while (reader.Read())</code> loop to advance the reader to the next record. The <code>.Read()</code> method returns <code>true</code> if there is another record.</li>
-                    <li>Inside the loop, you access data for the *current record* (e.g., <code>reader["ColumnName"]</code>).</li>
-                    <li>When finished, you <strong>must</strong> call <code>reader.Close()</code> and <code>connection.Close()</code>.</li>
-                </ol>
-                <p><strong>Why connected?</strong> It is the definition of a connected environment because it <strong>requires a live, open connection</strong> to the database the entire time it is reading. It doesn't copy all the data; it just reads the stream directly from the server, one row at a time.</p>
+                <ul>
+                    <li>It does not pull all data at once. It pulls one row at a time into memory.</li>
+                    <li>It is <strong>forward-only</strong> (you can only go to the next record, not back).</li>
+                    <li>It is <strong>read-only</strong> (you cannot update data with it).</li>
+                    <li>You use a <code>while (reader.Read())</code> loop to iterate through the records one by one.</li>
+                </ul>
+                <p>It is used in a <strong>connected environment</strong> because it *requires* the <code>Connection</code> object to remain open and active for as long as you are reading data from it. As soon as you close the connection, the <code>DataReader</code> becomes unusable.</p>
             </div>
         </div>
-
-        <div class="qa-pair">
-            <p class="question">4. Describe the steps involved in performing CRUD operations using ADO.NET in a connected model.</p>
-            <div class="answer">
-                <p><strong>CRUD</strong> = Create (<code>INSERT</code>), Read (<code>SELECT</code>), Update (<code>UPDATE</code>), Delete (<code>DELETE</code>).</p>
-                <p><strong>For READ (SELECT):</strong></p>
+        
+        <div class="question-block">
+            <p class="question-text">6. What is the DataSet class in ADO.NET? Explain how it works in a disconnected environment.</p>
+            <div class="answer-text">
+                <p>A <strong><code>DataSet</code></strong> is an in-memory representation of data. It is essentially a mini, disconnected database cached in your application's memory. It can contain one or more <strong><code>DataTable</code></strong> objects, as well as relationships between them (<code>DataRelation</code>).</p>
+                <p><strong>How it works (Disconnected):</strong></p>
                 <ol>
-                    <li>Create <code>SqlConnection</code> and <code>SqlCommand</code> (with <code>SELECT...</code> query).</li>
-                    <li>Open the connection: <code>conn.Open()</code>.</li>
-                    <li>Execute the command: <code>SqlDataReader reader = cmd.ExecuteReader()</code>.</li>
-                    <li>Loop through results: <code>while (reader.Read()) { ... }</code>.</li>
-                    <li>Close the reader: <code>reader.Close()</code>.</li>
-                    <li>Close the connection: <code>conn.Close()</code>.</li>
-                </ol>
-                <p><strong>For CREATE, UPDATE, DELETE (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>):</strong></p>
-                <ol>
-                    <li>Create <code>SqlConnection</code> and <code>SqlCommand</code> (with <code>INSERT...</code>, <code>UPDATE...</code>, or <code>DELETE...</code> query).</li>
-                    <li>Open the connection: <code>conn.Open()</code>.</li>
-                    <li>Execute the command: <code>int rowsAffected = cmd.ExecuteNonQuery()</code>.</li>
-                    <li>(Optional) Check <code>rowsAffected</code> to see if the command was successful.</li>
-                    <li>Close the connection: <code>conn.Close()</code>.</li>
+                    <li>A <code>DataAdapter</code> opens a connection to the database.</li>
+                    <li>It executes a SELECT command and uses the results to <strong><code>Fill()</code></strong> the <code>DataSet</code> with <code>DataTable</code>s.</li>
+                    <li>The <code>DataAdapter</code> then closes the connection.</li>
+                    <li>The application is now "disconnected" and can read, add, edit, and delete rows in the local <code>DataSet</code>, all while having no connection to the database.</li>
+                    <li>Later, the <code>DataAdapter</code> can reconnect and call its <strong><code>Update()</code></strong> method, which inspects the <code>DataSet</code> for changes (new, modified, or deleted rows) and executes the appropriate INSERT, UPDATE, or DELETE commands on the database to synchronize the changes.</li>
                 </ol>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">5. What is the DataSet class in ADO.NET? Explain how it works in a disconnected environment.</p>
-            <div class="answer">
-                <p>A <code>DataSet</code> is an <strong>in-memory database</strong>. It's a "disconnected" copy of data retrieved from a database.</p>
-                <p>It is a collection of <code>DataTable</code>s, which in turn are collections of <code>DataRow</code>s and <code>DataColumn</code>s. It can also hold relationships (<code>DataRelation</code>) between tables.</p>
-                <p><strong>How it works in a disconnected environment:</strong></p>
-                <ol>
-                    <li>A <code>SqlDataAdapter</code> is configured with a <code>SELECT</code> command.</li>
-                    <li>You call <code>adapter.Fill(myDataSet)</code>.</li>
-                    <li>The adapter opens a connection, executes the <code>SELECT</code>, fills the <code>DataSet</code> with the data, and <strong>immediately closes the connection</strong>.</li>
-                    <li>Your application is now "disconnected." You work *only* with the <code>myDataSet</code> object in memory. You can read, change, add, and delete rows. The <code>DataSet</code> tracks all these changes (original vs. current values).</li>
-                    <li>When you are ready to save, you call <code>adapter.Update(myDataSet)</code>.</li>
-                    <li>The adapter re-opens the connection, checks all the changes in the <code>DataSet</code>, and automatically generates and executes the required <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code> commands to synchronize the database with your <code>DataSet</code>.</li>
-                    <li>It then closes the connection again.</li>
-                </ol>
-            </div>
-        </div>
-
-        <!-- Unit 6 -->
+        <!-- ==================== UNIT 6 ==================== -->
         <h2>Unit 6: Building WPF Application</h2>
 
-        <div class="qa-pair">
-            <p class="question">1. Define WPF. What does it stand for and what are its main uses?</p>
-            <div class="answer">
+        <div class="question-block">
+            <p class="question-text">1. Define WPF. What does it stand for and what are its main uses?</p>
+            <div class="answer-text">
+                <p><strong>WPF</strong> stands for <strong>Windows Presentation Foundation</strong>.</p>
+                <p>It is Microsoft's modern UI framework for building rich, graphically-intensive desktop applications for Windows. It is a subsystem of the .NET Framework (3.0 and higher).</p>
+                <p><strong>Main Uses:</strong></p>
                 <ul>
-                    <li><strong>Stands For:</strong> <strong>WPF</strong> stands for <strong>Windows Presentation Foundation</strong>.</li>
-                    <li><strong>Definition:</strong> It is Microsoft's modern UI framework (part of .NET 3.0 and newer) for building rich, visually stunning desktop applications for Windows.</li>
-                    <li><strong>Main Uses:</strong>
+                    <li>To create visually rich user interfaces that go beyond standard buttons and text boxes.</li>
+                    <li>To build applications that combine UIs, 2D/3D graphics, documents, and multimedia (audio/video) into one framework.</li>
+                    <li>To create applications with complex animations and data binding.</li>
+                    <li>It separates the UI *appearance* (defined in <strong>XAML</strong>) from the application *behavior* (defined in <strong>C#</strong>).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">2. List the five WPF layout panels. Briefly mention the purpose of each.</p>
+            <div class="answer-text">
+                <ol>
+                    <li><strong>Grid Panel:</strong> Arranges controls in a table-like structure of rows and columns. Most flexible and common.</li>
+                    <li><strong>Stack Panel:</strong> Stacks controls in a single line, either vertically (default) or horizontally.</li>
+                    <li><strong>Dock Panel:</strong> Allows you to "dock" controls to the edges (Top, Bottom, Left, Right) of the panel. The last element fills the remaining center space.</li>
+<li><strong>Wrap Panel:</strong> Arranges controls in a line (horizontally or vertically) and "wraps" to the next line when it runs out of space.</li>
+                    <li><strong>Canvas Panel:</strong> A simple layout panel that allows you to position controls using explicit X/Y coordinates (e.g., <code>Canvas.Left="10"</code>). Least flexible, as it doesn't resize.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">3. What is XAML in WPF? Explain it's use in detail.</p>
+            <div class="answer-text">
+                <p><strong>XAML</strong> stands for <strong>eXtensible Application Markup Language</strong>. It is a declarative, XML-based language used to define the user interface in a WPF application.</p>
+                <p><strong>Use / Purpose:</strong></p>
+                <ul>
+                    <li><strong>Separation of Concerns:</strong> XAML's main purpose is to separate the *appearance* (the UI design) from the *behavior* (the logic). Designers can work on the XAML file to create the layout, while developers work on the C# "code-behind" file (e.g., <code>MainWindow.xaml.cs</code>) to handle events and logic.</li>
+                    <li><strong>Declarative UI:</strong> Instead of writing C# code to *create* and *configure* a button (<code>Button b = new Button(); b.Content = "Click";</code>), you simply *declare* it in XAML (<code>&lt;Button Content="Click" /&gt;</code>). This is cleaner and more readable.</li>
+                    <li><strong>Rich Features:</strong> XAML is used to define everything from simple controls (buttons, textboxes) to complex layouts (Grids, StackPanels), data binding, styles, and animations.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="question-block">
+            <p class="question-text">4. Explain how the Stack Panel and Grid Panel work in WPF. In which situations would you use each?</p>
+            <div class="answer-text">
+                <ul>
+                    <li><strong>Stack Panel:</strong>
                         <ul>
-                            <li>Building Windows desktop applications.</li>
-                            <li>Creating complex and rich user interfaces that include 2D/3D graphics, animations, documents, and multimedia.</li>
-                            <li>It uses <strong>XAML</strong> (a markup language) to define the "appearance" (the UI) and a code-behind language like <strong>C#</strong> to define the "behavior" (the logic).</li>
+                            <li><strong>How it works:</strong> It arranges its child controls in a single line (a "stack"). You can set its <code>Orientation</code> property to <code>Vertical</code> (default) or <code>Horizontal</code>.</li>
+                            <li><strong>When to use:</strong> Use it for simple layouts where you just need a list of controls, like a form with labels and textboxes stacked vertically, or a toolbar with buttons stacked horizontally.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Grid Panel:</strong>
+                        <ul>
+                            <li><strong>How it works:</strong> It arranges controls in a flexible grid of rows and columns. You define <code>RowDefinitions</code> and <code>ColumnDefinitions</code>, and then place controls into specific cells using <code>Grid.Row="0"</code> and <code>Grid.Column="1"</code>. Rows/columns can have fixed, auto, or proportional (*) sizing.</li>
+                            <li><strong>When to use:</strong> Use it for almost everything else. It is the most powerful and flexible panel, ideal for creating complex, resizable, and professional-looking UIs.</li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <div class="qa-pair">
-            <p class="question">2. What is XAML in WPF? Explain its use in detail.</p>
-            <div class="answer">
+        <div class="question-block">
+            <p class="question-text">5. What is the role of the PasswordBox control in WPF? How does it differ from a regular TextBox?</p>
+            <div class="answer-text">
+                <p>The <strong><code>PasswordBox</code></strong> control is a specialized text input control used for entering passwords.</p>
+                <p><strong>Difference from <code>TextBox</code>:</strong></p>
                 <ul>
-                    <li><strong>Stands For:</strong> <strong>XAML</strong> stands for <strong>Extensible Application Markup Language</strong>.</li>
-                    <li><strong>Definition:</strong> It is an XML-based, declarative language used to create and define the user interface (UI) of a WPF application.</li>
-                    <li><strong>Use (Separation of Concerns):</strong>
-                        <ul>
-                            <li>XAML allows for a "separation of appearance and behavior."</li>
-                            <li><strong>Appearance (The "What"):</strong> Designers can define the entire UI—controls, layout, data binding, and styles—in XAML files.
-                                <br>e.g., <code>&lt;Button Content="Click Me" Width="100" /&gt;</code></li>
-                            <li><strong>Behavior (The "How"):</strong> Developers can write the application logic (e.g., what happens when the button is clicked) in a separate "code-behind" file (like <code>MainWindow.xaml.cs</code>).</li>
-                            <li>This separation allows designers and developers to work on the same application simultaneously.</li>
-                        </ul>
-                    </li>
+                    <li><strong>Masking:</strong> The <code>PasswordBox</code> automatically masks the characters as the user types (e.g., showing • or *). A <code>TextBox</code> displays plain text by default.</li>
+                    <li><strong>Security:</strong> The <code>PasswordBox</code> does *not* store the password as a plain text <code>string</code> in its <code>Text</code> property (it doesn't have one). Instead, the password must be accessed via its <code>Password</code> property or, more securely, its <code>SecurePassword</code> property. This helps prevent the password from being stored in memory as plain text.</li>
+                    <li><strong>Functionality:</strong> It lacks features like spell-checking and multi-line support, as they are not relevant for passwords.</li>
                 </ul>
             </div>
         </div>
-
-        <div class="qa-pair">
-            <p class="question">3. List the five WPF layout panels. Briefly mention the purpose of each.</p>
-            <div class="answer">
-                <p>Layout panels are containers that automatically manage the size and position of the controls inside them.</p>
+        
+        <div class="question-block">
+            <p class="question-text">7. Describe how animation is implemented in WPF using Storyboards...</p>
+            <div class="answer-text">
+                <p>Animations in WPF work by changing the value of a property (like <code>Opacity</code>, <code>Width</code>, or a <code>Transform</code>) over a period of time (a <code>Duration</code>).</p>
+                <p>A <strong><code>Storyboard</code></strong> is a container that holds and manages one or more animations. It allows you to group multiple animations together and control them as a single unit (e.g., start, stop, pause).</p>
+                <p><strong>Implementation:</strong></p>
                 <ol>
-                    <li><strong><code>Grid</code>:</strong> The most powerful and common panel. It arranges controls in a flexible grid of rows and columns.</li>
-                    <li><strong><code>StackPanel</code>:</strong> "Stacks" controls one after another in a single line, either vertically (on top of each other) or horizontally (side-by-side).</li>
-                    <li><strong><code>DockPanel</code>:</strong> "Docks" controls to one of the four edges (Top, Bottom, Left, Right). The last control added (by default) fills the remaining center space.</li>
-                    <li><strong><code>WrapPanel</code>:</strong> Arranges controls in a line (horizontally or vertically) and automatically "wraps" to the next line when it runs out of space.</li>
-                    <li><strong><code>Canvas</code>:</strong> The most basic panel. It does *not* automatically arrange controls. You must explicitly position controls using coordinates (e.g., <code>Canvas.Top="10" Canvas.Left="20"</code>).</li>
+                    <li>You create an <strong>Animation</strong> class (e.g., <code>DoubleAnimation</code> to animate a <code>double</code> property like <code>Opacity</code>).</li>
+                    <li>You set its <code>From</code> value, <code>To</code> value, and <code>Duration</code>.</li>
+                    <li>You set the animation's target by specifying the <code>Storyboard.TargetName</code> (the <code>Name</code> of the control to animate) and <code>Storyboard.TargetProperty</code> (the property to animate, e.g., <code>(Rectangle.Opacity)</code>).</li>
+                    <li>You place this animation inside a <code>Storyboard</code>.</li>
+                    <li>You typically start the <code>Storyboard</code> using an <strong>Event Trigger</strong> (e.g., when the control loads or a button is clicked).</li>
                 </ol>
+                <p><strong>Key Properties:</strong> <code>From</code>, <code>To</code>, <code>Duration</code>, <code>AutoReverse</code> (to play backwards), <code>RepeatBehavior</code> (to loop).</p>
             </div>
         </div>
-
-        <div class="qa-pair">
-            <p class="question">4. What is the role of the PasswordBox control in WPF? How does it differ from a regular TextBox?</p>
-            <div class="answer">
-                <p>The <code>PasswordBox</code> is a control specifically designed for entering passwords.</p>
-                <p><strong>Differences from <code>TextBox</code>:</strong></p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>PasswordBox</th>
-                            <th>TextBox</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Masking</strong></td>
-                            <td><strong>Automatic.</strong> Characters are hidden (e.g., '●') by default.</td>
-                            <td><strong>None.</strong> Shows plain text by default.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Data Access</strong></td>
-                            <td>For security, the password is not stored as plain text. You access it via the <code>.Password</code> property (which is a <code>SecureString</code> in code).</td>
-                            <td>Content is a simple, readable string in the <code>.Text</code> property.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Clipboard</strong></td>
-                            <td>Copy/Paste is disabled by default for security.</td>
-                            <td>Copy/Paste is enabled.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="qa-pair">
-            <p class="question">5. Describe how animation is implemented in WPF using Storyboards.</p>
-            <div class="answer">
-                <p>WPF has a powerful animation system that works by changing a control's property (like <code>Opacity</code>, <code>Width</code>, or <code>Color</code>) over a set duration.</p>
-                <p><strong><code>Storyboard</code>:</strong> This is the main "container" or "manager" for animations. A <code>Storyboard</code> holds one or more animations and controls when they start, stop, and how they run.</p>
-                <p><strong>Implementation Steps:</strong></p>
-                <ol>
-                    <li><strong>Create an Animation:</strong> Define an animation object for the property you want to change (e.g., a <code>DoubleAnimation</code> to animate a number property like <code>Opacity</code>).
-                        <ul>
-                            <li>Set its <code>From</code> value (e.g., 1.0).</li>
-                            <li>Set its <code>To</code> value (e.g., 0.0).</li>
-                            <li>Set its <code>Duration</code> (e.g., "0:0:2" for 2 seconds).</li>
-                            <li>(Optional) Set <code>AutoReverse="True"</code> or <code>RepeatBehavior="Forever"</code>.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Add to Storyboard:</strong> Place this animation inside a <code>&lt;Storyboard&gt;</code>.</li>
-                    <li><strong>Set the Target:</strong> Tell the animation *what* to animate using attached properties:
-                        <ul>
-                            <li><code>Storyboard.TargetName="myButton"</code> (the <code>x:Name</code> of the control).</li>
-                            <li><code>Storyboard.TargetProperty="Opacity"</code> (the property to change).</li>
-                        </ul>
-                    </li>
-                    <li><strong>Run the Storyboard:</strong> Use an <strong><code>EventTrigger</code></strong> (like <code>Button.Loaded</code> or <code>Button.Click</code>) to <code>Begin</code> the <code>Storyboard</code>.</li>
-                </ol>
-            </div>
-        </div>
-
     </div>
 </body>
 </html>
