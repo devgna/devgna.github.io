@@ -89,6 +89,75 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
+        /* Styles for diagrams */
+        .diagram {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fdfdfd;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .diagram-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .diagram-box, .concept-box {
+            background-color: #e3f2fd; /* Light blue */
+            border: 1px solid #90caf9; /* Blue border */
+            color: #1e88e5; /* Blue text */
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 5px;
+            min-width: 120px;
+            text-align: center;
+        }
+        .concept-box-alt {
+            background-color: #e8f5e9; /* Light green */
+            border: 1px solid #a5d6a7; /* Green border */
+            color: #2e7d32; /* Green text */
+            display: block;
+        }
+        .concept-box-red {
+            background-color: #ffebee; /* Light red */
+            border: 1px solid #ef9a9a; /* Red border */
+            color: #c62828; /* Red text */
+        }
+        .concept-box-grey {
+            background-color: #f5f5f5; /* Grey */
+            border: 1px solid #e0e0e0; /* Grey border */
+            color: #424242; /* Grey text */
+        }
+        .arrow {
+            font-size: 24px;
+            font-weight: bold;
+            color: #757575;
+            margin: 0 10px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .arrow-down {
+            font-size: 24px;
+            font-weight: bold;
+            color: #757575;
+            display: block;
+            margin: 5px auto;
+        }
+        .flex-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .flex-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -111,10 +180,39 @@
             <li><strong>Exception Handling:</strong> It provides a standard way to handle errors (exceptions) across different .NET languages.</li>
             <li><strong>Type Safety:</strong> It enforces the Common Type System (CTS) to ensure that different .NET languages can interact safely.</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">CLR Execution Flow</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-alt">C# Code</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-alt">VB.NET Code</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box">Language Compiler</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box">MSIL Code</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-red">CLR (JIT, GC, Security)</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-grey">Native Code</div>
+            </div>
+        </div>
 
         <h3>2. Describe the .NET Framework architecture.</h3>
         <p>The .NET Framework architecture is a layered model that provides services for building, deploying, and running applications.</p>
-        [Image of .NET Framework architecture]
+        <div class="diagram">
+            <div class="diagram-title">.NET Framework Architecture</div>
+            <div class="flex-column">
+                <div class="diagram-box concept-box-alt" style="width: 300px;">Windows Forms | ASP.NET | WPF</div>
+                <div class="arrow-down">&darr;</div>
+                <div class="diagram-box" style="width: 300px;">Framework Class Library (FCL)</div>
+                <div class="arrow-down">&darr;</div>
+                <div class="diagram-box" style="width: 300px;">Common Language Specification (CLS) | Common Type System (CTS)</div>
+                <div class="arrow-down">&darr;</div>
+                <div class="diagram-box concept-box-red" style="width: 300px;">Common Language Runtime (CLR)</div>
+                <div class="arrow-down">&darr;</div>
+                <div class="diagram-box concept-box-grey" style="width: 300px;">Operating System (OS)</div>
+            </div>
+        </div>
         <p><strong>Main Components:</strong></p>
         <ol>
             <li><strong>Common Language Runtime (CLR):</strong> The "engine" at the bottom that executes code (as described in Q1). It includes the JIT compiler, Garbage Collector (GC), and handles security and exception handling.</li>
@@ -156,6 +254,24 @@
                 </tr>
             </tbody>
         </table>
+        <div class="diagram">
+            <div class="diagram-title">Managed vs. Unmanaged Code</div>
+            <div class="flex-container">
+                <div class="flex-column" style="margin-right: 20px;">
+                    <div class="diagram-box concept-box-alt">Managed Code (C#)</div>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="diagram-box concept-box-red">CLR</div>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="diagram-box concept-box-grey">Operating System</div>
+                </div>
+                <div class="flex-column" style="margin-left: 20px;">
+                    <div class="diagram-box concept-box-alt">Unmanaged Code (C++)</div>
+                    <div class="arrow-down" style="font-size: 61px; color: #f9f9f9;">&darr;</div>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="diagram-box concept-box-grey">Operating System</div>
+                </div>
+            </div>
+        </div>
 
         <h3>4. What is the Common Type System (CTS) and how does it support language interoperability?</h3>
         <p>The <strong>Common Type System (CTS)</strong> is a standard set of data types defined by the .NET Framework that all .NET languages must use.</p>
@@ -165,6 +281,16 @@
             <li>For example, a C# <code>int</code> and a VB.NET <code>Integer</code> both compile down to the same type in the CLR: <code>System.Int32</code>.</li>
             <li>Because all languages map their types to this common system, it allows a class written in C# to be seamlessly used (or inherited) by a class written in VB.NET, and vice versa.</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">Common Type System (CTS)</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-alt">C# <code>int</code></div>
+                <div class="arrow" style="transform: rotate(30deg);">&rarr;</div>
+                <div class="diagram-box concept-box-red">CTS<br>(System.Int32)</div>
+                <div class="arrow" style="transform: rotate(-30deg);">&larr;</div>
+                <div class="diagram-box concept-box-alt">VB.NET <code>Integer</code></div>
+            </div>
+        </div>
 
         <h3>5. Explain Garbage Collection (GC) in .NET.</h3>
         <p><strong>Garbage Collection (GC)</strong> is the automatic memory manager in the CLR. Its job is to find and release memory that is no longer being used by the application.</p>
@@ -176,6 +302,17 @@
             <li>It releases the memory occupied by these unreachable objects.</li>
             <li>It compacts the remaining objects in memory to avoid fragmentation.</li>
         </ol>
+        <div class="diagram">
+            <div class="diagram-title">Garbage Collection</div>
+            <div class="diagram-box" style="width: 80%;">
+                <strong>Managed Heap</strong>
+                <div class="concept-box concept-box-alt" style="display: block; margin: 10px;">Referenced Object A</div>
+                <div class="concept-box concept-box-red" style="display: block; margin: 10px; text-decoration: line-through;">Unreferenced Object B</div>
+                <div class="concept-box concept-box-alt" style="display: block; margin: 10px;">Referenced Object C</div>
+            </div>
+            <div class="arrow-down" style="transform: rotate(-30deg); text-align: left; margin-left: 20%;">&uarr;</div>
+            <div class="diagram-box concept-box-red" style="width: 100px;">GC finds & removes B</div>
+        </div>
         <p>The main benefit is that it prevents common programming errors like memory leaks, where memory is allocated but never freed.</p>
 
         <!-- Unit 2: C# Basics & OOP -->
@@ -188,6 +325,15 @@
             <li><strong>Polymorphism:</strong> This means "many forms." It allows objects of different classes to be treated as objects of a common base class. It's often implemented using method overriding (where a child class provides its own version of a parent's method) or method overloading (having multiple methods with the same name but different parameters).</li>
             <li><strong>Abstraction:</strong> Hiding complex implementation details from the user and only showing the essential features. This is achieved using <code>abstract</code> classes and <code>interfaces</code>, which define *what* a class should do, but not *how* it should do it.</li>
         </ol>
+        <div class="diagram">
+            <div class="diagram-title">Four Principles of OOP</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="diagram-box"><strong>Encapsulation</strong><br>(Data Hiding)</div>
+                <div class="diagram-box"><strong>Abstraction</strong><br>(Hiding Complexity)</div>
+                <div class="diagram-box"><strong>Inheritance</strong><br>(Reusing Code)</div>
+                <div class="diagram-box"><strong>Polymorphism</strong><br>(Many Forms)</div>
+            </div>
+        </div>
 
         <h3>2. Differentiate between Value Types and Reference Types.</h3>
         <table>
@@ -221,6 +367,21 @@
                 </tr>
             </tbody>
         </table>
+        <div class="diagram">
+            <div class="diagram-title">Value Type vs. Reference Type</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>Value Type (e.g., int)</strong>
+                    <div class="concept-box concept-box-grey" style="display: block; margin-top: 10px;"><strong>STACK</strong><br><code>int x = 10;</code></div>
+                </div>
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>Reference Type (e.g., class)</strong>
+                    <div class="concept-box concept-box-grey" style="display: block; margin-top: 10px;"><strong>STACK</strong><br><code>MyClass y = (address)</code></div>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="concept-box concept-box-alt" style="display: block;"><strong>HEAP</strong><br>[Object Data]</div>
+                </div>
+            </div>
+        </div>
 
         <h3>3. What are Boxing and Unboxing in C#? Provide examples.</h3>
         <p>Boxing and Unboxing are processes that bridge the gap between Value Types and Reference Types.</p>
@@ -228,6 +389,16 @@
             <li><strong>Boxing (Implicit):</strong> The process of converting a <strong>Value Type</strong> (like <code>int</code>) into a <strong>Reference Type</strong> (like <code>object</code>). The CLR wraps the value inside a new object on the heap.</li>
             <li><strong>Unboxing (Explicit):</strong> The process of extracting the original Value Type from the object it was boxed into. This requires an explicit cast.</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">Boxing & Unboxing</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-grey"><strong>STACK</strong><br><code>int i = 123;</code></div>
+                <div class="arrow">&rarr;<br>Boxing</div>
+                <div class="diagram-box concept-box-alt"><strong>HEAP</strong><br><code>object o;</code><br>[ 123 ]</div>
+                <div class="arrow">&rarr;<br>Unboxing</div>
+                <div class="diagram-box concept-box-grey"><strong>STACK</strong><br><code>int j = 123;</code></div>
+            </div>
+        </div>
 <pre><code class="language-csharp">
 // --- Boxing ---
 int myValue = 123;
@@ -246,6 +417,25 @@ int myUnboxedValue = (int)myBoxedValue; // Explicitly unboxed.
             <li><strong><code>checked</code> block:</strong> This block *enforces* overflow checking. If an overflow occurs, a <code>System.OverflowException</code> is thrown. This is safer.</li>
             <li><strong><code>unchecked</code> block:</strong> This block *ignores* overflow. The value will simply "wrap around" (becoming a negative number, usually) and no exception is thrown. This is the default behavior in C# for most operations.</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">Overflow Handling</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%;">
+                    <strong><code>checked</code> block</strong>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="concept-box concept-box-alt">Overflow Occurs?</div>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="concept-box concept-box-red"><strong>Exception Thrown!</strong></div>
+                </div>
+                <div class="diagram-box" style="width: 40%;">
+                    <strong><code>unchecked</code> block</strong>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="concept-box concept-box-alt">Overflow Occurs?</div>
+                    <div class="arrow-down">&darr;</div>
+                    <div class="concept-box concept-box-grey"><strong>Value Wraps Around</strong><br>(No Error)</div>
+                </div>
+            </div>
+        </div>
 <pre><code class="language-csharp">
 int maxInt = int.MaxValue; // 2,147,483,647
 
@@ -390,6 +580,22 @@ public class Program
                 </tr>
             </tbody>
         </table>
+        <div class="diagram">
+            <div class="diagram-title">MessageBox vs. Tooltip</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>MessageBox</strong>
+                    <div class="concept-box concept-box-red" style="margin-top: 10px;">[X] Error!<br>Invalid Input.<br>[ OK ]</div>
+                    <p>Modal, stops application.</p>
+                </div>
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>Tooltip</strong>
+                    <div class="concept-box concept-box-grey" style="margin-top: 10px;">[ Enter Name: _____ ]</div>
+                    <div class="concept-box-alt" style="padding: 5px; margin-top: 5px;">Enter your full name</div>
+                    <p>Non-intrusive hover hint.</p>
+                </div>
+            </div>
+        </div>
 
         <h3>3. What is the role of the ErrorProvider control?</h3>
         <p>The <code>ErrorProvider</code> is a control used for form validation. It does *not* stop the user like a <code>MessageBox</code>. Instead, it provides a non-intrusive way to show that a control has an error.</p>
@@ -401,7 +607,18 @@ public class Program
             <li>This displays a small, blinking error icon (e.g., an "!") next to the invalid control.</li>
             <li>When the user hovers over the icon, the error message you provided is shown as a tooltip.</li>
         </ol>
-        <p>When the user hovers over the icon, the error message you provided is shown as a tooltip.</p>
+        <div class="diagram">
+            <div class="diagram-title">ErrorProvider Flow</div>
+            <div class="flex-container">
+                <div class="diagram-box">User Clicks "Save"</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-alt"><code>if (textBox1.Text == "")</code></div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-red"><code>errorProvider1.SetError()</code></div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-grey">[TextBox] <span style="color: red; font-size: 24px; vertical-align: middle;"><strong>!</strong></span></div>
+            </div>
+        </div>
 <pre><code class="language-csharp">
 // In a button click event handler:
 if (string.IsNullOrEmpty(textBox1.Text))
@@ -434,6 +651,23 @@ else
                 </ul>
             </li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">Container Controls</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>Panel</strong><br>(No border, for layout)
+                    <div class="concept-box concept-box-grey" style="display: block; margin: 10px;">[ Button ] [ TextBox ]</div>
+                </div>
+                <div class="diagram-box" style="width: 40%; border-style: dashed;">
+                    <strong style="display: block; text-align: left; margin-left: 5px;">GroupBox</strong>
+                    (Border & Title, for RadioButtons)
+                    <div class="concept-box concept-box-grey" style="display: block; margin: 10px; text-align: left;">
+                        (•) Option 1<br>
+                        ( ) Option 2
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <h3>5. How do you use a ListBox? Explain its key properties.</h3>
         <p>A <code>ListBox</code> control displays a list of items from which the user can select one or more.</p>
@@ -451,6 +685,18 @@ else
             <li><code>SelectedItems</code>: Gets the *collection* of all selected items (if <code>SelectionMode</code> is <code>MultiSimple</code> or <code>MultiExtended</code>).</li>
             <li><code>SelectedIndex</code>: Gets the 0-based index of the currently selected item.</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">ListBox</div>
+            <div class="diagram-box" style="width: 50%; text-align: left;">
+                [ Item 1 ]<br>
+                <span class="concept-box-alt" style="display:block;">[ Item 2 ]</span>
+                [ Item 3 ]
+            </div>
+            <div style="text-align: left; margin-top: 10px; display: inline-block;">
+                <code>SelectedItem</code> = "Item 2"<br>
+                <code>SelectedIndex</code> = 1
+            </div>
+        </div>
 
         <!-- Unit 4: Web programming fundamentals (THEORY ONLY) -->
         <h2>Unit 4: Web programming fundamentals (Theory)</h2>
@@ -473,6 +719,19 @@ else
                 </ul>
             </li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">HTTP Request/Response</div>
+            <div class="flex-container">
+                <div class="diagram-box"><strong>Client (Browser)</strong></div>
+                <div class="arrow">&rarr;<br>HTTP Request<br>(GET /page.html)</div>
+                <div class="diagram-box concept-box-grey"><strong>Server</strong></div>
+            </div>
+            <div class="flex-container" style="margin-top: 10px;">
+                <div class="diagram-box"><strong>Client (Browser)</strong></div>
+                <div class="arrow">&larr;<br>HTTP Response<br>(200 OK + HTML)</div>
+                <div class="diagram-box concept-box-grey"><strong>Server</strong></div>
+            </div>
+        </div>
 
         <h3>2. Compare the GET and POST methods.</h3>
         <table>
@@ -516,10 +775,40 @@ else
                 </tr>
             </tbody>
         </table>
+        <div class="diagram">
+            <div class="diagram-title">GET vs. POST</div>
+            <div class="diagram-box" style="width: 80%; text-align: left; margin-bottom: 10px;">
+                <strong>GET:</strong> Data is in the URL<br>
+                <code>/search?q=mydata</code>
+            </div>
+            <div class="diagram-box" style="width: 80%; text-align: left;">
+                <strong>POST:</strong> Data is in the Request Body<br>
+                <code>/login</code><br>
+                <code>(Body: user=admin&pass=123)</code>
+            </div>
+        </div>
         
         <h3>3. Describe the main stages of the ASP.NET Page Life Cycle.</h3>
         <p>The ASP.NET Page Life Cycle is a series of steps a page goes through from the time it's requested by the server to the time it's rendered in the browser. Understanding this is key to knowing *when* to write your code.</p>
-        
+        <div class="diagram">
+            <div class="diagram-title">ASP.NET Page Life Cycle (Simplified)</div>
+            <div class="flex-container">
+                <div class="diagram-box">PreInit</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box">Init</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-alt">Load</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-red">Control Events<br>(e.g., Button_Click)</div>
+            </div>
+            <div class="flex-container" style="margin-top: 10px;">
+                <div class="diagram-box">PreRender</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box">Render</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-grey">Unload</div>
+            </div>
+        </div>
         <ol>
             <li><strong>PreInit:</strong> The very first step. Good for setting a Master Page or Theme dynamically.</li>
             <li><strong>Init:</strong> All controls on the page are initialized, and their UniqueID is set.</li>
@@ -544,6 +833,22 @@ else
             <li><strong>CustomValidator:</strong> Allows you to write your own custom logic (in C# or JavaScript) for complex validation rules.</li>
             <li><strong>ValidationSummary:</strong> Gathers all the error messages from the other validators on the page and displays them in a single, collective list.</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">Validation Controls Flow</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-grey">[TextBox]</div>
+                <div class="flex-column" style="margin: 0 10px;">
+                    <div class="arrow">&rarr;</div>
+                    <div class="arrow">&rarr;</div>
+                </div>
+                <div class="flex-column">
+                    <div class="diagram-box concept-box-red" style="margin: 2px;">RequiredFieldValidator</div>
+                    <div class="diagram-box concept-box-red" style="margin: 2px;">RangeValidator</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-alt">ValidationSummary</div>
+            </div>
+        </div>
         
         <h3>5. What is the role of the web.config file? How does it differ from machine.config?</h3>
         <p>Both are XML files used for configuration in .NET applications, but they have different scopes.</p>
@@ -565,14 +870,51 @@ else
                 </ul>
             </li>
         </ul>
-        <p><strong>In short:</strong> <code>machine.config</code> provides the defaults for the whole server, and <code>web.config</code> provides the specific settings for your one application.</p>
+        <div class="diagram">
+            <div class="diagram-title">Configuration Inheritance</div>
+            <div class="flex-column">
+                <div class="diagram-box concept-box-grey" style="width: 300px;"><strong>machine.config</strong><br>(Defaults for whole server)</div>
+                <div class="arrow-down">&darr; (inherits)</div>
+                <div class="diagram-box concept-box-alt" style="width: 300px;"><strong>web.config</strong><br>(Overrides for *your* app)</div>
+                <div class="arrow-down">&darr; (applies to)</div>
+                <div class="diagram-box" style="width: 300px;">Your Web Application</div>
+            </div>
+        </div>
 
         <!-- Unit 5: ADO.NET -->
         <h2>Unit 5: Database Connectivity (ADO.NET)</h2>
 
         <h3>1. Compare Connected and Disconnected ADO.NET architectures.</h3>
         <p>ADO.NET provides two different ways to interact with a database:</p>
-        [Image of ADO.NET Object Model]
+        <div class="diagram">
+            <div class="diagram-title">ADO.NET Architectures</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>Connected Model</strong>
+                    <div class="flex-container" style="margin-top: 10px;">
+                         <div class="diagram-box concept-box-alt">App</div>
+                         <div class="arrow">&harr;</div>
+                         <div class="diagram-box concept-box-red">DataReader</div>
+                         <div class="arrow">&harr;</div>
+                         <div class="diagram-box concept-box-grey">DB</div>
+                    </div>
+                    <p>Connection stays open.</p>
+                </div>
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>Disconnected Model</strong>
+                    <div class="flex-container" style="margin-top: 10px;">
+                        <div class="diagram-box concept-box-alt">App</div>
+                        <div class="arrow">&harr;</div>
+                        <div class="diagram-box">DataSet</div>
+                        <div class="arrow">&harr;</div>
+                        <div class="diagram-box concept-box-red">DataAdapter</div>
+                        <div class="arrow">&harr;</div>
+                        <div class="diagram-box concept-box-grey">DB</div>
+                    </div>
+                    <p>Connection opens & closes.</p>
+                </div>
+            </div>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -649,6 +991,18 @@ else
                 </ul>
             </li>
         </ol>
+        <div class="diagram">
+            <div class="diagram-title">Core ADO.NET Components</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-alt" style="width: 200px;"><strong>Connection</strong><br>(*Where* to connect)</div>
+                <div class="arrow">+</div>
+                <div class="diagram-box concept-box-alt" style="width: 200px;"><strong>Command</strong><br>(*What* to execute)</div>
+            </div>
+            <div class="arrow-down">&darr;</div>
+            <div class="diagram-box concept-box-red" style="width: 430px;"><strong>DataAdapter</strong><br>(*Bridge* to fill DataSet)</div>
+            <div class="arrow-down">&darr;</div>
+            <div class="diagram-box" style="width: 430px;"><strong>DataSet</strong><br>(*In-memory* data)</div>
+        </div>
         
         <h3>4. Explain the ExecuteReader(), ExecuteScalar(), and ExecuteNonQuery() methods.</h3>
         <p>These are the three main methods of the <code>SqlCommand</code> object:</p>
@@ -675,15 +1029,29 @@ else
                 </ul>
             </li>
         </ul>
-
-        <h3>5. (CODE) Write C# code to fill a DataSet and bind it to a DataGridView.</h3>
-        <p>This code shows the full disconnected model: using a Example: <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code> statements.</li>
-                </ul>
-            </li>
-        </ul>
+        <div class="diagram">
+            <div class="diagram-title">SqlCommand Execute Methods</div>
+            <div class="flex-column">
+                <div class="diagram-box concept-box-alt"><code>ExecuteReader()</code><div class="arrow">&rarr;</div>Returns: <strong>SqlDataReader</strong> (for rows)</div>
+                <div class="diagram-box concept-box-alt" style="margin-top: 10px;"><code>ExecuteScalar()</code><div class="arrow">&rarr;</div>Returns: <strong>Object</strong> (for a single value)</div>
+                <div class="diagram-box concept-box-alt" style="margin-top: 10px;"><code>ExecuteNonQuery()</code><div class="arrow">&rarr;</div>Returns: <strong>int</strong> (rows affected)</div>
+            </div>
+        </div>
 
         <h3>5. (CODE) Write C# code to fill a DataSet and bind it to a DataGridView.</h3>
         <p>This code shows the full disconnected model: using a <code>SqlDataAdapter</code> to fill a <code>DataSet</code>, and then setting that <code>DataSet</code> as the data source for a <code>DataGridView</code> control (named <code>dataGridView1</code>) in a Windows Forms application.</p>
+        <div class="diagram">
+            <div class="diagram-title">DataSet to DataGridView Flow</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-grey">DB</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-red">SqlDataAdapter.Fill()</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box">DataSet</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-alt">DataGridView</div>
+            </div>
+        </div>
 <pre><code class="language-csharp">
 using System;
 using System.Data;
