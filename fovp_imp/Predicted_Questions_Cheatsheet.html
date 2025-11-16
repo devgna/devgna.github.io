@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CA328 - Cheat Sheet</title>
+    <!-- Prism.js CSS for syntax highlighting (Tomorrow Night theme) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <!-- Simple styling for a clean, printable "doc-like" feel -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #1a73e8; /* Blue */
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            font-size: 2.2em;
+            font-weight: 600;
+        }
+        h2 {
+            color: #d9534f; /* Red */
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 8px;
+            margin-top: 40px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+        h3 {
+            color: #333;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-top: 30px;
+        }
+        p {
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        ul, ol {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        /* Remove custom pre/code styles, Prism will handle it */
+        pre {
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+        code {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.95em; /* Ensure code font size matches pre */
+        }
+        .note {
+            background-color: #fffbdd;
+            border: 1px solid #ffeb3b;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CA328: Fundamentals of Visual Programming - Cheat Sheet</h1>
+        <p class="note">
+            <strong>Note:</strong> As requested, this cheat sheet includes theory for Unit 4 but excludes its code questions. Unit 6 is omitted entirely. Questions are predicted based on the provided Question Bank, Sessional Paper, and Syllabus.
+        </p>
+
+        <!-- Unit 1: Introduction to .NET Framework -->
+        <h2>Unit 1: Introduction to .NET Framework</h2>
+
+        <h3>1. Define CLR (Common Language Runtime) and explain its role.</h3>
+        <p>The <strong>CLR (Common Language Runtime)</strong> is the core execution engine of the .NET Framework. It's an environment that manages the execution of .NET code (managed code).</p>
+        <p><strong>Key Roles:</strong></p>
+        <ul>
+            <li><strong>MSIL to Native Code:</strong> It converts the intermediate code (MSIL or CIL) into native machine code using a Just-In-Time (JIT) compiler.</li>
+            <li><strong>Memory Management:</strong> It automatically handles memory, most importantly through <strong>Garbage Collection (GC)</strong>, which reclaims memory from objects that are no longer in use.</li>
+            <li><strong>Security:</strong> It provides services like Code Access Security (CAS) to prevent unauthorized access.</li>
+            <li><strong>Exception Handling:</strong> It provides a standard way to handle errors (exceptions) across different .NET languages.</li>
+            <li><strong>Type Safety:</strong> It enforces the Common Type System (CTS) to ensure that different .NET languages can interact safely.</li>
+        </ul>
+
+        <h3>2. Describe the .NET Framework architecture.</h3>
+        <p>The .NET Framework architecture is a layered model that provides services for building, deploying, and running applications.</p>
+        [Image of .NET Framework architecture]
+        <p><strong>Main Components:</strong></p>
+        <ol>
+            <li><strong>Common Language Runtime (CLR):</strong> The "engine" at the bottom that executes code (as described in Q1). It includes the JIT compiler, Garbage Collector (GC), and handles security and exception handling.</li>
+            <li><strong>Framework Class Library (FCL):</strong> A huge library of pre-written, reusable code (classes, interfaces, value types) that developers can use for common tasks like database access (ADO.NET), file I/O, string manipulation, etc.</li>
+            <li><strong>Common Language Specification (CLS):</strong> A set of rules that language compilers must follow to create code that can interoperate (work with) other .NET languages.</li>
+            <li><strong>Common Type System (CTS):</strong> Defines a set of common data types that all .NET languages share, ensuring (for example) that a C# <code>int</code> is the same as a VB.NET <code>Integer</code>.</li>
+            <li><strong>Application Layers:</strong> These are the types of applications you can build, which all use the FCL and CLR (e.g., Windows Forms, ASP.NET, WPF).</li>
+        </ol>
+
+        <h3>3. Explain the difference between Managed and Unmanaged Code.</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Managed Code</th>
+                    <th>Unmanaged Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Execution</strong></td>
+                    <td>Executed *by* the CLR. The CLR manages its entire lifecycle.</td>
+                    <td>Executed *directly* by the Operating System (CPU).</td>
+                </tr>
+                <tr>
+                    <td><strong>Memory</strong></td>
+                    <td>Memory is managed automatically by the Garbage Collector (GC).</td>
+                    <td>Programmer is responsible for all memory allocation and de-allocation.</td>
+                </tr>
+                <tr>
+                    <td><strong>Services</strong></td>
+                    <td>Benefits from CLR services (type safety, security, exception handling).</td>
+                    <td>Does not get any services from the CLR.</td>
+                </tr>
+                <tr>
+                    <td><strong>Example</strong></td>
+                    <td>C#, VB.NET</td>
+                    <td>C, C++ (traditional)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>4. What is the Common Type System (CTS) and how does it support language interoperability?</h3>
+        <p>The <strong>Common Type System (CTS)</strong> is a standard set of data types defined by the .NET Framework that all .NET languages must use.</p>
+        <p><strong>How it supports interoperability:</strong></p>
+        <ul>
+            <li>It ensures that all .NET languages "speak the same language" regarding data.</li>
+            <li>For example, a C# <code>int</code> and a VB.NET <code>Integer</code> both compile down to the same type in the CLR: <code>System.Int32</code>.</li>
+            <li>Because all languages map their types to this common system, it allows a class written in C# to be seamlessly used (or inherited) by a class written in VB.NET, and vice versa.</li>
+        </ul>
+
+        <h3>5. Explain Garbage Collection (GC) in .NET.</h3>
+        <p><strong>Garbage Collection (GC)</strong> is the automatic memory manager in the CLR. Its job is to find and release memory that is no longer being used by the application.</p>
+        <p><strong>How it works (simplified):</strong></p>
+        <ol>
+            <li>When an object is created, it's placed in a memory area called the "managed heap."</li>
+            <li>The GC periodically runs and checks all objects in the heap.</li>
+            <li>It identifies which objects are "unreachable" (i.e., no part of the running program still holds a reference to them).</li>
+            <li>It releases the memory occupied by these unreachable objects.</li>
+            <li>It compacts the remaining objects in memory to avoid fragmentation.</li>
+        </ol>
+        <p>The main benefit is that it prevents common programming errors like memory leaks, where memory is allocated but never freed.</p>
+
+        <!-- Unit 2: C# Basics & OOP -->
+        <h2>Unit 2: C# Basics & OOP</h2>
+
+        <h3>1. List and describe the four main principles of OOP.</h3>
+        <ol>
+            <li><strong>Encapsulation:</strong> The practice of binding data (fields) and the methods that operate on that data into a single unit (a class). Data is often hidden (made <code>private</code>) and can only be accessed via public methods (getters/setters or properties).</li>
+            <li><strong>Inheritance:</strong> A mechanism where a new class (child/derived class) can "inherit" the properties and methods of an existing class (parent/base class). This promotes code reusability.</li>
+            <li><strong>Polymorphism:</strong> This means "many forms." It allows objects of different classes to be treated as objects of a common base class. It's often implemented using method overriding (where a child class provides its own version of a parent's method) or method overloading (having multiple methods with the same name but different parameters).</li>
+            <li><strong>Abstraction:</strong> Hiding complex implementation details from the user and only showing the essential features. This is achieved using <code>abstract</code> classes and <code>interfaces</code>, which define *what* a class should do, but not *how* it should do it.</li>
+        </ol>
+
+        <h3>2. Differentiate between Value Types and Reference Types.</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Value Types</th>
+                    <th>Reference Types</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Storage</strong></td>
+                    <td>Stored directly on the <strong>Stack</strong> (for local variables).</td>
+                    <td>Stored on the <strong>Heap</strong>. A "pointer" or reference to the heap location is stored on the stack.</td>
+                </tr>
+                <tr>
+                    <td><strong>Copying</strong></td>
+                    <td>When copied, the actual value is copied. Creates two independent copies.</td>
+                    <td>When copied, only the *reference* is copied. Both variables point to the *same* object in memory.</td>
+                </tr>
+                <tr>
+                    <td><strong>Null?</strong></td>
+                    <td>Cannot be null (unless it's a "Nullable" type, e.g., <code>int?</code>).</td>
+                    <td>Can be null (meaning it doesn't point to any object).</td>
+                </tr>
+                <tr>
+                    <td><strong>Examples</strong></td>
+                    <td><code>int</code>, <code>float</code>, <code>double</code>, <code>bool</code>, <code>char</code>, <code>struct</code>, <code>enum</code></td>
+                    <td><code>string</code>, <code>object</code>, <code>class</code>, <code>interface</code>, <code>delegate</code>, <code>array</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>3. What are Boxing and Unboxing in C#? Provide examples.</h3>
+        <p>Boxing and Unboxing are processes that bridge the gap between Value Types and Reference Types.</p>
+        <ul>
+            <li><strong>Boxing (Implicit):</strong> The process of converting a <strong>Value Type</strong> (like <code>int</code>) into a <strong>Reference Type</strong> (like <code>object</code>). The CLR wraps the value inside a new object on the heap.</li>
+            <li><strong>Unboxing (Explicit):</strong> The process of extracting the original Value Type from the object it was boxed into. This requires an explicit cast.</li>
+        </ul>
+<pre><code class="language-csharp">
+// --- Boxing ---
+int myValue = 123;
+// 'myValue' is a Value Type on the Stack.
+object myBoxedValue = myValue; // Implicitly boxed. 
+// 'myBoxedValue' is a Reference Type pointing to the value 123 on the Heap.
+
+// --- Unboxing ---
+int myUnboxedValue = (int)myBoxedValue; // Explicitly unboxed.
+// The value is copied from the heap back to the stack.
+</code></pre>
+
+        <h3>4. Explain Checked and Unchecked blocks for overflow handling.</h3>
+        <p>These blocks tell the CLR how to handle "arithmetic overflow," which happens when the result of a math operation is too large for the data type to hold.</p>
+        <ul>
+            <li><strong><code>checked</code> block:</strong> This block *enforces* overflow checking. If an overflow occurs, a <code>System.OverflowException</code> is thrown. This is safer.</li>
+            <li><strong><code>unchecked</code> block:</strong> This block *ignores* overflow. The value will simply "wrap around" (becoming a negative number, usually) and no exception is thrown. This is the default behavior in C# for most operations.</li>
+        </ul>
+<pre><code class="language-csharp">
+int maxInt = int.MaxValue; // 2,147,483,647
+
+try
+{
+    // This block will throw an exception
+    checked
+    {
+        int overflow = maxInt + 1; 
+    }
+}
+catch (OverflowException ex)
+{
+    Console.WriteLine("Checked block failed!");
+}
+
+// This block will not throw. The value just wraps.
+unchecked
+{
+    int wrap = maxInt + 1; // 'wrap' will be -2,147,483,648
+}
+</code></pre>
+
+        <h3>5. (CODE) Create a C# class using auto-implemented properties.</h3>
+        <p>Auto-implemented properties are a shortcut to create a private backing field and its public <code>get</code> and <code>set</code> accessors in one line.</p>
+<pre><code class="language-csharp">
+using System;
+
+// 1. Define the class with auto-implemented properties
+public class Book
+{
+    // Auto-property for Title. Compiler creates a private 'title' field.
+    public string Title { get; set; }
+
+    // Auto-property for Author. Compiler creates a private 'author' field.
+    public string Author { get; set; }
+
+    // Auto-property for Price.
+    public double Price { get; set; }
+
+    // Constructor to set values
+    public Book(string title, string author, double price)
+    {
+        Title = title;
+        Author = author;
+        Price = price;
+    }
+
+    // Method to display details
+    public void DisplayDetails()
+    {
+        Console.WriteLine($"Title: {Title}");
+        Console.WriteLine($"Author: {Author}");
+        Console.WriteLine($"Price: {Price:C}"); // 'C' formats as currency
+    }
+}
+
+// 2. Use the class
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        // Create an instance
+        Book myBook = new Book("Fundamentals of Visual Programming", "Dr. Patel", 49.99);
+
+        // Use the 'get' accessors via the method
+        myBook.DisplayDetails();
+        
+        // Use the 'set' accessor
+        myBook.Price = 54.99;
+        Console.WriteLine("\nPrice updated:");
+        myBook.DisplayDetails();
+    }
+}
+</code></pre>
+
+        <!-- Unit 3: Building Desktop Application (Windows Forms) -->
+        <h2>Unit 3: Building Desktop Application (Windows Forms)</h2>
+        
+        <h3>1. Explain the key properties and events of the Button and TextBox controls.</h3>
+        <p><strong>TextBox Control:</strong> Allows the user to enter text.</p>
+        <ul>
+            <li><strong>Properties:</strong>
+                <ul>
+                    <li><code>Text</code>: Gets or sets the text content in the box.</li>
+                    <li><code>Multiline</code>: (bool) If true, allows the text to span multiple lines.</li>
+                    <li><code>PasswordChar</code>: (char) Hides the input with a specific character (e.g., '*').</li>
+                    <li><code>ReadOnly</code>: (bool) If true, the user cannot change the text.</li>
+                    <li><code>Enabled</code>: (bool) If false, the control is "grayed out" and unusable.</li>
+                </ul>
+            </li>
+            <li><strong>Events:</strong>
+                <ul>
+                    <li><code>TextChanged</code>: Fires *every time* the text in the box changes (e.g., on key press).</li>
+                </ul>
+            </li>
+        </ul>
+        <p><strong>Button Control:</strong> A standard button the user can click.</p>
+        <ul>
+            <li><strong>Properties:</strong>
+                <ul>
+                    <li><code>Text</code>: The text displayed on the button (e.g., "Submit").</li>
+                    <li><code>Enabled</code>: (bool) If false, the button is "grayed out" and cannot be clicked.</li>
+                </ul>
+            </li>
+            <li><strong>Events:</strong>
+                <ul>
+                    <li><code>Click</code>: The most important event. Fires *once* when the user clicks the button.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>2. Compare MessageBox and TooltipProvider for user feedback.</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>MessageBox</th>
+                    <th>TooltipProvider</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Purpose</strong></td>
+                    <td>Shows an important message (error, warning, confirmation) in a new pop-up window.</td>
+                    <td>Shows a small, helpful hint (a "tooltip") when the user *hovers* over a control.</td>
+                </tr>
+                <tr>
+                    <td><strong>User Interaction</strong></td>
+                    <td>It is <strong>modal</strong>. It *stops* the application and forces the user to click a button (OK, Yes, No).</td>
+                    <td>It is <strong>non-intrusive</strong>. It appears and disappears automatically and does *not* stop the application.</td>
+                </tr>
+                <tr>
+                    <td><strong>Use Case</strong></td>
+                    <td>"Are you sure you want to delete this?" or "Error: Invalid input."</td>
+                    <td>"Enter your name here" (on a TextBox) or "Click to save" (on a Button).</td>
+                </tr>
+                <tr>
+                    <td><strong>Implementation</strong></td>
+                    <td>Called via a static method: <code>MessageBox.Show("My message");</code></td>
+                    <td>You drag the `TooltipProvider` control onto the form, and then set the `ToolTip on toolTipProvider1` property for other controls.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>3. What is the role of the ErrorProvider control?</h3>
+        <p>The <code>ErrorProvider</code> is a control used for form validation. It does *not* stop the user like a <code>MessageBox</code>. Instead, it provides a non-intrusive way to show that a control has an error.</p>
+        <p><strong>How it works:</strong></p>
+        <ol>
+            <li>You add an <code>ErrorProvider</code> control to your form (it sits in the component tray).</li>
+            <li>In your code (e.g., a Button's <code>Click</code> event), you check if a control is valid.</li>
+            <li>If the control is *invalid* (e.g., a <code>TextBox</code> is empty), you call the <code>ErrorProvider</code>'s <code>SetError()</code> method.</li>
+            <li>This displays a small, blinking error icon (e.g., an "!") next to the invalid control.</li>
+            <li>When the user hovers over the icon, the error message you provided is shown as a tooltip.</li>
+        </ol>
+        <p>When the user hovers over the icon, the error message you provided is shown as a tooltip.</p>
+<pre><code class="language-csharp">
+// In a button click event handler:
+if (string.IsNullOrEmpty(textBox1.Text))
+{
+    // Set an error for textBox1
+    errorProvider1.SetError(textBox1, "Name cannot be empty!");
+}
+else
+{
+    // Clear the error
+    errorProvider1.SetError(textBox1, "");
+}
+</code></pre>
+
+        <h3>4. Explain container controls like Panel and GroupBox.</h3>
+        <p>Container controls are used to hold and organize other controls.</p>
+        <ul>
+            <li><strong>Panel:</strong>
+                <ul>
+                    <li>A simple container with no visual style by default (it's often invisible).</li>
+                    <li>Its main purpose is to <strong>group controls</strong>. For example, you can put several buttons and textboxes on a Panel, and then move the Panel, and all its contents move together.</li>
+                    <li>You can also show/hide the Panel's <code>Visible</code> property to show/hide all child controls at once.</li>
+                </ul>
+            </li>
+            <li><strong>GroupBox:</strong>
+                <ul>
+                    <li>A container that draws a <strong>border and a title (<code>Text</code> property)</strong> around its contents.</li>
+                    <li>It provides a visual grouping for related controls.</li>
+                    <li>It is most commonly used to group <code>RadioButton</code> controls. When <code>RadioButton</code>s are placed in the same <code>GroupBox</code>, they become mutually exclusive (only one can be selected).</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>5. How do you use a ListBox? Explain its key properties.</h3>
+        <p>A <code>ListBox</code> control displays a list of items from which the user can select one or more.</p>
+        <p><strong>Key Properties:</strong></p>
+        <ul>
+            <li><code>Items</code>: This is the *collection* of items in the list. You add items using <code>listBox1.Items.Add("New Item");</code>.</li>
+            <li><code>SelectionMode</code>: Controls how many items can be selected.
+                <ul>
+                    <li><code>One</code>: (Default) Only one item can be selected.</li>
+                    <li><code>MultiSimple</code>: Multiple items can be selected by clicking or tapping.</li>
+                    <li><code>MultiExtended</code>: Multiple items can be selected, but requires holding Ctrl/Shift (like in Windows Explorer).</li>
+                </ul>
+            </li>
+            <li><code>SelectedItem</code>: Gets the item that is currently selected (if <code>SelectionMode</code> is <code>One</code>).</li>
+            <li><code>SelectedItems</code>: Gets the *collection* of all selected items (if <code>SelectionMode</code> is <code>MultiSimple</code> or <code>MultiExtended</code>).</li>
+            <li><code>SelectedIndex</code>: Gets the 0-based index of the currently selected item.</li>
+        </ul>
+
+        <!-- Unit 4: Web programming fundamentals (THEORY ONLY) -->
+        <h2>Unit 4: Web programming fundamentals (Theory)</h2>
+
+        <h3>1. Explain the role of HTTP Request and HTTP Response.</h3>
+        <p>HTTP (HyperText Transfer Protocol) is the foundation of data communication for the World Wide Web. It works as a request-response protocol between a client (like a web browser) and a server.</p>
+        <ul>
+            <li><strong>HTTP Request:</strong> This is the message sent by the client (e.g., your browser) to the server when you want to access a resource (like a webpage or an image). It includes:
+                <ul>
+                    <li>A request line (e.g., <code>GET /index.html</code>).</li>
+                    <li>Headers (e.g., information about your browser, what data types it accepts).</li>
+                    <li>An optional body (used to send data, like in a POST request).</li>
+                </ul>
+            </li>
+            <li><strong>HTTP Response:</strong> This is the message sent back by the server to the client. It includes:
+                <ul>
+                    <li>A status line (e.g., <code>200 OK</code> or <code>404 Not Found</code>).</li>
+                    <li>Headers (e.g., information about the content, like <code>Content-Type: text/html</code>).</li>
+                    <li>The actual resource (the HTML, image, or data) in the response body.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>2. Compare the GET and POST methods.</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>GET</th>
+                    <th>POST</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Data Submission</strong></td>
+                    <td>Data is sent in the URL query string (e.g., <code>page.aspx?id=123</code>).</td>
+                    <td>Data is sent in the body of the HTTP request.</td>
+                </tr>
+                <tr>
+                    <td><strong>Visibility</strong></td>
+                    <td>Data is visible to everyone in the URL, browser history, and server logs.</td>
+                    <td>Data is not displayed in the URL, making it more secure for sensitive information.</td>
+                </tr>
+                <tr>
+                    <td><strong>Security</strong></td>
+                    <td>Less secure. Should not be used for sensitive data (like passwords).</td>
+                    <td>More secure (though not encrypted by default; needs HTTPS).</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Type/Size</strong></td>
+                    <td>Limited in size (by the browser/server) and only allows ASCII characters.</td>
+                    <td>No restrictions on data size or type (can send binary data).</td>
+                </tr>
+                <tr>
+                    <td><strong>Bookmark/Cache</strong></td>
+                    <td>Can be bookmarked and cached.</td>
+                    <td>Cannot be bookmarked and is not cached.</td>
+                </tr>
+                <tr>
+                    <td><strong>Use Case</strong></td>
+                    <td>Requesting data (e.g., loading a product page, search queries).</td>
+                    <td>Submitting data (e.g., a login form, file uploads, creating a new user).</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h3>3. Describe the main stages of the ASP.NET Page Life Cycle.</h3>
+        <p>The ASP.NET Page Life Cycle is a series of steps a page goes through from the time it's requested by the server to the time it's rendered in the browser. Understanding this is key to knowing *when* to write your code.</p>
+        
+        <ol>
+            <li><strong>PreInit:</strong> The very first step. Good for setting a Master Page or Theme dynamically.</li>
+            <li><strong>Init:</strong> All controls on the page are initialized, and their UniqueID is set.</li>
+            <li><strong>InitComplete:</strong> All initialization is complete. ViewState tracking is turned on.</li>
+            <li><strong>OnPreLoad:</strong> ViewState and PostBack data are loaded into the controls.</li>
+            <li><strong>Load:</strong> The main event for page logic. The page and all controls are fully loaded. This is where you typically check <code>if (!IsPostBack)</code> to set up data on the first load (e.g., database queries).</li>
+            <li><strong>Control PostBack Event(s):</strong> If the page was submitted (PostBack), the specific control event that caused it (e.g., a <code>Button_Click</code>) runs now.</li>
+            <li><strong>LoadComplete:</strong> All processing and event handling is finished.</li>
+            <li><strong>OnPreRender:</strong> The last chance to make changes to the page or its controls before they are rendered into HTML.</li>
+            <li><strong>OnSaveStateComplete:</strong> ViewState and ControlState are saved. No further changes are possible.</li>
+            <li><strong>Render:</strong> The page and its controls are "drawn" as HTML, DHTML, and script to be sent to the browser.</li>
+            <li><strong>Unload:</strong> The page is removed from memory. Used for final cleanup (e.g., closing database connections or files).</li>
+        </ol>
+
+        <h3>4. What are Validation Controls in ASP.NET?</h3>
+        <p>Validation Controls are server controls that automatically check user input on a form to ensure it's valid. They can run on both the client (using JavaScript) and the server, preventing bad data from being submitted.</p>
+        <ul>
+            <li><strong>RequiredFieldValidator:</strong> Ensures the user does not leave a control (like a TextBox) empty.</li>
+            <li><strong>RangeValidator:</strong> Checks that the user's input is within a specified range (e.g., age between 18 and 65).</li>
+            <li><strong>CompareValidator:</strong> Compares the user's input against a fixed value or the value of another control (e.g., "Password" and "Confirm Password" fields must match).</li>
+            <li><strong>RegularExpressionValidator:</strong> Checks that the input matches a specific pattern (a "regex"), such as for a valid email address, phone number, or postal code.</li>
+            <li><strong>CustomValidator:</strong> Allows you to write your own custom logic (in C# or JavaScript) for complex validation rules.</li>
+            <li><strong>ValidationSummary:</strong> Gathers all the error messages from the other validators on the page and displays them in a single, collective list.</li>
+        </ul>
+        
+        <h3>5. What is the role of the web.config file? How does it differ from machine.config?</h3>
+        <p>Both are XML files used for configuration in .NET applications, but they have different scopes.</p>
+        <ul>
+            <li><strong><code>machine.config</code>:</strong>
+                <ul>
+                    <li>This is the "master" configuration file for the *entire machine* (server).</li>
+                    <li>It defines the default settings for *all* .NET applications running on that server.</li>
+                    <li>It is located in the main .NET Framework directory.</li>
+                    <li>Settings here are inherited by all applications, but can be overridden.</li>
+                </ul>
+            </li>
+            <li><strong><code>web.config</code>:</strong>
+                <ul>
+                    <li>This is the configuration file for a *specific* web application.</li>
+                    <li>It is placed in the root directory of your application.</li>
+                    <li>It is used to *override* the default settings from <code>machine.config</code> and define application-specific settings.</li>
+                    <li>Common settings include: database connection strings, session state settings, security rules, and custom error pages.</li>
+                </ul>
+            </li>
+        </ul>
+        <p><strong>In short:</strong> <code>machine.config</code> provides the defaults for the whole server, and <code>web.config</code> provides the specific settings for your one application.</p>
+
+        <!-- Unit 5: ADO.NET -->
+        <h2>Unit 5: Database Connectivity (ADO.NET)</h2>
+
+        <h3>1. Compare Connected and Disconnected ADO.NET architectures.</h3>
+        <p>ADO.NET provides two different ways to interact with a database:</p>
+        [Image of ADO.NET Object Model]
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Connected Architecture</th>
+                    <th>Disconnected Architecture</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Main Class</strong></td>
+                    <td><code>SqlDataReader</code></td>
+                    <td><code>DataSet</code> (filled by a <code>SqlDataAdapter</code>)</td>
+                </tr>
+                <tr>
+                    <td><strong>Connection</strong></td>
+                    <td>Requires a <strong>constant, open connection</strong> to the database while reading.</td>
+                    <td>Connects only long enough to fill the <code>DataSet</code>, then disconnects. All work is done on the in-memory copy.</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Access</strong></td>
+                    <td>Forward-only, read-only stream of data. Very fast and memory-efficient.</td>
+                    <td>Full, scrollable, editable, in-memory copy of the database tables. Can hold multiple tables and their relationships.</td>
+                </tr>
+                <tr>
+                    <td><strong>Use Case</strong></td>
+                    <td>Quickly reading and displaying large amounts of data (e.g., populating a list).</td>
+                    <td>Complex data binding, editing data (CRUD operations), and working with data offline.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2. Analyze the role of DataSet vs. DataReader.</h3>
+        <p><strong>DataReader (Connected):</strong></p>
+        <ul>
+            <li><strong>Analogy:</strong> A fast-moving, forward-only "data firehose."</li>
+            <li>It's a lightweight component that reads a stream of data directly from the database.</li>
+            <li>It is <strong>forward-only</strong> (you can only read records one after another, you can't go back).</li>
+            <li>It is <strong>read-only</strong> (you cannot use it to change data).</li>
+            <li>It is extremely fast and uses very little memory, as it only holds one record in memory at a time.</li>
+            <li>Requires the <code>SqlConnection</code> to remain open the entire time you are reading.</li>
+        </ul>
+        <p><strong>DataSet (Disconnected):</strong></p>
+        <ul>
+            <li><strong>Analogy:</strong> An in-memory, mini-database.</li>
+            <li>It's a heavy-duty object that holds a *full copy* of data in your application's memory.</li>
+            <li>It is <strong>fully scrollable and editable</strong>. You can navigate it forwards, backwards, and make changes.</li>
+            <li>It can hold multiple <code>DataTable</code> objects and their relationships (<code>DataRelation</code>).</li>
+            <li>It is <strong>disconnected</strong>. A <code>SqlDataAdapter</code> is used to "Fill" the <code>DataSet</code> from the DB. After the fill, the database connection is closed. All work (reading, editing) is done on the local copy. The <code>DataAdapter</code> is used again later to "Update" the database with any changes.</li>
+        </ul>
+        
+        <h3>3. Explain the main ADO.NET components (Connection, Command, DataAdapter).</h3>
+        <ol>
+            <li><strong>Connection (<code>SqlConnection</code>):</strong>
+                <ul>
+                    <li>Represents the actual connection to a specific database.</li>
+                    <li>It holds the <strong>Connection String</strong>, which contains the address (Data Source), database name (Initial Catalog), and security info (User ID, Password, or Integrated Security).</li>
+                    <li>Its main methods are <code>Open()</code> and <code>Close()</code>.</li>
+                </ul>
+            </li>
+            <li><strong>Command (<code>SqlCommand</code>):</strong>
+                <ul>
+                    <li>Represents a single SQL statement (like <code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>) or a stored procedure.</li>
+                    <li>It *must* be associated with a <code>SqlConnection</code> object to know *where* to execute the query.</li>
+                    <li>It has the `Execute...()` methods (see next question).</li>
+                </ul>
+            </li>
+            <li><strong>DataAdapter (<code>SqlDataAdapter</code>):</strong>
+                <ul>
+                    <li>This is the "bridge" for the disconnected model.</li>
+                    <li>It holds a <code>SelectCommand</code> (and optionally Insert, Update, Delete commands).</li>
+                    <li>Its <code>Fill()</code> method opens the connection, runs the <code>SelectCommand</code>, loads all the results into a <code>DataSet</code>, and then closes the connection.</li>
+                    <li>Its <code>Update()</code> method connects to the DB and pushes any changes from the <code>DataSet</code> back to the database.</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <h3>4. Explain the ExecuteReader(), ExecuteScalar(), and ExecuteNonQuery() methods.</h3>
+        <p>These are the three main methods of the <code>SqlCommand</code> object:</p>
+        <ul>
+            <li><strong><code>ExecuteReader()</code>:</strong>
+                <ul>
+                    <li><strong>Use:</strong> For <code>SELECT</code> statements that return *multiple rows*.</li>
+                    <li><strong>Returns:</strong> A <code>SqlDataReader</code> object.</li>
+                    <li><strong>Model:</strong> Used in the <strong>Connected</strong> architecture. You must loop through the reader (e.g., <code>while (myReader.Read()) { ... }</code>) to get the data, and the connection must stay open.</li>
+                </ul>
+            </li>
+            <li><strong><code>ExecuteScalar()</code>:</strong>
+                <ul>
+                    <li><strong>Use:</strong> For <code>SELECT</code> queries that return *a single value*.</li>
+                    <li><strong>Returns:</strong> An <code>object</code>. It returns only the value from the first column of the first row.</li>
+                    <li><strong>Example:</strong> <code>SELECT COUNT(*) FROM Users</code> or <code>SELECT MAX(Price) FROM Products</code>.</li>
+                </ul>
+            </li>
+            <li><strong><code>ExecuteNonQuery()</code>:</strong>
+                <ul>
+                    <li><strong>Use:</strong> For SQL commands that do *not* return rows of data.</li>
+                    <li><strong>Returns:</strong> An <code>int</code> representing the number of rows affected by the command.</li>
+                    <li><strong>Example:</strong> <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code> statements.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>5. (CODE) Write C# code to fill a DataSet and bind it to a DataGridView.</h3>
+        <p>This code shows the full disconnected model: using a Example: <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code> statements.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>5. (CODE) Write C# code to fill a DataSet and bind it to a DataGridView.</h3>
+        <p>This code shows the full disconnected model: using a <code>SqlDataAdapter</code> to fill a <code>DataSet</code>, and then setting that <code>DataSet</code> as the data source for a <code>DataGridView</code> control (named <code>dataGridView1</code>) in a Windows Forms application.</p>
+<pre><code class="language-csharp">
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+// ... inside your Form class ...
+
+private void LoadDataButton_Click(object sender, EventArgs e)
+{
+    // 1. Connection string
+    string connString = @"Data Source=YourServer;Initial Catalog=YourDatabase;Integrated Security=True";
+
+    // 2. The query to run
+    string query = "SELECT * FROM Employees";
+
+    // 3. Create the DataAdapter and DataSet
+    // The DataAdapter needs the query and connection string
+    SqlDataAdapter dataAdapter = new SqlDataAdapter(query, connString);
+
+    // The DataSet is the in-memory copy of the data
+    DataSet dataSet = new DataSet();
+
+    try
+    {
+        // 4. Fill the DataSet
+        // The Fill method automatically opens the connection,
+        // runs the query, loads the data into 'dataSet',
+        // and closes the connection.
+        dataAdapter.Fill(dataSet, "EmployeesTable"); // "EmployeesTable" is a friendly name
+
+        // 5. Bind the DataSet to the DataGridView
+        // We bind to the specific table inside the DataSet
+        dataGridView1.DataSource = dataSet.Tables["EmployeesTable"];
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show("Error loading data: " + ex.Message);
+    }
+    finally
+    {
+        // Good practice to dispose of the adapter
+        if (dataAdapter != null)
+        {
+            dataAdapter.Dispose();
+        }
+    }
+}
+</code></pre>
+
+    </div>
+    <!-- Prism.js JS for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
