@@ -533,17 +533,11 @@ int myUnboxedValue = (int)myBoxedValue; // Explicitly unboxed.
 <pre><code class="language-csharp">
 int maxInt = int.MaxValue; // 2,147,483,647
 
-try
+// This block will throw an exception
+checked
 {
-    // This block will throw an exception
-    checked
-    {
-        int overflow = maxInt + 1; 
-    }
-}
-catch (OverflowException ex)
-{
-    Console.WriteLine("Checked block failed!");
+    // Will fail and jump to a catch block (if one exists)
+    int overflow = maxInt + 1; 
 }
 
 // This block will not throw. The value just wraps.
@@ -566,15 +560,24 @@ unchecked
 // 1. Define the class with auto-implemented properties
 public class Book
 {
+    // Auto-property for Title. Compiler creates a private 'title' field.
     public string Title { get; set; }
+
+    // Auto-property for Author. Compiler creates a private 'author' field.
     public string Author { get; set; }
+
+    // Auto-property for Price.
     public double Price { get; set; }
 }
 
-// 2. Use the class
+// 2. Use the class (e.g., in a Main method or button click)
 Book myBook = new Book();
+
+// Use the 'set' accessor
 myBook.Title = "Fundamentals of Visual Programming";
 myBook.Price = 54.99;
+
+// Use the 'get' accessor
 Console.WriteLine(myBook.Title); // Prints the title
 </code></pre>
         <div class="example">
@@ -700,7 +703,506 @@ Console.WriteLine(myBook.Title); // Prints the title
             </div>
         </div>
 <pre><code class="language-csharp">
-// Assume connString and query are defined, and dataGridView1 exists on the form
+// In a button click event handler:
+if (string.IsNullOrEmpty(textBox1.Text))
+{
+    // Set an error for textBox1
+    errorProvider1.SetError(textBox1, "Name cannot be empty!");
+}
+else
+{
+    // Clear the error
+    errorProvider1.SetError(textBox1, "");
+}
+</code></pre>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like a spell-checker in a word processor. It doesn't pop up a big error window every time you misspell a word (that would be annoying, like a MessageBox). Instead, it quietly puts a *little red-squiggle* (the error icon) under the problem word (the `TextBox`). If you hover over it, it tells you what's wrong (the tooltip).
+        </div>
+
+        <h3>4. Explain container controls like Panel and GroupBox.</h3>
+        <p>Container controls are used to hold and organize other controls.</p>
+        <ul>
+            <li><strong>Panel:</strong>
+                <ul>
+                    <li>A simple container with no visual style by default (it's often invisible).</li>
+                    <li>Its main purpose is to <strong>group controls for layout</strong>. For example, you can put several buttons and textboxes on a Panel, and then move the Panel, and all its contents move together.</li>
+                    <li>You can also show/hide the Panel's <code>Visible</code> property to show/hide all child controls at once.</li>
+                </ul>
+            </li>
+            <li><strong>GroupBox:</strong>
+                <ul>
+                    <li>A container that draws a <strong>border and a title (<code>Text</code> property)</strong> around its contents.</li>
+                    <li>It provides a <strong>visual and logical grouping</strong> for related controls.</li>
+                    <li>It is most commonly used to group <code>RadioButton</code> controls. When <code>RadioButton</code>s are placed in the same <code>GroupBox</code>, they become mutually exclusive (only one can be selected).</li>
+                </ul>
+            </li>
+        </ul>
+        <div class="diagram">
+            <div class="diagram-title">Container Controls</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>Panel</strong>
+                    <div class="concept-box" style="display: block; margin: 10px; background-color: #fff; border: 1px dashed #ccc;">
+                        [ Button ] [ TextBox ]
+                    </div>
+                    <p style="font-size: 0.9em;">(No border, for layout)</p>
+                </div>
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong style="display: block; text-align: left; margin-left: 5px;">GroupBox Title</strong>
+                    <div class="concept-box" style="display: block; margin: 10px; background-color: #fff; border: 1px solid #999; text-align: left; padding: 10px;">
+                        (•) Option 1<br>
+                        ( ) Option 2
+                    </div>
+                    <p style="font-size: 0.9em;">(Has border & title)</p>
+                </div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li>A <strong>Panel</strong> is like a plain moving box. Its job is to group items (your plates, your books) so you can move them all at once. From the outside, it's just an invisible box.</li>
+                <li>A <strong>GroupBox</strong> is like a fancy display case with a glass front and a label that says "My Mug Collection." It *both* groups the items *and* provides a visual border and title so the user knows what's inside.</li>
+            </ul>
+        </div>
+
+        <h3>5. How do you use a ListBox? Explain its key properties.</h3>
+        <p>A <code>ListBox</code> control displays a list of items from which the user can select one or more.</p>
+        <p><strong>Key Properties:</strong></p>
+        <ul>
+            <li><code>Items</code>: This is the *collection* of items in the list. You add items using <code>listBox1.Items.Add("New Item");</code>.</li>
+            <li><code>SelectionMode</code>: Controls how many items can be selected.
+                <ul>
+                    <li><code>One</code>: (Default) Only one item can be selected.</li>
+                    <li><code>MultiSimple</code>: Multiple items can be selected by clicking or tapping.</li>
+                    <li><code>MultiExtended</code>: Multiple items can be selected, but requires holding Ctrl/Shift (like in Windows Explorer).</li>
+                </ul>
+            </li>
+            <li><code>SelectedItem</code>: Gets the item that is currently selected (if <code>SelectionMode</code> is <code>One</code>).</li>
+            <li><code>SelectedItems</code>: Gets the *collection* of all selected items (if <code>SelectionMode</code> is <code>MultiSimple</code> or <code>MultiExtended</code>).</li>
+            <li><code>SelectedIndex</code>: Gets the 0-based index of the currently selected item.</li>
+        </ul>
+        <div class="diagram">
+            <div class="diagram-title">ListBox (SelectionMode = MultiSimple)</div>
+            <div class="diagram-box" style="width: 50%; text-align: left;">
+                [ Item 1 ]<br>
+                <span class="concept-box-alt" style="display:block;">[ Item 2 ]</span>
+                [ Item 3 ]<br>
+                <span class="concept-box-alt" style="display:block;">[ Item 4 ]</span>
+            </div>
+            <div style="text-align: left; margin-top: 10px; display: inline-block; vertical-align: top;">
+                <code>SelectedItems</code> = {"Item 2", "Item 4"}
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> A **ListBox** is like a food menu.
+            <ul>
+                <li>The <code>Items</code> are all the dishes.</li>
+                <li><code>SelectionMode.One</code> is a normal menu where you pick one main course.</li>
+                <li><code>SelectionMode.MultiSimple</code> is like a checklist for appetizers where you can just tap all the ones you want ("Fries," "Wings," "Spring Rolls").</li>
+            </ul>
+        </div>
+
+        <!-- Unit 4: Web programming fundamentals (THEORY ONLY) -->
+        <h2>Unit 4: Web programming fundamentals (Theory)</h2>
+
+        <h3>1. Explain the role of HTTP Request and HTTP Response.</h3>
+        <p>HTTP (HyperText Transfer Protocol) is the foundation of data communication for the World Wide Web. It works as a request-response protocol between a client (like a web browser) and a server.</p>
+        <ul>
+            <li><strong>HTTP Request:</strong> This is the message sent by the client (e.g., your browser) to the server when you want to access a resource (like a webpage). It's the "ask."</li>
+            <li><strong>HTTP Response:</strong> This is the message sent back by the server to the client. It's the "answer" and contains the resource (the HTML, image, or data) or an error.</li>
+        </ul>
+        <div class="diagram">
+            <div class="diagram-title">HTTP Request/Response</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 30%;"><strong>Client (Browser)</strong></div>
+                <div class="flex-column" style="width: 30%;">
+                    <div class="arrow">&rarr;</div>
+                    <div><strong>Request</strong></div>
+                    <div style="font-size: 0.9em;">(e.g., "GET /page.html")</div>
+                </div>
+                <div class="diagram-box concept-box-grey" style="width: 30%;"><strong>Server</strong></div>
+            </div>
+            <div class="flex-container" style="margin-top: 10px;">
+                <div class="diagram-box" style="width: 30%;"><strong>Client (Browser)</strong></div>
+                <div class="flex-column" style="width: 30%;">
+                    <div class="arrow">&larr;</div>
+                    <div><strong>Response</strong></div>
+                    <div style="font-size: 0.9em;">(e.g., "200 OK" + HTML data)</div>
+                </div>
+                <div class="diagram-box concept-box-grey" style="width: 30%;"><strong>Server</strong></div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like ordering food at a restaurant.
+            <ul>
+                <li><strong>Request:</strong> You (the **Client**) give a waiter your order (the **HTTP Request**). The order says "I want (GET) the daily special (/menu.html)."</li>
+                <li><strong>Response:</strong> The waiter goes to the kitchen (the **Server**), gets your food, and brings it back. The food on the plate is the **HTTP Response** (the HTML, images, etc.).</li>
+            </ul>
+        </div>
+
+        <h3>2. Compare the GET and POST methods.</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>GET</th>
+                    <th>POST</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Data Submission</strong></td>
+                    <td>Data is sent in the URL query string (e.g., <code>page.aspx?id=123</code>).</td>
+                    <td>Data is sent in the body of the HTTP request.</td>
+                </tr>
+                <tr>
+                    <td><strong>Visibility</strong></td>
+                    <td>Data is visible to everyone in the URL, browser history, and server logs.</td>
+                    <td>Data is not displayed in the URL.</td>
+                </tr>
+                <tr>
+                    <td><strong>Security</strong></td>
+                    <td>Less secure. Should not be used for sensitive data (like passwords).</td>
+                    <td>More secure (though not encrypted by default; needs HTTPS).</td>
+                </tr>
+                <tr>
+                    <td><strong>Use Case</strong></td>
+                    <td>Requesting data (e.g., Google search, loading a product page).</td>
+                    <td>Submitting data (e.g., a login form, file uploads).</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="diagram">
+            <div class="diagram-title">GET vs. POST</div>
+            <div class="diagram-box" style="width: 80%; text-align: left; margin-bottom: 10px; background-color: #f5f5f5; border-color: #e0e0e0;">
+                <strong>GET (Postcard)</strong><br>
+                <code>/search?q=mydata</code> (Data is visible in URL)
+            </div>
+            <div class="diagram-box" style="width: 80%; text-align: left; background-color: #f5f5f5; border-color: #e0e0e0;">
+                <strong>POST (Sealed Envelope)</strong><br>
+                <code>/login</code><br>
+                <code>(Body: user=admin&pass=123)</code> (Data is hidden in body)
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>GET:</strong> It's like sending a **postcard**. Anyone can read the message (the data) written on the back (the URL). It's public and has a limited size. Good for simple requests like "What's the weather in London?"</li>
+                <li><strong>POST:</strong> It's like sending a **sealed envelope**. The data is *inside* the envelope (the request body), not written on the outside. It's private and can hold a lot more info. You *must* use this for sending a credit card number or a password.</li>
+            </ul>
+        </div>
+        
+        <h3>3. Describe the main stages of the ASP.NET Page Life Cycle.</h3>
+        <p>The ASP.NET Page Life Cycle is a series of steps a page goes through from the time it's requested by the server to the time it's rendered in the browser. Understanding this is key to knowing *when* to write your code.</p>
+        <div class="diagram">
+            <div class="diagram-title">ASP.NET Page Life Cycle (Simplified)</div>
+            <div class="flex-container">
+                <div class="diagram-box">PreInit</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box">Init</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-alt">Load</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-red">Control Events<br>(e.g., Button_Click)</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box">PreRender</div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-grey">Render & Unload</div>
+            </div>
+        </div>
+        <ol>
+            <li><strong>PreInit:</strong> The very first step. Set master page or theme.</li>
+            <li><strong>Init:</strong> All controls on the page are initialized.</li>
+            <li><strong>Load:</strong> The main event for page logic. ViewState and PostBack data are loaded. This is where you check <code>if (!IsPostBack)</code> to set up data (e.g., database queries).</li>
+            <li><strong>Control PostBack Event(s):</strong> If the page was submitted, the specific control event that caused it (e.g., a <code>Button_Click</code>) runs now.</li>
+            <li><strong>PreRender:</strong> The last chance to make changes to the page or its controls before they are rendered into HTML.</li>
+            <li><strong>Render:</strong> The page and its controls are "drawn" as HTML.</li>
+            <li><strong>Unload:</strong> The page is removed from memory. Used for final cleanup (e.g., closing database connections).</li>
+        </ol>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like an actor performing a play.
+            <ul>
+                <li><strong>Init:</strong> The actor wakes up and gets into costume (controls are initialized).</li>
+                <li><strong>Load:</strong> The actor gets their props and the ViewState (what happened last scene) is restored.</li>
+                <li><strong>Control Events (Button_Click):</strong> This is the actor's *main line* ("To be, or not to be!"). This is the main action of the scene.</li>
+                <li><strong>Render:</strong> The actor takes their final pose as the lights hit them, and this is the "picture" the audience (browser) sees.</li>
+                <li><strong>Unload:</strong> The actor leaves the stage and the scene is cleaned up.</li>
+            </ul>
+        </div>
+
+        <h3>4. What are Validation Controls in ASP.NET?</h3>
+        <p>Validation Controls are server controls that automatically check user input on a form to ensure it's valid. They can run on both the client (using JavaScript) and the server, preventing bad data from being submitted.</p>
+        <ul>
+            <li><strong>RequiredFieldValidator:</strong> Ensures the user does not leave a control (like a TextBox) empty.</li>
+            <li><strong>RangeValidator:</strong> Checks that the user's input is within a specified range (e.g., age 18-65).</li>
+            <li><strong>CompareValidator:</strong> Compares the input against a fixed value or another control (e.g., "Password" and "Confirm Password" must match).</li>
+            <li><strong>RegularExpressionValidator:</strong> Checks that the input matches a specific pattern (a "regex"), such as for a valid email address.</li>
+            <li><strong>ValidationSummary:</strong> Gathers all the error messages and displays them in a single, collective list.</li>
+        </ul>
+        <div class="diagram">
+            <div class="diagram-title">Validation Controls Flow</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-grey" style="width: 150px;">Email: [ <u>text</u> ]</div>
+                <div class="arrow">&rarr;</div>
+                <div class="flex-column">
+                    <div class="diagram-box concept-box-red" style="margin: 2px;">RequiredFieldValidator</div>
+                    <div class="diagram-box concept-box-red" style="margin: 2px;">RegularExpressionValidator</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-alt" style="width: 150px;">ValidationSummary<br>• Email is required.<br>• Must be valid format.</div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> They are like helpful assistants at a passport office, checking your form *before* you get to the main counter.
+            <ul>
+                <li><strong>RequiredFieldValidator:</strong> "Sir, you forgot to sign your name here."</li>
+                <li><strong>RangeValidator:</strong> "Ma'am, the date of birth you entered says you are 300 years old. That's not in the valid range."</li>
+                <li><strong>RegularExpressionValidator:</strong> "This phone number is missing a digit. It doesn't match the 10-digit pattern."</li>
+                <li><strong>ValidationSummary:</strong> This is the final assistant who gives you one list of *all* the things you did wrong.</li>
+            </ul>
+        </div>
+        
+        <h3>5. What is the role of the web.config file? How does it differ from machine.config?</h3>
+        <p>Both are XML files used for configuration in .NET applications, but they have different scopes.</p>
+        <ul>
+            <li><strong><code>machine.config</code>:</strong>
+                <ul>
+                    <li>This is the "master" configuration file for the *entire machine* (server).</li>
+                    <li>It defines the default settings for *all* .NET applications running on that server.</li>
+                    <li>Settings here are inherited by all applications.</li>
+                </ul>
+            </li>
+            <li><strong><code>web.config</code>:</strong>
+                <ul>
+                    <li>This is the configuration file for a *specific* web application.</li>
+                    <li>It is placed in the root directory of your application.</li>
+                    <li>It is used to *override* the default settings from <code>machine.config</code> and define application-specific settings (like database connection strings, security rules, etc.).</li>
+                </ul>
+            </li>
+        </ul>
+        <div class="diagram">
+            <div class="diagram-title">Configuration Inheritance</div>
+            <div class="flex-column">
+                <div class="diagram-box concept-box-grey" style="width: 300px;"><strong>machine.config</strong><br>(Defaults for whole server)</div>
+                <div class="arrow-down">&darr; (inherits from)</div>
+                <div class="diagram-box concept-box-alt" style="width: 300px;"><strong>web.config</strong><br>(Overrides for *your* app)</div>
+                <div class="arrow-down">&darr; (applies to)</div>
+                <div class="diagram-box" style="width: 300px;">Your Web Application</div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>`machine.config`:** This is the *main rulebook for the entire apartment building*. It has default rules for everyone (e.g., "Quiet hours are 10 PM to 8 AM," "No pets").</li>
+                <li><strong>`web.config`:** This is your *personal set of house rules for your own apartment*. You can *override* the building rules (e.g., "In this apartment, quiet hours start at 11 PM") or add new ones ("Database connection string is..."). Your rules only apply to your apartment (your app).</li>
+            </ul>
+        </div>
+
+        <!-- Unit 5: ADO.NET -->
+        <h2>Unit 5: Database Connectivity (ADO.NET)</h2>
+
+        <h3>1. Compare Connected and Disconnected ADO.NET architectures.</h3>
+        <p>ADO.NET provides two different ways to interact with a database:</p>
+        <div class="diagram">
+            <div class="diagram-title">ADO.NET Architectures</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>Connected Model</strong>
+                    <div class="flex-container" style="margin-top: 10px;">
+                         <div class="diagram-box concept-box-alt">App</div>
+                         <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                         <div class="diagram-box concept-box-red" style="padding: 10px; font-size: 0.9em;">SqlDataReader</div>
+                         <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                         <div class="diagram-box concept-box-grey">DB</div>
+                    </div>
+                    <p style="margin-top: 10px;"><strong>Connection stays open.</strong></p>
+                </div>
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>Disconnected Model</strong>
+                    <div class="flex-container" style="margin-top: 10px;">
+                        <div class="diagram-box concept-box-alt">App</div>
+                        <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                        <div class="diagram-box" style="padding: 10px; font-size: 0.9em;">DataSet</div>
+                        <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                        <div class="diagram-box concept-box-red" style="padding: 10px; font-size: 0.9em;">SqlDataAdapter</div>
+                        <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                        <div class="diagram-box concept-box-grey">DB</div>
+                    </div>
+                    <p style="margin-top: 10px;"><strong>Connection opens & closes.</strong></p>
+                </div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Connected Architecture</th>
+                    <th>Disconnected Architecture</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Main Class</strong></td>
+                    <td><code>SqlDataReader</code></td>
+                    <td><code>DataSet</code> (filled by a <code>SqlDataAdapter</code>)</td>
+                </tr>
+                <tr>
+                    <td><strong>Connection</strong></td>
+                    <td>Requires a <strong>constant, open connection</strong> to the database while reading.</td>
+                    <td>Connects only long enough to fill the <code>DataSet</code>, then disconnects. All work is done on the in-memory copy.</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Access</strong></td>
+                    <td>Forward-only, read-only stream of data. Very fast and memory-efficient.</td>
+                    <td>Full, scrollable, editable, in-memory copy of the database tables.</td>
+                </tr>
+                <tr>
+                    <td><strong>Use Case</strong></td>
+                    <td>Quickly reading and displaying large amounts of data (e.g., populating a list).</td>
+                    <td>Complex data binding, editing data (CRUD operations), and working with data offline.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>Connected (DataReader):</strong> It's like a *live phone call* with the bank. You are connected the *entire time*. You ask for your transactions one by one ("Next? Next? Next?"). It's fast, but you're holding the line open.</li>
+                <li><strong>Disconnected (DataSet):</strong> It's like asking the bank to *mail you a full paper statement*. You connect (call them), they send it (Fill DataSet), and you hang up (disconnect). Now, at your desk, you can circle items, write notes, and edit the statement. When you're done, you call them back and *tell them all your changes* (Update with DataAdapter).</li>
+            </ul>
+        </div>
+
+        <h3>2. Analyze the role of DataSet vs. DataReader.</h3>
+        <p><strong>DataReader (Connected):</strong></p>
+        <ul>
+            <li><strong>Analogy:</strong> A fast-moving, forward-only "data firehose."</li>
+            <li>It's a lightweight component that reads a stream of data directly from the database.</li>
+            <li>It is <strong>forward-only</strong> (you can only read records one after another, you can't go back).</li>
+            <li>It is <strong>read-only</strong> (you cannot use it to change data).</li>
+            <li>It uses very little memory, as it only holds one record in memory at a time.</li>
+            <li>Requires the <code>SqlConnection</code> to remain open the entire time you are reading.</li>
+        </ul>
+        <p><strong>DataSet (Disconnected):</strong></p>
+        <ul>
+            <li><strong>Analogy:</strong> An in-memory, mini-database.</li>
+            <li>It's a heavy-duty object that holds a *full copy* of data in your application's memory.</li>
+            <li>It is <strong>fully scrollable and editable</strong>. You can navigate it forwards, backwards, and make changes.</li>
+            <li>It can hold multiple <code>DataTable</code> objects and their relationships.</li>
+            <li>It is <strong>disconnected</strong>. A <code>SqlDataAdapter</code> is used to "Fill" the <code>DataSet</code>. After the fill, the database connection is closed. All work (reading, editing) is done on the local copy.</li>
+        </ul>
+        <div class="diagram">
+            <div class="diagram-title">DataReader vs. DataSet</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>DataReader</strong>
+                    <div class="concept-box concept-box-red" style="margin-top: 10px;">[ Row 1 ]</div>
+                    <p style="font-size: 0.9em; margin-top: 10px;">(Reads one row at a time)<br><strong>Forward-only, Read-only, Live Connection</strong></p>
+                </div>
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>DataSet</strong>
+                    <div class="concept-box" style="margin-top: 10px; background-color: #fff;">
+                        [ Row 1 ]<br>[ Row 2 ]<br>[ Row 3 ]
+                    </div>
+                    <p style="font-size: 0.9em; margin-top: 10px;">(Holds all rows in memory)<br><strong>Full Copy, Read/Write, Disconnected</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li>A <strong>DataReader</strong> is like a news ticker on TV. It streams the data to you one piece at a time, you can't pause it, you can't go back, and you can't change it. It's just a fast, read-only feed.</li>
+                <li>A <strong>DataSet</strong> is like getting the *entire newspaper*. You can spread all the pages (tables) out on your table, read them in any order, write on them (edit), and look at multiple pages at once.</li>
+            </ul>
+        </div>
+        
+        <h3>3. Explain the main ADO.NET components (Connection, Command, DataAdapter).</h3>
+        <ol>
+            <li><strong>Connection (<code>SqlConnection</code>):</strong> Represents the actual connection to a specific database. It holds the <strong>Connection String</strong> (address, DB name, security). Its main methods are <code>Open()</code> and <code>Close()</code>.</li>
+            <li><strong>Command (<code>SqlCommand</code>):</strong> Represents a single SQL statement (like <code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>). It must be associated with a <code>SqlConnection</code> to know *where* to execute.</li>
+            <li><strong>DataAdapter (<code>SqlDataAdapter</code>):</strong> This is the "bridge" for the disconnected model. Its <code>Fill()</code> method opens the connection, runs a <code>SelectCommand</code>, loads the results into a <code>DataSet</code>, and closes the connection. Its <code>Update()</code> method pushes changes from the <code>DataSet</code> back to the DB.</li>
+        </ol>
+        <div class="diagram">
+            <div class="diagram-title">ADO.NET Disconnected Components</div>
+            <div class="flex-container">
+                <div class="flex-column">
+                    <div class="diagram-box concept-box-alt" style="width: 200px;"><strong>Connection</strong><br>(*Where* to connect)</div>
+                    <div class="diagram-box concept-box-alt" style="width: 200px; margin-top: 5px;"><strong>Command</strong><br>(*What* to execute)</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-red" style="width: 200px;"><strong>DataAdapter</strong><br>(*Bridge* to fill/update)</div>
+                <div class="arrow">&harr;</div>
+                <div class="diagram-box" style="width: 200px;"><strong>DataSet</strong><br>(*In-memory* data)</div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> Think of it as a water-bottling plant.
+            <ul>
+                <li><strong>Connection:</strong> The main *water pipe* to the reservoir (the database).</li>
+                <li><strong>Command:</strong> The *instruction* you give the pipe ("Send me water," "Stop sending water").</li>
+                <li><strong>DataAdapter:</strong> The *bottling machine*. It connects to the pipe (Connection), takes the water (based on the Command), and *fills* a multi-pack of water bottles (the `DataSet`).</li>
+                <li><strong>DataSet:</strong> The *multi-pack of water bottles* (tables) that you can now take with you, disconnected from the plant.</li>
+            </ul>
+        </div>
+        
+        <h3>4. Explain the ExecuteReader(), ExecuteScalar(), and ExecuteNonQuery() methods.</h3>
+        <p>These are the three main methods of the <code>SqlCommand</code> object:</p>
+        <ul>
+            <li><strong><code>ExecuteReader()</code>:</strong>
+                <ul>
+                    <li><strong>Use:</strong> For <code>SELECT</code> statements that return *multiple rows*.</li>
+                    <li><strong>Returns:</strong> A <code>SqlDataReader</code> object (a live, forward-only stream).</li>
+                </ul>
+            </li>
+            <li><strong><code>ExecuteScalar()</code>:</strong>
+                <ul>
+                    <li><strong>Use:</strong> For <code>SELECT</code> queries that return *a single value* (first column of the first row).</li>
+                    <li><strong>Returns:</strong> An <code>object</code>. (e.g., <code>SELECT COUNT(*) FROM Users</code>).</li>
+                </ul>
+            </li>
+            <li><strong><code>ExecuteNonQuery()</code>:</strong>
+                <ul>
+                    <li><strong>Use:</strong> For commands that do *not* return rows of data (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>).</li>
+                    <li><strong>Returns:</strong> An <code>int</code> (the number of rows affected by the command).</li>
+                </ul>
+            </li>
+        </ul>
+        <div class="diagram">
+            <div class="diagram-title">SqlCommand Execute Methods</div>
+            <div class="diagram-box" style="width: 80%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                <div class="concept-box-alt" style="display: block; margin: 10px;"><code>ExecuteReader()</code> &rarr; Returns: <strong>SqlDataReader</strong> (for getting a list of results)</div>
+                <div class="concept-box-alt" style="display: block; margin: 10px;"><code>ExecuteScalar()</code> &rarr; Returns: <strong>Object</strong> (for getting a single value, like "5")</div>
+                <div class="concept-box-alt" style="display: block; margin: 10px;"><code>ExecuteNonQuery()</code> &rarr; Returns: <strong>int</strong> (for <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>, tells you "3 rows affected")</div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>`ExecuteNonQuery()`:** This is for commands where you *tell* the database to *do* something. It's like yelling "Open the gate!" (an `INSERT` or `UPDATE`). The response you get back is just an `int`: "1 gate (row) opened."</li>
+                <li><strong>`ExecuteScalar()`:** This is when you ask a question that has a *single answer*. "How many people are in the room?" (a `COUNT(*)`). The response is just that one number (an `object`).</li>
+                <li><strong>`ExecuteReader()`:** This is when you ask for a *list*. "Read me the names of everyone in the room." The response is a *reader* object that lets you go through the list, one name at a time.</li>
+            </ul>
+        </div>
+
+        <h3>5. (CODE) Write C# code to fill a DataSet and bind it to a DataGridView.</h3>
+        <p>This code shows the full disconnected model: using a <code>SqlDataAdapter</code> to fill a <code>DataSet</code>, and then setting that <code>DataSet</code> as the data source for a <code>DataGridView</code> control (named <code>dataGridView1</code>) in a Windows Forms application.</p>
+        <div class="diagram">
+            <div class="diagram-title">DataSet to DataGridView Flow</div>
+            <div class="flex-container">
+                <div class="diagram-box concept-box-grey">Database</div>
+                <div class="flex-column" style="margin: 0 5px;">
+                    <div class="arrow">&rarr;</div>
+                    <div style="font-size: 0.9em;"><strong>SqlDataAdapter.Fill()</strong></div>
+                </div>
+                <div class="diagram-box" style="width: 150px;"><strong>DataSet</strong><br>(In-Memory Copy)</div>
+                <div class="flex-column" style="margin: 0 5px;">
+                    <div class="arrow">&rarr;</div>
+                    <div style="font-size: 0.9em;"><strong>.DataSource =</strong></div>
+                </div>
+                <div class="diagram-box concept-box-alt" style="width: 150px;"><strong>DataGridView</strong><br>(Visual Table)</div>
+            </div>
+        </div>
+<pre><code class="language-csharp">
+// Assume you are inside a button-click event
+// and you have a DataGridView on your form named 'dataGridView1'
 
 // 1. Define Connection String and Query
 string connString = @"Data Source=YourServer;Initial Catalog=YourDatabase;Integrated Security=True";
@@ -717,7 +1219,7 @@ dataAdapter.Fill(dataSet, "EmployeesTable");
 // 4. Bind the in-memory data to the visual DataGridView
 dataGridView1.DataSource = dataSet.Tables["EmployeesTable"];
 
-// 5. Good practice to dispose of the adapter
+// 5. Clean up
 dataAdapter.Dispose();
 </code></pre>
         <div class="example">
