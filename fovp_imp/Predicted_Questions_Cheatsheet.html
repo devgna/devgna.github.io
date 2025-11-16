@@ -56,7 +56,6 @@
         li {
             margin-bottom: 8px;
         }
-        /* Remove custom pre/code styles, Prism will handle it */
         pre {
             border-radius: 5px;
             font-size: 0.95em;
@@ -72,6 +71,20 @@
             border-radius: 5px;
             margin-top: 15px;
         }
+        /* NEW: Real-world example box */
+        .example {
+            background-color: #fffaf0; /* Light orange/cream */
+            border: 1px solid #ffe0b2; /* Orange border */
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .example strong {
+            color: #e65100; /* Dark orange */
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -114,12 +127,12 @@
             margin: 5px;
             min-width: 120px;
             text-align: center;
+            vertical-align: middle;
         }
         .concept-box-alt {
             background-color: #e8f5e9; /* Light green */
             border: 1px solid #a5d6a7; /* Green border */
             color: #2e7d32; /* Green text */
-            display: block;
         }
         .concept-box-red {
             background-color: #ffebee; /* Light red */
@@ -183,18 +196,33 @@
         <div class="diagram">
             <div class="diagram-title">CLR Execution Flow</div>
             <div class="flex-container">
-                <div class="diagram-box concept-box-alt">C# Code</div>
+                <div class="flex-column">
+                    <div class="diagram-box concept-box-alt">C# Code</div>
+                    <div class="diagram-box concept-box-alt" style="margin-top: 5px;">VB.NET Code</div>
+                </div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-alt">VB.NET Code</div>
+                <div class="diagram-box">Language<br>Compiler</div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box">Language Compiler</div>
+                <div class="diagram-box">MSIL Code<br>(Intermediate)</div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box">MSIL Code</div>
+                <div class="diagram-box concept-box-red">CLR<br>(JIT, GC, Security)</div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-red">CLR (JIT, GC, Security)</div>
-                <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-grey">Native Code</div>
+                <div class="diagram-box concept-box-grey">Native Code<br>(Machine-Specific)</div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> Think of the CLR as a highly-skilled translator and event manager at the UN.
+            <ul>
+                <li>Speakers (C#, VB.NET) write their speeches (code) in their own language.</li>
+                <li>A compiler translates them into a common "UN-speak" (MSIL).</li>
+                <li>The <strong>CLR (manager)</strong> is in the room:
+                    <ul>
+                        <li>It translates that "UN-speak" into the *specific* language of the listening diplomats (Native Code) *just-in-time* as they speak (JIT).</li>
+                        <li>It provides security, checking everyone's badges (CAS).</li>
+                        <li>It automatically cleans up the water glasses and trash left behind (Garbage Collection).</li>
+                    </ul>
+                </li>
+            </ul>
         </div>
 
         <h3>2. Describe the .NET Framework architecture.</h3>
@@ -202,7 +230,7 @@
         <div class="diagram">
             <div class="diagram-title">.NET Framework Architecture</div>
             <div class="flex-column">
-                <div class="diagram-box concept-box-alt" style="width: 300px;">Windows Forms | ASP.NET | WPF</div>
+                <div class="diagram-box concept-box-alt" style="width: 300px;">Windows Forms | ASP.NET | WPF (Your Apps)</div>
                 <div class="arrow-down">&darr;</div>
                 <div class="diagram-box" style="width: 300px;">Framework Class Library (FCL)</div>
                 <div class="arrow-down">&darr;</div>
@@ -215,12 +243,22 @@
         </div>
         <p><strong>Main Components:</strong></p>
         <ol>
-            <li><strong>Common Language Runtime (CLR):</strong> The "engine" at the bottom that executes code (as described in Q1). It includes the JIT compiler, Garbage Collector (GC), and handles security and exception handling.</li>
-            <li><strong>Framework Class Library (FCL):</strong> A huge library of pre-written, reusable code (classes, interfaces, value types) that developers can use for common tasks like database access (ADO.NET), file I/O, string manipulation, etc.</li>
-            <li><strong>Common Language Specification (CLS):</strong> A set of rules that language compilers must follow to create code that can interoperate (work with) other .NET languages.</li>
-            <li><strong>Common Type System (CTS):</strong> Defines a set of common data types that all .NET languages share, ensuring (for example) that a C# <code>int</code> is the same as a VB.NET <code>Integer</code>.</li>
-            <li><strong>Application Layers:</strong> These are the types of applications you can build, which all use the FCL and CLR (e.g., Windows Forms, ASP.NET, WPF).</li>
+            <li><strong>Common Language Runtime (CLR):</strong> The "engine" at the bottom that executes code.</li>
+            <li><strong>Framework Class Library (FCL):</strong> A huge library of pre-written, reusable code (e.g., code for database access, file I/O, string manipulation).</li>
+            <li><strong>Common Language Specification (CLS):</strong> A set of rules that languages must follow to be able to "talk" to each other.</li>
+            <li><strong>Common Type System (CTS):</strong> Defines a set of common data types that all .NET languages share.</li>
+            <li><strong>Application Layers (WPF, ASP.NET, etc.):</strong> The types of applications you can build.</li>
         </ol>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like building with LEGOs.
+            <ul>
+                <li>The **Operating System** is the floor.</li>
+                <li>The **CLR** is the big, flat green LEGO baseplate you build on.</li>
+                <li>The **FCL** is a giant box of pre-built LEGO pieces (wheels, doors, windows, etc.).</li>
+                <li>The **CLS/CTS** are the "studs" and "holes" that guarantee all pieces, no matter which box they came from, will snap together.</li>
+                <li>**Your App (WPF)** is the final car or house you build.</li>
+            </ul>
+        </div>
 
         <h3>3. Explain the difference between Managed and Unmanaged Code.</h3>
         <table>
@@ -258,19 +296,27 @@
             <div class="diagram-title">Managed vs. Unmanaged Code</div>
             <div class="flex-container">
                 <div class="flex-column" style="margin-right: 20px;">
-                    <div class="diagram-box concept-box-alt">Managed Code (C#)</div>
+                    <div class="diagram-title">Managed Flow</div>
+                    <div class="diagram-box concept-box-alt">Your C# Code</div>
                     <div class="arrow-down">&darr;</div>
-                    <div class="diagram-box concept-box-red">CLR</div>
+                    <div class="diagram-box concept-box-red">CLR (Manager)</div>
                     <div class="arrow-down">&darr;</div>
                     <div class="diagram-box concept-box-grey">Operating System</div>
                 </div>
                 <div class="flex-column" style="margin-left: 20px;">
-                    <div class="diagram-box concept-box-alt">Unmanaged Code (C++)</div>
-                    <div class="arrow-down" style="font-size: 61px; color: #f9f9f9;">&darr;</div>
-                    <div class="arrow-down">&darr;</div>
+                    <div class="diagram-title">Unmanaged Flow</div>
+                    <div class="diagram-box concept-box-alt">Your C++ Code</div>
+                    <div class="arrow-down" style="font-size: 61px;">&darr;</div>
                     <div class="diagram-box concept-box-grey">Operating System</div>
                 </div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>Managed Code (C#):</strong> It's like driving a modern car with automatic transmission, anti-lock brakes, and airbags. The **CLR** is the car's computer, managing the engine and protecting you. You just steer.</li>
+                <li><strong>Unmanaged Code (C++):</strong> It's like riding a powerful, custom-built motorcycle. You have *total* control and it's incredibly fast, but you are responsible for *everything*. If you forget to manage your fuel (memory), you'll crash.</li>
+            </ul>
         </div>
 
         <h3>4. What is the Common Type System (CTS) and how does it support language interoperability?</h3>
@@ -284,12 +330,15 @@
         <div class="diagram">
             <div class="diagram-title">Common Type System (CTS)</div>
             <div class="flex-container">
-                <div class="diagram-box concept-box-alt">C# <code>int</code></div>
+                <div class="diagram-box concept-box-alt">C#<br><code>int</code></div>
                 <div class="arrow" style="transform: rotate(30deg);">&rarr;</div>
-                <div class="diagram-box concept-box-red">CTS<br>(System.Int32)</div>
+                <div class="diagram-box concept-box-red" style="padding-top: 20px; padding-bottom: 20px;"><strong>CTS</strong><br>(<code>System.Int32</code>)</div>
                 <div class="arrow" style="transform: rotate(-30deg);">&larr;</div>
-                <div class="diagram-box concept-box-alt">VB.NET <code>Integer</code></div>
+                <div class="diagram-box concept-box-alt">VB.NET<br><code>Integer</code></div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> The CTS is like a universal power adapter for travel. Your C# code has a European plug (an `int`), and your VB.NET code has an American plug (an `Integer`). The **CTS** acts as the universal socket, defining a standard `System.Int32` plug. Both your plugs fit into the CTS, so they can share power (data) without problems.
         </div>
 
         <h3>5. Explain Garbage Collection (GC) in .NET.</h3>
@@ -303,17 +352,24 @@
             <li>It compacts the remaining objects in memory to avoid fragmentation.</li>
         </ol>
         <div class="diagram">
-            <div class="diagram-title">Garbage Collection</div>
+            <div class="diagram-title">Garbage Collection (GC)</div>
             <div class="diagram-box" style="width: 80%;">
-                <strong>Managed Heap</strong>
-                <div class="concept-box concept-box-alt" style="display: block; margin: 10px;">Referenced Object A</div>
-                <div class="concept-box concept-box-red" style="display: block; margin: 10px; text-decoration: line-through;">Unreferenced Object B</div>
-                <div class="concept-box concept-box-alt" style="display: block; margin: 10px;">Referenced Object C</div>
+                <strong>Managed Heap (Before GC)</strong>
+                <div class="concept-box-alt" style="display: block; margin: 10px;">Object A (Referenced)</div>
+                <div class="concept-box-red" style="display: block; margin: 10px;">Object B (Unreferenced)</div>
+                <div class="concept-box-alt" style="display: block; margin: 10px;">Object C (Referenced)</div>
             </div>
-            <div class="arrow-down" style="transform: rotate(-30deg); text-align: left; margin-left: 20%;">&uarr;</div>
-            <div class="diagram-box concept-box-red" style="width: 100px;">GC finds & removes B</div>
+            <div class="arrow-down" style="font-size: 20px;">&darr; GC Runs &darr;</div>
+            <div class="diagram-box" style="width: 80%;">
+                <strong>Managed Heap (After GC)</strong>
+                <div class="concept-box-alt" style="display: block; margin: 10px;">Object A (Referenced)</div>
+                <div class="concept-box-alt" style="display: block; margin: 10px;">Object C (Referenced)</div>
+                <div class="concept-box-grey" style="display: block; margin: 10px;">Memory for B is freed.</div>
+            </div>
         </div>
-        <p>The main benefit is that it prevents common programming errors like memory leaks, where memory is allocated but never freed.</p>
+        <div class="example">
+            <strong>Real-world Example:</strong> The GC is like a self-cleaning kitchen. You (your code) keep grabbing new plates (objects) from the cupboard (heap) and using them. When you're done, you just leave them on the counter. You don't wash them. The **Garbage Collector (GC)** is a robot that periodically comes out, sees which plates you're no longer using (unreferenced), and automatically washes them and puts them back in the cupboard (frees the memory).
+        </div>
 
         <!-- Unit 2: C# Basics & OOP -->
         <h2>Unit 2: C# Basics & OOP</h2>
@@ -328,11 +384,20 @@
         <div class="diagram">
             <div class="diagram-title">Four Principles of OOP</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="diagram-box"><strong>Encapsulation</strong><br>(Data Hiding)</div>
-                <div class="diagram-box"><strong>Abstraction</strong><br>(Hiding Complexity)</div>
-                <div class="diagram-box"><strong>Inheritance</strong><br>(Reusing Code)</div>
-                <div class="diagram-box"><strong>Polymorphism</strong><br>(Many Forms)</div>
+                <div class="diagram-box"><strong>Encapsulation</strong><br>(Hides data in a "capsule")</div>
+                <div class="diagram-box"><strong>Abstraction</strong><br>(Hides complex logic)</div>
+                <div class="diagram-box"><strong>Inheritance</strong><br>("is-a" relationship, reuses code)</div>
+                <div class="diagram-box"><strong>Polymorphism</strong><br>(Same method, different behaviors)</div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> Imagine a "Car" object.
+            <ul>
+                <li><strong>Encapsulation:</strong> The engine is hidden under the hood. You don't need to know *how* it works; you just use the pedals and key (public methods) to interact with it.</li>
+                <li><strong>Abstraction:</strong> The steering wheel *is* the abstraction. It hides the complex steering rack, hydraulics, and axle logic. You just use the simple interface of "turn wheel."</li>
+                <li><strong>Inheritance:</strong> A "SportsCar" *is-a* "Car." It inherits all the "Car" parts (wheels, engine, steering wheel) but adds new ones (a spoiler) or changes existing ones (a bigger engine).</li>
+                <li><strong>Polymorphism:</strong> Your "Car" object and your "SportsCar" object both have a `Drive()` method. When you call `Drive()`, the "Car" drives normally, but the "SportsCar" drives fast. Same method name, different behavior.</li>
+            </ul>
         </div>
 
         <h3>2. Differentiate between Value Types and Reference Types.</h3>
@@ -370,17 +435,24 @@
         <div class="diagram">
             <div class="diagram-title">Value Type vs. Reference Type</div>
             <div class="flex-container">
-                <div class="diagram-box" style="width: 40%;">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
                     <strong>Value Type (e.g., int)</strong>
-                    <div class="concept-box concept-box-grey" style="display: block; margin-top: 10px;"><strong>STACK</strong><br><code>int x = 10;</code></div>
+                    <div class="concept-box" style="display: block; margin-top: 10px; background-color: #fff;"><strong>STACK</strong><br><code>int x = 10;</code></div>
                 </div>
-                <div class="diagram-box" style="width: 40%;">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
                     <strong>Reference Type (e.g., class)</strong>
-                    <div class="concept-box concept-box-grey" style="display: block; margin-top: 10px;"><strong>STACK</strong><br><code>MyClass y = (address)</code></div>
-                    <div class="arrow-down">&darr;</div>
-                    <div class="concept-box concept-box-alt" style="display: block;"><strong>HEAP</strong><br>[Object Data]</div>
+                    <div class="concept-box" style="display: block; margin-top: 10px; background-color: #fff;"><strong>STACK</strong><br><code>MyClass y = (Address 01)</code></div>
+                    <div class="arrow-down">&darr; (Points to)</div>
+                    <div class="concept-box concept-box-alt" style="display: block;"><strong>HEAP (Address 01)</strong><br>[Object's Data]</div>
                 </div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>Value Type (int):</strong> It's like a *piece of paper* with a number written on it. If you "copy" it for a friend, you write the *same number* on a *new* piece of paper. If your friend changes their paper, yours is unaffected.</li>
+                <li><strong>Reference Type (class):</strong> It's like a *Google Doc*. If you "share" it with a friend, you are just sending them a *link* (a reference). You both look at the *same* document. If your friend changes the doc, you see the changes instantly.</li>
+            </ul>
         </div>
 
         <h3>3. What are Boxing and Unboxing in C#? Provide examples.</h3>
@@ -390,13 +462,28 @@
             <li><strong>Unboxing (Explicit):</strong> The process of extracting the original Value Type from the object it was boxed into. This requires an explicit cast.</li>
         </ul>
         <div class="diagram">
-            <div class="diagram-title">Boxing & Unboxing</div>
+            <div class="diagram-title">Boxing & Unboxing Flow</div>
             <div class="flex-container">
-                <div class="diagram-box concept-box-grey"><strong>STACK</strong><br><code>int i = 123;</code></div>
-                <div class="arrow">&rarr;<br>Boxing</div>
-                <div class="diagram-box concept-box-alt"><strong>HEAP</strong><br><code>object o;</code><br>[ 123 ]</div>
-                <div class="arrow">&rarr;<br>Unboxing</div>
-                <div class="diagram-box concept-box-grey"><strong>STACK</strong><br><code>int j = 123;</code></div>
+                <div class="flex-column">
+                    <div class="diagram-box concept-box-grey"><strong>STACK</strong><br><code>int i = 123;</code></div>
+                </div>
+                <div class="flex-column" style="margin: 0 10px;">
+                    <div class="arrow">&rarr;</div>
+                    <div style="font-size: 0.9em;"><strong>Boxing</strong></div>
+                    <div style="font-size: 0.9em;">(Value copied to Heap)</div>
+                </div>
+                <div class="flex-column">
+                    <div class="diagram-box concept-box-alt"><strong>HEAP</strong><br>[ object wrapper ]<br>[ value: 123 ]</div>
+                    <div class="diagram-box concept-box-grey" style="margin-top: 5px;"><strong>STACK</strong><br><code>object o;</code> (points to Heap)</div>
+                </div>
+                <div class="flex-column" style="margin: 0 10px;">
+                    <div class="arrow">&rarr;</div>
+                    <div style="font-size: 0.9em;"><strong>Unboxing</strong></div>
+                    <div style="font-size: 0.9em;">(Value copied to Stack)</div>
+                </div>
+                 <div class="flex-column">
+                    <div class="diagram-box concept-box-grey"><strong>STACK</strong><br><code>int j = (int)o;</code></div>
+                </div>
             </div>
         </div>
 <pre><code class="language-csharp">
@@ -410,6 +497,13 @@ object myBoxedValue = myValue; // Implicitly boxed.
 int myUnboxedValue = (int)myBoxedValue; // Explicitly unboxed.
 // The value is copied from the heap back to the stack.
 </code></pre>
+        <div class="example">
+            <strong>Real-world Example:</strong> Think of a pet fish (a `Value Type`).
+            <ul>
+                <li><strong>Boxing:</strong> You need to mail your fish. You take the fish (the value) and put it in a "box" with water (an `object` wrapper) and send it to the post office (the `Heap`). The fish is now an "object."</li>
+                <li><strong>Unboxing:</strong> Your friend receives the package. They can't play with the "box." They have to *explicitly* open the box and take the fish *out* of its wrapper. That's unboxing.</li>
+            </ul>
+        </div>
 
         <h3>4. Explain Checked and Unchecked blocks for overflow handling.</h3>
         <p>These blocks tell the CLR how to handle "arithmetic overflow," which happens when the result of a math operation is too large for the data type to hold.</p>
@@ -420,19 +514,19 @@ int myUnboxedValue = (int)myBoxedValue; // Explicitly unboxed.
         <div class="diagram">
             <div class="diagram-title">Overflow Handling</div>
             <div class="flex-container">
-                <div class="diagram-box" style="width: 40%;">
-                    <strong><code>checked</code> block</strong>
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong><code>checked { int.MaxValue + 1; }</code></strong>
                     <div class="arrow-down">&darr;</div>
                     <div class="concept-box concept-box-alt">Overflow Occurs?</div>
                     <div class="arrow-down">&darr;</div>
-                    <div class="concept-box concept-box-red"><strong>Exception Thrown!</strong></div>
+                    <div class="concept-box concept-box-red"><strong>Exception Thrown!</strong><br>(Program stops)</div>
                 </div>
-                <div class="diagram-box" style="width: 40%;">
-                    <strong><code>unchecked</code> block</strong>
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong><code>unchecked { int.MaxValue + 1; }</code></strong>
                     <div class="arrow-down">&darr;</div>
                     <div class="concept-box concept-box-alt">Overflow Occurs?</div>
                     <div class="arrow-down">&darr;</div>
-                    <div class="concept-box concept-box-grey"><strong>Value Wraps Around</strong><br>(No Error)</div>
+                    <div class="concept-box concept-box-grey"><strong>Value Wraps Around</strong><br>(Becomes negative, no error)</div>
                 </div>
             </div>
         </div>
@@ -458,6 +552,13 @@ unchecked
     int wrap = maxInt + 1; // 'wrap' will be -2,147,483,648
 }
 </code></pre>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like a car's odometer. An `int` can only go up to ~2.1 billion.
+            <ul>
+                <li><strong><code>unchecked</code> (default):</strong> This is like an old car's odometer. When it hits 999,999, it doesn't break; it just "wraps around" back to 000,000 (or in C#, to the lowest negative number).</li>
+                <li><strong><code>checked</code>:</strong> This is like a modern smart-car. If you try to go past the limit, the car's computer (CLR) throws a major error (an `OverflowException`) and stops, saying "This number is too big!"</li>
+            </ul>
+        </div>
 
         <h3>5. (CODE) Create a C# class using auto-implemented properties.</h3>
         <p>Auto-implemented properties are a shortcut to create a private backing field and its public <code>get</code> and <code>set</code> accessors in one line.</p>
@@ -511,6 +612,9 @@ public class Program
     }
 }
 </code></pre>
+        <div class="example">
+            <strong>Real-world Example:</strong> This `Book` class is a blueprint for a library's database. The "auto-implemented property" <code>public string Title { get; set; }</code> is like a magic, self-labeling box. You just declare you *want* a box for "Title," and the compiler (C#) automatically builds the private storage for it *and* the public "get" (read the label) and "set" (write a new label) functions for you. It's a huge time-saver.
+        </div>
 
         <!-- Unit 3: Building Desktop Application (Windows Forms) -->
         <h2>Unit 3: Building Desktop Application (Windows Forms)</h2>
@@ -518,35 +622,38 @@ public class Program
         <h3>1. Explain the key properties and events of the Button and TextBox controls.</h3>
         <p><strong>TextBox Control:</strong> Allows the user to enter text.</p>
         <ul>
-            <li><strong>Properties:</strong>
-                <ul>
-                    <li><code>Text</code>: Gets or sets the text content in the box.</li>
-                    <li><code>Multiline</code>: (bool) If true, allows the text to span multiple lines.</li>
-                    <li><code>PasswordChar</code>: (char) Hides the input with a specific character (e.g., '*').</li>
-                    <li><code>ReadOnly</code>: (bool) If true, the user cannot change the text.</li>
-                    <li><code>Enabled</code>: (bool) If false, the control is "grayed out" and unusable.</li>
-                </ul>
-            </li>
-            <li><strong>Events:</strong>
-                <ul>
-                    <li><code>TextChanged</code>: Fires *every time* the text in the box changes (e.g., on key press).</li>
-                </ul>
-            </li>
+            <li><strong>Properties:</strong> <code>Text</code> (what's in the box), <code>Multiline</code> (true/false), <code>PasswordChar</code> (e.g., '*'), <code>ReadOnly</code> (true/false).</li>
+            <li><strong>Events:</strong> <code>TextChanged</code> (fires *every time* the text changes, on each key press).</li>
         </ul>
         <p><strong>Button Control:</strong> A standard button the user can click.</p>
         <ul>
-            <li><strong>Properties:</strong>
-                <ul>
-                    <li><code>Text</code>: The text displayed on the button (e.g., "Submit").</li>
-                    <li><code>Enabled</code>: (bool) If false, the button is "grayed out" and cannot be clicked.</li>
-                </ul>
-            </li>
-            <li><strong>Events:</strong>
-                <ul>
-                    <li><code>Click</code>: The most important event. Fires *once* when the user clicks the button.</li>
-                </ul>
-            </li>
+            <li><strong>Properties:</strong> <code>Text</code> (what's written on the button), <code>Enabled</code> (true/false, can it be clicked).</li>
+            <li><strong>Events:</strong> <code>Click</code> (the most important event, fires *once* when the user clicks it).</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">TextBox vs. Button</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>TextBox</strong>
+                    <div class="concept-box concept-box-grey">[ <u>Hello|</u> ]</div>
+                    <div style="text-align: left; font-size: 0.9em; margin-top: 10px;">
+                        <strong>Prop:</strong> <code>Text = "Hello"</code><br>
+                        <strong>Event:</strong> <code>TextChanged</code>
+                    </div>
+                </div>
+                <div class="diagram-box" style="width: 40%;">
+                    <strong>Button</strong>
+                    <div class="concept-box concept-box-grey">[ Submit ]</div>
+                    <div style="text-align: left; font-size: 0.9em; margin-top: 10px;">
+                        <strong>Prop:</strong> <code>Text = "Submit"</code><br>
+                        <strong>Event:</strong> <code>Click</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> A **TextBox** is like an empty form field on a piece of paper (e.g., "Name: _________"). The `Text` property is what's written on the line. The `TextChanged` event fires *as* you are writing. A **Button** is the "Submit" box at the end of the form. The `Text` property is the "Submit" label. The `Click` event fires *only* when you tap the "Submit" box.
+        </div>
 
         <h3>2. Compare MessageBox and TooltipProvider for user feedback.</h3>
         <table>
@@ -564,41 +671,49 @@ public class Program
                     <td>Shows a small, helpful hint (a "tooltip") when the user *hovers* over a control.</td>
                 </tr>
                 <tr>
-                    <td><strong>User Interaction</strong></td>
-                    <td>It is <strong>modal</strong>. It *stops* the application and forces the user to click a button (OK, Yes, No).</td>
-                    <td>It is <strong>non-intrusive</strong>. It appears and disappears automatically and does *not* stop the application.</td>
+                    <td><strong>Interaction</strong></td>
+                    <td><strong>Modal</strong>. It *stops* the application and forces the user to click a button (OK, Yes, No).</td>
+                    <td><strong>Non-intrusive</strong>. It appears/disappears automatically and does *not* stop the application.</td>
                 </tr>
                 <tr>
                     <td><strong>Use Case</strong></td>
                     <td>"Are you sure you want to delete this?" or "Error: Invalid input."</td>
                     <td>"Enter your name here" (on a TextBox) or "Click to save" (on a Button).</td>
                 </tr>
-                <tr>
-                    <td><strong>Implementation</strong></td>
-                    <td>Called via a static method: <code>MessageBox.Show("My message");</code></td>
-                    <td>You drag the `TooltipProvider` control onto the form, and then set the `ToolTip on toolTipProvider1` property for other controls.</td>
-                </tr>
             </tbody>
         </table>
         <div class="diagram">
             <div class="diagram-title">MessageBox vs. Tooltip</div>
             <div class="flex-container">
-                <div class="diagram-box" style="width: 40%;">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
                     <strong>MessageBox</strong>
-                    <div class="concept-box concept-box-red" style="margin-top: 10px;">[X] Error!<br>Invalid Input.<br>[ OK ]</div>
-                    <p>Modal, stops application.</p>
+                    <div class="concept-box concept-box-red" style="margin-top: 10px; padding: 20px;">
+                        [X] Error!<br>Invalid Input.<br><br>[ OK ]
+                    </div>
+                    <p style="margin-top: 10px;"><strong>Stops everything!</strong> (Modal)</p>
                 </div>
-                <div class="diagram-box" style="width: 40%;">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
                     <strong>Tooltip</strong>
-                    <div class="concept-box concept-box-grey" style="margin-top: 10px;">[ Enter Name: _____ ]</div>
-                    <div class="concept-box-alt" style="padding: 5px; margin-top: 5px;">Enter your full name</div>
-                    <p>Non-intrusive hover hint.</p>
+                    <div class="concept-box concept-box-grey" style="margin-top: 10px; padding: 20px;">
+                        Name: [ <u>User|</u> ]
+                    </div>
+                    <div class="concept-box-alt" style="padding: 5px; margin-top: 5px;">
+                        Enter your full name
+                    </div>
+                    <p style="margin-top: 10px;">Just a hint. (Non-intrusive)</p>
                 </div>
             </div>
         </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li>A <strong>MessageBox</strong> is like a security guard who steps in front of you, stops you, and *forces* you to answer a question ("Are you sure?"). You can't do anything else until you answer.</li>
+                <li>A <strong>Tooltip</strong> is like a quiet museum label next to a painting. You can look at it if you're curious (by hovering), but it doesn't stop you from walking around.</li>
+            </ul>
+        </div>
 
         <h3>3. What is the role of the ErrorProvider control?</h3>
-        <p>The <code>ErrorProvider</code> is a control used for form validation. It does *not* stop the user like a <code>MessageBox</code>. Instead, it provides a non-intrusive way to show that a control has an error.</p>
+        <p>The <code>ErrorProvider</code> is a control used for form validation. It provides a non-intrusive way to show that a control has an error, without stopping the user with a <code>MessageBox</code>.</p>
         <p><strong>How it works:</strong></p>
         <ol>
             <li>You add an <code>ErrorProvider</code> control to your form (it sits in the component tray).</li>
@@ -612,11 +727,11 @@ public class Program
             <div class="flex-container">
                 <div class="diagram-box">User Clicks "Save"</div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-alt"><code>if (textBox1.Text == "")</code></div>
+                <div class="diagram-box concept-box-alt">Code checks:<br><code>if (textBox1.Text == "")</code></div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-red"><code>errorProvider1.SetError()</code></div>
+                <div class="diagram-box concept-box-red"><code>errorProvider1.SetError(...)</code></div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-grey">[TextBox] <span style="color: red; font-size: 24px; vertical-align: middle;"><strong>!</strong></span></div>
+                <div class="diagram-box concept-box-grey" style="width: 150px;">Name: [ ] <span style="color: red; font-size: 24px; vertical-align: middle;"><strong>!</strong></span></div>
             </div>
         </div>
 <pre><code class="language-csharp">
@@ -632,6 +747,9 @@ else
     errorProvider1.SetError(textBox1, "");
 }
 </code></pre>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like a spell-checker in a word processor. It doesn't pop up a big error window every time you misspell a word (that would be annoying, like a MessageBox). Instead, it quietly puts a *little red-squiggle* (the error icon) under the problem word (the `TextBox`). If you hover over it, it tells you what's wrong (the tooltip).
+        </div>
 
         <h3>4. Explain container controls like Panel and GroupBox.</h3>
         <p>Container controls are used to hold and organize other controls.</p>
@@ -639,14 +757,14 @@ else
             <li><strong>Panel:</strong>
                 <ul>
                     <li>A simple container with no visual style by default (it's often invisible).</li>
-                    <li>Its main purpose is to <strong>group controls</strong>. For example, you can put several buttons and textboxes on a Panel, and then move the Panel, and all its contents move together.</li>
+                    <li>Its main purpose is to <strong>group controls for layout</strong>. For example, you can put several buttons and textboxes on a Panel, and then move the Panel, and all its contents move together.</li>
                     <li>You can also show/hide the Panel's <code>Visible</code> property to show/hide all child controls at once.</li>
                 </ul>
             </li>
             <li><strong>GroupBox:</strong>
                 <ul>
                     <li>A container that draws a <strong>border and a title (<code>Text</code> property)</strong> around its contents.</li>
-                    <li>It provides a visual grouping for related controls.</li>
+                    <li>It provides a <strong>visual and logical grouping</strong> for related controls.</li>
                     <li>It is most commonly used to group <code>RadioButton</code> controls. When <code>RadioButton</code>s are placed in the same <code>GroupBox</code>, they become mutually exclusive (only one can be selected).</li>
                 </ul>
             </li>
@@ -654,19 +772,29 @@ else
         <div class="diagram">
             <div class="diagram-title">Container Controls</div>
             <div class="flex-container">
-                <div class="diagram-box" style="width: 40%;">
-                    <strong>Panel</strong><br>(No border, for layout)
-                    <div class="concept-box concept-box-grey" style="display: block; margin: 10px;">[ Button ] [ TextBox ]</div>
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>Panel</strong>
+                    <div class="concept-box" style="display: block; margin: 10px; background-color: #fff; border: 1px dashed #ccc;">
+                        [ Button ] [ TextBox ]
+                    </div>
+                    <p style="font-size: 0.9em;">(No border, for layout)</p>
                 </div>
-                <div class="diagram-box" style="width: 40%; border-style: dashed;">
-                    <strong style="display: block; text-align: left; margin-left: 5px;">GroupBox</strong>
-                    (Border & Title, for RadioButtons)
-                    <div class="concept-box concept-box-grey" style="display: block; margin: 10px; text-align: left;">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong style="display: block; text-align: left; margin-left: 5px;">GroupBox Title</strong>
+                    <div class="concept-box" style="display: block; margin: 10px; background-color: #fff; border: 1px solid #999; text-align: left; padding: 10px;">
                         (•) Option 1<br>
                         ( ) Option 2
                     </div>
+                    <p style="font-size: 0.9em;">(Has border & title)</p>
                 </div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li>A <strong>Panel</strong> is like a plain moving box. Its job is to group items (your plates, your books) so you can move them all at once. From the outside, it's just an invisible box.</li>
+                <li>A <strong>GroupBox</strong> is like a fancy display case with a glass front and a label that says "My Mug Collection." It *both* groups the items *and* provides a visual border and title so the user knows what's inside.</li>
+            </ul>
         </div>
 
         <h3>5. How do you use a ListBox? Explain its key properties.</h3>
@@ -686,16 +814,24 @@ else
             <li><code>SelectedIndex</code>: Gets the 0-based index of the currently selected item.</li>
         </ul>
         <div class="diagram">
-            <div class="diagram-title">ListBox</div>
+            <div class="diagram-title">ListBox (SelectionMode = MultiSimple)</div>
             <div class="diagram-box" style="width: 50%; text-align: left;">
                 [ Item 1 ]<br>
                 <span class="concept-box-alt" style="display:block;">[ Item 2 ]</span>
-                [ Item 3 ]
+                [ Item 3 ]<br>
+                <span class="concept-box-alt" style="display:block;">[ Item 4 ]</span>
             </div>
-            <div style="text-align: left; margin-top: 10px; display: inline-block;">
-                <code>SelectedItem</code> = "Item 2"<br>
-                <code>SelectedIndex</code> = 1
+            <div style="text-align: left; margin-top: 10px; display: inline-block; vertical-align: top;">
+                <code>SelectedItems</code> = {"Item 2", "Item 4"}
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> A **ListBox** is like a food menu.
+            <ul>
+                <li>The <code>Items</code> are all the dishes.</li>
+                <li><code>SelectionMode.One</code> is a normal menu where you pick one main course.</li>
+                <li><code>SelectionMode.MultiSimple</code> is like a checklist for appetizers where you can just tap all the ones you want ("Fries," "Wings," "Spring Rolls").</li>
+            </ul>
         </div>
 
         <!-- Unit 4: Web programming fundamentals (THEORY ONLY) -->
@@ -704,33 +840,36 @@ else
         <h3>1. Explain the role of HTTP Request and HTTP Response.</h3>
         <p>HTTP (HyperText Transfer Protocol) is the foundation of data communication for the World Wide Web. It works as a request-response protocol between a client (like a web browser) and a server.</p>
         <ul>
-            <li><strong>HTTP Request:</strong> This is the message sent by the client (e.g., your browser) to the server when you want to access a resource (like a webpage or an image). It includes:
-                <ul>
-                    <li>A request line (e.g., <code>GET /index.html</code>).</li>
-                    <li>Headers (e.g., information about your browser, what data types it accepts).</li>
-                    <li>An optional body (used to send data, like in a POST request).</li>
-                </ul>
-            </li>
-            <li><strong>HTTP Response:</strong> This is the message sent back by the server to the client. It includes:
-                <ul>
-                    <li>A status line (e.g., <code>200 OK</code> or <code>404 Not Found</code>).</li>
-                    <li>Headers (e.g., information about the content, like <code>Content-Type: text/html</code>).</li>
-                    <li>The actual resource (the HTML, image, or data) in the response body.</li>
-                </ul>
-            </li>
+            <li><strong>HTTP Request:</strong> This is the message sent by the client (e.g., your browser) to the server when you want to access a resource (like a webpage). It's the "ask."</li>
+            <li><strong>HTTP Response:</strong> This is the message sent back by the server to the client. It's the "answer" and contains the resource (the HTML, image, or data) or an error.</li>
         </ul>
         <div class="diagram">
             <div class="diagram-title">HTTP Request/Response</div>
             <div class="flex-container">
-                <div class="diagram-box"><strong>Client (Browser)</strong></div>
-                <div class="arrow">&rarr;<br>HTTP Request<br>(GET /page.html)</div>
-                <div class="diagram-box concept-box-grey"><strong>Server</strong></div>
+                <div class="diagram-box" style="width: 30%;"><strong>Client (Browser)</strong></div>
+                <div class="flex-column" style="width: 30%;">
+                    <div class="arrow">&rarr;</div>
+                    <div><strong>Request</strong></div>
+                    <div style="font-size: 0.9em;">(e.g., "GET /page.html")</div>
+                </div>
+                <div class="diagram-box concept-box-grey" style="width: 30%;"><strong>Server</strong></div>
             </div>
             <div class="flex-container" style="margin-top: 10px;">
-                <div class="diagram-box"><strong>Client (Browser)</strong></div>
-                <div class="arrow">&larr;<br>HTTP Response<br>(200 OK + HTML)</div>
-                <div class="diagram-box concept-box-grey"><strong>Server</strong></div>
+                <div class="diagram-box" style="width: 30%;"><strong>Client (Browser)</strong></div>
+                <div class="flex-column" style="width: 30%;">
+                    <div class="arrow">&larr;</div>
+                    <div><strong>Response</strong></div>
+                    <div style="font-size: 0.9em;">(e.g., "200 OK" + HTML data)</div>
+                </div>
+                <div class="diagram-box concept-box-grey" style="width: 30%;"><strong>Server</strong></div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like ordering food at a restaurant.
+            <ul>
+                <li><strong>Request:</strong> You (the **Client**) give a waiter your order (the **HTTP Request**). The order says "I want (GET) the daily special (/menu.html)."</li>
+                <li><strong>Response:</strong> The waiter goes to the kitchen (the **Server**), gets your food, and brings it back. The food on the plate is the **HTTP Response** (the HTML, images, etc.).</li>
+            </ul>
         </div>
 
         <h3>2. Compare the GET and POST methods.</h3>
@@ -751,7 +890,7 @@ else
                 <tr>
                     <td><strong>Visibility</strong></td>
                     <td>Data is visible to everyone in the URL, browser history, and server logs.</td>
-                    <td>Data is not displayed in the URL, making it more secure for sensitive information.</td>
+                    <td>Data is not displayed in the URL.</td>
                 </tr>
                 <tr>
                     <td><strong>Security</strong></td>
@@ -759,33 +898,30 @@ else
                     <td>More secure (though not encrypted by default; needs HTTPS).</td>
                 </tr>
                 <tr>
-                    <td><strong>Data Type/Size</strong></td>
-                    <td>Limited in size (by the browser/server) and only allows ASCII characters.</td>
-                    <td>No restrictions on data size or type (can send binary data).</td>
-                </tr>
-                <tr>
-                    <td><strong>Bookmark/Cache</strong></td>
-                    <td>Can be bookmarked and cached.</td>
-                    <td>Cannot be bookmarked and is not cached.</td>
-                </tr>
-                <tr>
                     <td><strong>Use Case</strong></td>
-                    <td>Requesting data (e.g., loading a product page, search queries).</td>
-                    <td>Submitting data (e.g., a login form, file uploads, creating a new user).</td>
+                    <td>Requesting data (e.g., Google search, loading a product page).</td>
+                    <td>Submitting data (e.g., a login form, file uploads).</td>
                 </tr>
             </tbody>
         </table>
         <div class="diagram">
             <div class="diagram-title">GET vs. POST</div>
-            <div class="diagram-box" style="width: 80%; text-align: left; margin-bottom: 10px;">
-                <strong>GET:</strong> Data is in the URL<br>
-                <code>/search?q=mydata</code>
+            <div class="diagram-box" style="width: 80%; text-align: left; margin-bottom: 10px; background-color: #f5f5f5; border-color: #e0e0e0;">
+                <strong>GET (Postcard)</strong><br>
+                <code>/search?q=mydata</code> (Data is visible in URL)
             </div>
-            <div class="diagram-box" style="width: 80%; text-align: left;">
-                <strong>POST:</strong> Data is in the Request Body<br>
+            <div class="diagram-box" style="width: 80%; text-align: left; background-color: #f5f5f5; border-color: #e0e0e0;">
+                <strong>POST (Sealed Envelope)</strong><br>
                 <code>/login</code><br>
-                <code>(Body: user=admin&pass=123)</code>
+                <code>(Body: user=admin&pass=123)</code> (Data is hidden in body)
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>GET:</strong> It's like sending a **postcard**. Anyone can read the message (the data) written on the back (the URL). It's public and has a limited size. Good for simple requests like "What's the weather in London?"</li>
+                <li><strong>POST:</strong> It's like sending a **sealed envelope**. The data is *inside* the envelope (the request body), not written on the outside. It's private and can hold a lot more info. You *must* use this for sending a credit card number or a password.</li>
+            </ul>
         </div>
         
         <h3>3. Describe the main stages of the ASP.NET Page Life Cycle.</h3>
@@ -800,54 +936,62 @@ else
                 <div class="diagram-box concept-box-alt">Load</div>
                 <div class="arrow">&rarr;</div>
                 <div class="diagram-box concept-box-red">Control Events<br>(e.g., Button_Click)</div>
-            </div>
-            <div class="flex-container" style="margin-top: 10px;">
+                <div class="arrow">&rarr;</div>
                 <div class="diagram-box">PreRender</div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box">Render</div>
-                <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-grey">Unload</div>
+                <div class="diagram-box concept-box-grey">Render & Unload</div>
             </div>
         </div>
         <ol>
-            <li><strong>PreInit:</strong> The very first step. Good for setting a Master Page or Theme dynamically.</li>
-            <li><strong>Init:</strong> All controls on the page are initialized, and their UniqueID is set.</li>
-            <li><strong>InitComplete:</strong> All initialization is complete. ViewState tracking is turned on.</li>
-            <li><strong>OnPreLoad:</strong> ViewState and PostBack data are loaded into the controls.</li>
-            <li><strong>Load:</strong> The main event for page logic. The page and all controls are fully loaded. This is where you typically check <code>if (!IsPostBack)</code> to set up data on the first load (e.g., database queries).</li>
-            <li><strong>Control PostBack Event(s):</strong> If the page was submitted (PostBack), the specific control event that caused it (e.g., a <code>Button_Click</code>) runs now.</li>
-            <li><strong>LoadComplete:</strong> All processing and event handling is finished.</li>
-            <li><strong>OnPreRender:</strong> The last chance to make changes to the page or its controls before they are rendered into HTML.</li>
-            <li><strong>OnSaveStateComplete:</strong> ViewState and ControlState are saved. No further changes are possible.</li>
-            <li><strong>Render:</strong> The page and its controls are "drawn" as HTML, DHTML, and script to be sent to the browser.</li>
-            <li><strong>Unload:</strong> The page is removed from memory. Used for final cleanup (e.g., closing database connections or files).</li>
+            <li><strong>PreInit:</strong> The very first step. Set master page or theme.</li>
+            <li><strong>Init:</strong> All controls on the page are initialized.</li>
+            <li><strong>Load:</strong> The main event for page logic. ViewState and PostBack data are loaded. This is where you check <code>if (!IsPostBack)</code> to set up data (e.g., database queries).</li>
+            <li><strong>Control PostBack Event(s):</strong> If the page was submitted, the specific control event that caused it (e.g., a <code>Button_Click</code>) runs now.</li>
+            <li><strong>PreRender:</strong> The last chance to make changes to the page or its controls before they are rendered into HTML.</li>
+            <li><strong>Render:</strong> The page and its controls are "drawn" as HTML.</li>
+            <li><strong>Unload:</strong> The page is removed from memory. Used for final cleanup (e.g., closing database connections).</li>
         </ol>
+        <div class="example">
+            <strong>Real-world Example:</strong> It's like an actor performing a play.
+            <ul>
+                <li><strong>Init:</strong> The actor wakes up and gets into costume (controls are initialized).</li>
+                <li><strong>Load:</strong> The actor gets their props and the ViewState (what happened last scene) is restored.</li>
+                <li><strong>Control Events (Button_Click):</strong> This is the actor's *main line* ("To be, or not to be!"). This is the main action of the scene.</li>
+                <li><strong>Render:</strong> The actor takes their final pose as the lights hit them, and this is the "picture" the audience (browser) sees.</li>
+                <li><strong>Unload:</strong> The actor leaves the stage and the scene is cleaned up.</li>
+            </ul>
+        </div>
 
         <h3>4. What are Validation Controls in ASP.NET?</h3>
         <p>Validation Controls are server controls that automatically check user input on a form to ensure it's valid. They can run on both the client (using JavaScript) and the server, preventing bad data from being submitted.</p>
         <ul>
             <li><strong>RequiredFieldValidator:</strong> Ensures the user does not leave a control (like a TextBox) empty.</li>
-            <li><strong>RangeValidator:</strong> Checks that the user's input is within a specified range (e.g., age between 18 and 65).</li>
-            <li><strong>CompareValidator:</strong> Compares the user's input against a fixed value or the value of another control (e.g., "Password" and "Confirm Password" fields must match).</li>
-            <li><strong>RegularExpressionValidator:</strong> Checks that the input matches a specific pattern (a "regex"), such as for a valid email address, phone number, or postal code.</li>
-            <li><strong>CustomValidator:</strong> Allows you to write your own custom logic (in C# or JavaScript) for complex validation rules.</li>
-            <li><strong>ValidationSummary:</strong> Gathers all the error messages from the other validators on the page and displays them in a single, collective list.</li>
+            <li><strong>RangeValidator:</strong> Checks that the user's input is within a specified range (e.g., age 18-65).</li>
+            <li><strong>CompareValidator:</strong> Compares the input against a fixed value or another control (e.g., "Password" and "Confirm Password" must match).</li>
+            <li><strong>RegularExpressionValidator:</strong> Checks that the input matches a specific pattern (a "regex"), such as for a valid email address.</li>
+            <li><strong>ValidationSummary:</strong> Gathers all the error messages and displays them in a single, collective list.</li>
         </ul>
         <div class="diagram">
             <div class="diagram-title">Validation Controls Flow</div>
             <div class="flex-container">
-                <div class="diagram-box concept-box-grey">[TextBox]</div>
-                <div class="flex-column" style="margin: 0 10px;">
-                    <div class="arrow">&rarr;</div>
-                    <div class="arrow">&rarr;</div>
-                </div>
+                <div class="diagram-box concept-box-grey" style="width: 150px;">Email: [ <u>text</u> ]</div>
+                <div class="arrow">&rarr;</div>
                 <div class="flex-column">
                     <div class="diagram-box concept-box-red" style="margin: 2px;">RequiredFieldValidator</div>
-                    <div class="diagram-box concept-box-red" style="margin: 2px;">RangeValidator</div>
+                    <div class="diagram-box concept-box-red" style="margin: 2px;">RegularExpressionValidator</div>
                 </div>
                 <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-alt">ValidationSummary</div>
+                <div class="diagram-box concept-box-alt" style="width: 150px;">ValidationSummary<br>• Email is required.<br>• Must be valid format.</div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> They are like helpful assistants at a passport office, checking your form *before* you get to the main counter.
+            <ul>
+                <li><strong>RequiredFieldValidator:</strong> "Sir, you forgot to sign your name here."</li>
+                <li><strong>RangeValidator:</strong> "Ma'am, the date of birth you entered says you are 300 years old. That's not in the valid range."</li>
+                <li><strong>RegularExpressionValidator:</strong> "This phone number is missing a digit. It doesn't match the 10-digit pattern."</li>
+                <li><strong>ValidationSummary:</strong> This is the final assistant who gives you one list of *all* the things you did wrong.</li>
+            </ul>
         </div>
         
         <h3>5. What is the role of the web.config file? How does it differ from machine.config?</h3>
@@ -857,16 +1001,14 @@ else
                 <ul>
                     <li>This is the "master" configuration file for the *entire machine* (server).</li>
                     <li>It defines the default settings for *all* .NET applications running on that server.</li>
-                    <li>It is located in the main .NET Framework directory.</li>
-                    <li>Settings here are inherited by all applications, but can be overridden.</li>
+                    <li>Settings here are inherited by all applications.</li>
                 </ul>
             </li>
             <li><strong><code>web.config</code>:</strong>
                 <ul>
                     <li>This is the configuration file for a *specific* web application.</li>
                     <li>It is placed in the root directory of your application.</li>
-                    <li>It is used to *override* the default settings from <code>machine.config</code> and define application-specific settings.</li>
-                    <li>Common settings include: database connection strings, session state settings, security rules, and custom error pages.</li>
+                    <li>It is used to *override* the default settings from <code>machine.config</code> and define application-specific settings (like database connection strings, security rules, etc.).</li>
                 </ul>
             </li>
         </ul>
@@ -874,11 +1016,18 @@ else
             <div class="diagram-title">Configuration Inheritance</div>
             <div class="flex-column">
                 <div class="diagram-box concept-box-grey" style="width: 300px;"><strong>machine.config</strong><br>(Defaults for whole server)</div>
-                <div class="arrow-down">&darr; (inherits)</div>
+                <div class="arrow-down">&darr; (inherits from)</div>
                 <div class="diagram-box concept-box-alt" style="width: 300px;"><strong>web.config</strong><br>(Overrides for *your* app)</div>
                 <div class="arrow-down">&darr; (applies to)</div>
                 <div class="diagram-box" style="width: 300px;">Your Web Application</div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>`machine.config`:** This is the *main rulebook for the entire apartment building*. It has default rules for everyone (e.g., "Quiet hours are 10 PM to 8 AM," "No pets").</li>
+                <li><strong>`web.config`:** This is your *personal set of house rules for your own apartment*. You can *override* the building rules (e.g., "In this apartment, quiet hours start at 11 PM") or add new ones ("Database connection string is..."). Your rules only apply to your apartment (your app).</li>
+            </ul>
         </div>
 
         <!-- Unit 5: ADO.NET -->
@@ -889,29 +1038,29 @@ else
         <div class="diagram">
             <div class="diagram-title">ADO.NET Architectures</div>
             <div class="flex-container">
-                <div class="diagram-box" style="width: 40%;">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
                     <strong>Connected Model</strong>
                     <div class="flex-container" style="margin-top: 10px;">
                          <div class="diagram-box concept-box-alt">App</div>
-                         <div class="arrow">&harr;</div>
-                         <div class="diagram-box concept-box-red">DataReader</div>
-                         <div class="arrow">&harr;</div>
+                         <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                         <div class="diagram-box concept-box-red" style="padding: 10px; font-size: 0.9em;">SqlDataReader</div>
+                         <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
                          <div class="diagram-box concept-box-grey">DB</div>
                     </div>
-                    <p>Connection stays open.</p>
+                    <p style="margin-top: 10px;"><strong>Connection stays open.</strong></p>
                 </div>
-                <div class="diagram-box" style="width: 40%;">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
                     <strong>Disconnected Model</strong>
                     <div class="flex-container" style="margin-top: 10px;">
                         <div class="diagram-box concept-box-alt">App</div>
-                        <div class="arrow">&harr;</div>
-                        <div class="diagram-box">DataSet</div>
-                        <div class="arrow">&harr;</div>
-                        <div class="diagram-box concept-box-red">DataAdapter</div>
-                        <div class="arrow">&harr;</div>
+                        <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                        <div class="diagram-box" style="padding: 10px; font-size: 0.9em;">DataSet</div>
+                        <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
+                        <div class="diagram-box concept-box-red" style="padding: 10px; font-size: 0.9em;">SqlDataAdapter</div>
+                        <div class="arrow" style="font-size: 1.5em; line-height: 2;">&harr;</div>
                         <div class="diagram-box concept-box-grey">DB</div>
                     </div>
-                    <p>Connection opens & closes.</p>
+                    <p style="margin-top: 10px;"><strong>Connection opens & closes.</strong></p>
                 </div>
             </div>
         </div>
@@ -937,7 +1086,7 @@ else
                 <tr>
                     <td><strong>Data Access</strong></td>
                     <td>Forward-only, read-only stream of data. Very fast and memory-efficient.</td>
-                    <td>Full, scrollable, editable, in-memory copy of the database tables. Can hold multiple tables and their relationships.</td>
+                    <td>Full, scrollable, editable, in-memory copy of the database tables.</td>
                 </tr>
                 <tr>
                     <td><strong>Use Case</strong></td>
@@ -946,6 +1095,13 @@ else
                 </tr>
             </tbody>
         </table>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>Connected (DataReader):</strong> It's like a *live phone call* with the bank. You are connected the *entire time*. You ask for your transactions one by one ("Next? Next? Next?"). It's fast, but you're holding the line open.</li>
+                <li><strong>Disconnected (DataSet):</strong> It's like asking the bank to *mail you a full paper statement*. You connect (call them), they send it (Fill DataSet), and you hang up (disconnect). Now, at your desk, you can circle items, write notes, and edit the statement. When you're done, you call them back and *tell them all your changes* (Update with DataAdapter).</li>
+            </ul>
+        </div>
 
         <h3>2. Analyze the role of DataSet vs. DataReader.</h3>
         <p><strong>DataReader (Connected):</strong></p>
@@ -954,7 +1110,7 @@ else
             <li>It's a lightweight component that reads a stream of data directly from the database.</li>
             <li>It is <strong>forward-only</strong> (you can only read records one after another, you can't go back).</li>
             <li>It is <strong>read-only</strong> (you cannot use it to change data).</li>
-            <li>It is extremely fast and uses very little memory, as it only holds one record in memory at a time.</li>
+            <li>It uses very little memory, as it only holds one record in memory at a time.</li>
             <li>Requires the <code>SqlConnection</code> to remain open the entire time you are reading.</li>
         </ul>
         <p><strong>DataSet (Disconnected):</strong></p>
@@ -962,46 +1118,61 @@ else
             <li><strong>Analogy:</strong> An in-memory, mini-database.</li>
             <li>It's a heavy-duty object that holds a *full copy* of data in your application's memory.</li>
             <li>It is <strong>fully scrollable and editable</strong>. You can navigate it forwards, backwards, and make changes.</li>
-            <li>It can hold multiple <code>DataTable</code> objects and their relationships (<code>DataRelation</code>).</li>
-            <li>It is <strong>disconnected</strong>. A <code>SqlDataAdapter</code> is used to "Fill" the <code>DataSet</code> from the DB. After the fill, the database connection is closed. All work (reading, editing) is done on the local copy. The <code>DataAdapter</code> is used again later to "Update" the database with any changes.</li>
+            <li>It can hold multiple <code>DataTable</code> objects and their relationships.</li>
+            <li>It is <strong>disconnected</strong>. A <code>SqlDataAdapter</code> is used to "Fill" the <code>DataSet</code>. After the fill, the database connection is closed. All work (reading, editing) is done on the local copy.</li>
         </ul>
+        <div class="diagram">
+            <div class="diagram-title">DataReader vs. DataSet</div>
+            <div class="flex-container">
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>DataReader</strong>
+                    <div class="concept-box concept-box-red" style="margin-top: 10px;">[ Row 1 ]</div>
+                    <p style="font-size: 0.9em; margin-top: 10px;">(Reads one row at a time)<br><strong>Forward-only, Read-only, Live Connection</strong></p>
+                </div>
+                <div class="diagram-box" style="width: 40%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                    <strong>DataSet</strong>
+                    <div class="concept-box" style="margin-top: 10px; background-color: #fff;">
+                        [ Row 1 ]<br>[ Row 2 ]<br>[ Row 3 ]
+                    </div>
+                    <p style="font-size: 0.9em; margin-top: 10px;">(Holds all rows in memory)<br><strong>Full Copy, Read/Write, Disconnected</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li>A <strong>DataReader</strong> is like a news ticker on TV. It streams the data to you one piece at a time, you can't pause it, you can't go back, and you can't change it. It's just a fast, read-only feed.</li>
+                <li>A <strong>DataSet</strong> is like getting the *entire newspaper*. You can spread all the pages (tables) out on your table, read them in any order, write on them (edit), and look at multiple pages at once.</li>
+            </ul>
+        </div>
         
         <h3>3. Explain the main ADO.NET components (Connection, Command, DataAdapter).</h3>
         <ol>
-            <li><strong>Connection (<code>SqlConnection</code>):</strong>
-                <ul>
-                    <li>Represents the actual connection to a specific database.</li>
-                    <li>It holds the <strong>Connection String</strong>, which contains the address (Data Source), database name (Initial Catalog), and security info (User ID, Password, or Integrated Security).</li>
-                    <li>Its main methods are <code>Open()</code> and <code>Close()</code>.</li>
-                </ul>
-            </li>
-            <li><strong>Command (<code>SqlCommand</code>):</strong>
-                <ul>
-                    <li>Represents a single SQL statement (like <code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>) or a stored procedure.</li>
-                    <li>It *must* be associated with a <code>SqlConnection</code> object to know *where* to execute the query.</li>
-                    <li>It has the `Execute...()` methods (see next question).</li>
-                </ul>
-            </li>
-            <li><strong>DataAdapter (<code>SqlDataAdapter</code>):</strong>
-                <ul>
-                    <li>This is the "bridge" for the disconnected model.</li>
-                    <li>It holds a <code>SelectCommand</code> (and optionally Insert, Update, Delete commands).</li>
-                    <li>Its <code>Fill()</code> method opens the connection, runs the <code>SelectCommand</code>, loads all the results into a <code>DataSet</code>, and then closes the connection.</li>
-                    <li>Its <code>Update()</code> method connects to the DB and pushes any changes from the <code>DataSet</code> back to the database.</li>
-                </ul>
-            </li>
+            <li><strong>Connection (<code>SqlConnection</code>):</strong> Represents the actual connection to a specific database. It holds the <strong>Connection String</strong> (address, DB name, security). Its main methods are <code>Open()</code> and <code>Close()</code>.</li>
+            <li><strong>Command (<code>SqlCommand</code>):</strong> Represents a single SQL statement (like <code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>). It must be associated with a <code>SqlConnection</code> to know *where* to execute.</li>
+            <li><strong>DataAdapter (<code>SqlDataAdapter</code>):</strong> This is the "bridge" for the disconnected model. Its <code>Fill()</code> method opens the connection, runs a <code>SelectCommand</code>, loads the results into a <code>DataSet</code>, and closes the connection. Its <code>Update()</code> method pushes changes from the <code>DataSet</code> back to the DB.</li>
         </ol>
         <div class="diagram">
-            <div class="diagram-title">Core ADO.NET Components</div>
+            <div class="diagram-title">ADO.NET Disconnected Components</div>
             <div class="flex-container">
-                <div class="diagram-box concept-box-alt" style="width: 200px;"><strong>Connection</strong><br>(*Where* to connect)</div>
-                <div class="arrow">+</div>
-                <div class="diagram-box concept-box-alt" style="width: 200px;"><strong>Command</strong><br>(*What* to execute)</div>
+                <div class="flex-column">
+                    <div class="diagram-box concept-box-alt" style="width: 200px;"><strong>Connection</strong><br>(*Where* to connect)</div>
+                    <div class="diagram-box concept-box-alt" style="width: 200px; margin-top: 5px;"><strong>Command</strong><br>(*What* to execute)</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="diagram-box concept-box-red" style="width: 200px;"><strong>DataAdapter</strong><br>(*Bridge* to fill/update)</div>
+                <div class="arrow">&harr;</div>
+                <div class="diagram-box" style="width: 200px;"><strong>DataSet</strong><br>(*In-memory* data)</div>
             </div>
-            <div class="arrow-down">&darr;</div>
-            <div class="diagram-box concept-box-red" style="width: 430px;"><strong>DataAdapter</strong><br>(*Bridge* to fill DataSet)</div>
-            <div class="arrow-down">&darr;</div>
-            <div class="diagram-box" style="width: 430px;"><strong>DataSet</strong><br>(*In-memory* data)</div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong> Think of it as a water-bottling plant.
+            <ul>
+                <li><strong>Connection:</strong> The main *water pipe* to the reservoir (the database).</li>
+                <li><strong>Command:</strong> The *instruction* you give the pipe ("Send me water," "Stop sending water").</li>
+                <li><strong>DataAdapter:</strong> The *bottling machine*. It connects to the pipe (Connection), takes the water (based on the Command), and *fills* a multi-pack of water bottles (the `DataSet`).</li>
+                <li><strong>DataSet:</strong> The *multi-pack of water bottles* (tables) that you can now take with you, disconnected from the plant.</li>
+            </ul>
         </div>
         
         <h3>4. Explain the ExecuteReader(), ExecuteScalar(), and ExecuteNonQuery() methods.</h3>
@@ -1010,32 +1181,37 @@ else
             <li><strong><code>ExecuteReader()</code>:</strong>
                 <ul>
                     <li><strong>Use:</strong> For <code>SELECT</code> statements that return *multiple rows*.</li>
-                    <li><strong>Returns:</strong> A <code>SqlDataReader</code> object.</li>
-                    <li><strong>Model:</strong> Used in the <strong>Connected</strong> architecture. You must loop through the reader (e.g., <code>while (myReader.Read()) { ... }</code>) to get the data, and the connection must stay open.</li>
+                    <li><strong>Returns:</strong> A <code>SqlDataReader</code> object (a live, forward-only stream).</li>
                 </ul>
             </li>
             <li><strong><code>ExecuteScalar()</code>:</strong>
                 <ul>
-                    <li><strong>Use:</strong> For <code>SELECT</code> queries that return *a single value*.</li>
-                    <li><strong>Returns:</strong> An <code>object</code>. It returns only the value from the first column of the first row.</li>
-                    <li><strong>Example:</strong> <code>SELECT COUNT(*) FROM Users</code> or <code>SELECT MAX(Price) FROM Products</code>.</li>
+                    <li><strong>Use:</strong> For <code>SELECT</code> queries that return *a single value* (first column of the first row).</li>
+                    <li><strong>Returns:</strong> An <code>object</code>. (e.g., <code>SELECT COUNT(*) FROM Users</code>).</li>
                 </ul>
             </li>
             <li><strong><code>ExecuteNonQuery()</code>:</strong>
                 <ul>
-                    <li><strong>Use:</strong> For SQL commands that do *not* return rows of data.</li>
-                    <li><strong>Returns:</strong> An <code>int</code> representing the number of rows affected by the command.</li>
-                    <li><strong>Example:</strong> <code>INSERT</code>, <code>UPDATE</code>, and <code>DELETE</code> statements.</li>
+                    <li><strong>Use:</strong> For commands that do *not* return rows of data (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>).</li>
+                    <li><strong>Returns:</strong> An <code>int</code> (the number of rows affected by the command).</li>
                 </ul>
             </li>
         </ul>
         <div class="diagram">
             <div class="diagram-title">SqlCommand Execute Methods</div>
-            <div class="flex-column">
-                <div class="diagram-box concept-box-alt"><code>ExecuteReader()</code><div class="arrow">&rarr;</div>Returns: <strong>SqlDataReader</strong> (for rows)</div>
-                <div class="diagram-box concept-box-alt" style="margin-top: 10px;"><code>ExecuteScalar()</code><div class="arrow">&rarr;</div>Returns: <strong>Object</strong> (for a single value)</div>
-                <div class="diagram-box concept-box-alt" style="margin-top: 10px;"><code>ExecuteNonQuery()</code><div class="arrow">&rarr;</div>Returns: <strong>int</strong> (rows affected)</div>
+            <div class="diagram-box" style="width: 80%; background-color: #f5f5f5; border-color: #e0e0e0;">
+                <div class="concept-box-alt" style="display: block; margin: 10px;"><code>ExecuteReader()</code> &rarr; Returns: <strong>SqlDataReader</strong> (for getting a list of results)</div>
+                <div class="concept-box-alt" style="display: block; margin: 10px;"><code>ExecuteScalar()</code> &rarr; Returns: <strong>Object</strong> (for getting a single value, like "5")</div>
+                <div class="concept-box-alt" style="display: block; margin: 10px;"><code>ExecuteNonQuery()</code> &rarr; Returns: <strong>int</strong> (for <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>, tells you "3 rows affected")</div>
             </div>
+        </div>
+        <div class="example">
+            <strong>Real-world Example:</strong>
+            <ul>
+                <li><strong>`ExecuteNonQuery()`:** This is for commands where you *tell* the database to *do* something. It's like yelling "Open the gate!" (an `INSERT` or `UPDATE`). The response you get back is just an `int`: "1 gate (row) opened."</li>
+                <li><strong>`ExecuteScalar()`:** This is when you ask a question that has a *single answer*. "How many people are in the room?" (a `COUNT(*)`). The response is just that one number (an `object`).</li>
+                <li><strong>`ExecuteReader()`:** This is when you ask for a *list*. "Read me the names of everyone in the room." The response is a *reader* object that lets you go through the list, one name at a time.</li>
+            </ul>
         </div>
 
         <h3>5. (CODE) Write C# code to fill a DataSet and bind it to a DataGridView.</h3>
@@ -1043,13 +1219,17 @@ else
         <div class="diagram">
             <div class="diagram-title">DataSet to DataGridView Flow</div>
             <div class="flex-container">
-                <div class="diagram-box concept-box-grey">DB</div>
-                <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-red">SqlDataAdapter.Fill()</div>
-                <div class="arrow">&rarr;</div>
-                <div class="diagram-box">DataSet</div>
-                <div class="arrow">&rarr;</div>
-                <div class="diagram-box concept-box-alt">DataGridView</div>
+                <div class="diagram-box concept-box-grey">Database</div>
+                <div class="flex-column" style="margin: 0 5px;">
+                    <div class="arrow">&rarr;</div>
+                    <div style="font-size: 0.9em;"><strong>SqlDataAdapter.Fill()</strong></div>
+                </div>
+                <div class="diagram-box" style="width: 150px;"><strong>DataSet</strong><br>(In-Memory Copy)</div>
+                <div class="flex-column" style="margin: 0 5px;">
+                    <div class="arrow">&rarr;</div>
+                    <div style="font-size: 0.9em;"><strong>.DataSource =</strong></div>
+                </div>
+                <div class="diagram-box concept-box-alt" style="width: 150px;"><strong>DataGridView</strong><br>(Visual Table)</div>
             </div>
         </div>
 <pre><code class="language-csharp">
@@ -1101,6 +1281,15 @@ private void LoadDataButton_Click(object sender, EventArgs e)
     }
 }
 </code></pre>
+        <div class="example">
+            <strong>Real-world Example:</strong> This code is for a front-desk receptionist.
+            <ul>
+                <li>The <strong>`connString`</strong> is the phone number for the main office (database).</li>
+                <li>The <strong>`query`</strong> is the question "Can I have the whole employee list?"</li>
+                <li>The <strong>`dataAdapter.Fill(dataSet)`</strong> is the receptionist making the call, getting the list, and writing it down on their *own clipboard* (the `DataSet`).</li>
+                <li>Finally, <strong>`dataGridView1.DataSource = ...`</strong> is them taking that clipboard and *displaying it on the public-facing monitor* (the `DataGridView`) for everyone to see.</li>
+            </ul>
+        </div>
 
     </div>
     <!-- Prism.js JS for syntax highlighting -->
