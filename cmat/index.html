@@ -1,599 +1,577 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  BookOpen, 
-  CheckSquare, 
-  ChevronDown, 
-  ChevronRight, 
-  PieChart, 
-  Zap, 
-  Target, 
-  Clock, 
-  Brain, 
-  Menu, 
-  X, 
-  Award,
-  Lightbulb,
-  TrendingUp,
-  Bookmark,
-  List
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMAT NEXUS | Strategic Prep Companion</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-// --- 1. THE KNOWLEDGE BASE (Granular Syllabus & Concepts) ---
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+        .animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
 
-const SYLLABUS_DB = {
-  "Quant & DI": {
-    icon: PieChart,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    modules: [
-      {
-        title: "Arithmetic (High Priority)",
-        topics: [
-          {
-            name: "Percentages",
-            concepts: [
-              "Fraction to % Conversion Table (1/2 to 1/20)",
-              "Successive Percentage Change Formula (a + b + ab/100)",
-              "Product Constancy Rule (Price x Consumption = Exp)",
-              "Population Growth/Depreciation"
-            ]
-          },
-          {
-            name: "Profit & Loss",
-            concepts: [
-              "Marked Price, Discount, Selling Price Relationship",
-              "False Weights/Dishonest Shopkeeper Logic",
-              "Buy X Get Y Free Concept",
-              "Profit Calculation on Selling Price vs Cost Price"
-            ]
-          },
-          {
-            name: "Time, Speed & Distance",
-            concepts: [
-              "Average Speed (2xy/x+y)",
-              "Relative Speed (Same direction vs Opposite)",
-              "Trains (Crossing pole vs Platform)",
-              "Boats & Streams (Upstream/Downstream)",
-              "Circular Motion Basics",
-              "Races (Linear start/beat)"
-            ]
-          },
-          {
-            name: "Time & Work",
-            concepts: [
-              "LCM Method for Total Work",
-              "Efficiency (Inversely proportional to days)",
-              "Pipes & Cisterns (Negative work for leaks)",
-              "Man-Days-Hours Formula (M1D1H1/W1 = M2D2H2/W2)",
-              "Work in alternate days"
-            ]
-          },
-          {
-            name: "SI & CI",
-            concepts: [
-              "Difference between SI and CI for 2/3 years",
-              "Installment Formulas",
-              "Rule of 72 (Doubling time)"
-            ]
-          }
-        ]
-      },
-      {
-        title: "Number Systems",
-        topics: [
-          {
-            name: "Properties of Numbers",
-            concepts: [
-              "Divisibility Rules (2, 3, 4, 5, 8, 9, 11, 7)",
-              "Unit Digit Calculation (Cyclicity)",
-              "Last Two Digits",
-              "Factors (Sum, Number of factors, Odd/Even factors)"
-            ]
-          },
-          {
-            name: "HCF & LCM",
-            concepts: [
-              "HCF/LCM of Fractions",
-              "Standard Models (Bell ringing, Circular track)",
-              "Product of two numbers = HCF * LCM"
-            ]
-          }
-        ]
-      },
-      {
-        title: "Algebra & Modern Math",
-        topics: [
-          { name: "Linear & Quadratic Eq", concepts: ["Nature of Roots (Discriminant)", "Sum/Product of Roots", "Graph of Parabola (Basics)"] },
-          { name: "Probability", concepts: ["Coins, Dice, Cards Logic", "At least/At most cases", "And/Or probability rules"] },
-          { name: "Permutation & Comb", concepts: ["Arrangements (Linear/Circular)", "Selection (nCr)", "Rank of a word in dictionary"] },
-          { name: "Set Theory", concepts: ["Venn Diagrams (2 & 3 Sets)", "Exactly one, exactly two formulas"] }
-        ]
-      },
-      {
-        title: "Data Interpretation",
-        topics: [
-          { name: "Calculation Techniques", concepts: ["Vedic Math Approximations", "10% and 1% Split Method", "Comparing Fractions"] },
-          { name: "Chart Types", concepts: ["Pie Charts (Degree to %)", "Bar Graphs (Stacked vs Grouped)", "Spider/Radar Charts", "Caselets (Text to Table)"] }
-        ]
-      }
-    ]
-  },
-  "Logical Reasoning": {
-    icon: Brain,
-    color: "text-purple-600",
-    bg: "bg-purple-50",
-    modules: [
-      {
-        title: "Analytical Reasoning",
-        topics: [
-          { name: "Linear Arrangement", concepts: ["Single Row (North/South)", "Double Row (Parallel)", "Uncertain number of persons"] },
-          { name: "Circular Arrangement", concepts: ["Facing Center vs Outwards", "Rectangular/Square Table"] },
-          { name: "Distribution/Matrix", concepts: ["Matching attributes (Person-City-Car-Color)", "Grid method elimination"] },
-          { name: "Blood Relations", concepts: ["Family Tree Symbols", "Coded Relations (A+B means A is father)", "Pointing to a photo type"] },
-          { name: "Direction Sense", concepts: ["Pythagoras Theorem Application", "Shadows (Morning/Evening)", "Degrees of rotation"] }
-        ]
-      },
-      {
-        title: "Verbal & Critical Reasoning",
-        topics: [
-          { name: "Syllogisms", concepts: ["Venn Diagram Method (All/Some/No)", "Possibility cases", "Reverse Syllogism"] },
-          { name: "Critical Reasoning", concepts: ["Strong vs Weak Arguments", "Implicit Assumptions", "Course of Action", "Cause & Effect"] },
-          { name: "Coding Decoding", concepts: ["Letter shifting", "Number coding", "Chinese Coding (Sentences)"] },
-          { name: "Input-Output", concepts: ["Shifting logic", "Mathematical operation logic"] }
-        ]
-      },
-      {
-        title: "Visual Reasoning (CMAT Special)",
-        topics: [
-          { name: "Visual Puzzles", concepts: ["Paper Folding/Cutting", "Mirror/Water Images", "Completing the series", "Embedded Figures"] },
-          { name: "Cubes & Dice", concepts: ["Opposite faces logic", "Unfolded cube matching", "Painting cubes (Cut logic)"] }
-        ]
-      }
-    ]
-  },
-  "Language": {
-    icon: BookOpen,
-    color: "text-green-600",
-    bg: "bg-green-50",
-    modules: [
-      {
-        title: "Vocabulary",
-        topics: [
-          { name: "Core Vocab", concepts: ["Root Words (Etymology)", "Synonyms & Antonyms (High frequency list)", "Foreign Words (e.g., ad hoc, pro bono)"] },
-          { name: "Usage", concepts: ["Idioms & Phrases", "One Word Substitution", "Confusing Words (Affect vs Effect)"] }
-        ]
-      },
-      {
-        title: "Grammar",
-        topics: [
-          { name: "Core Rules", concepts: ["Subject-Verb Agreement", "Tenses (Perfect vs Past Simple)", "Modifiers", "Parallelism", "Articles & Prepositions"] },
-          { name: "Application", concepts: ["Sentence Correction", "Spotting Errors", "Sentence Improvement"] }
-        ]
-      },
-      {
-        title: "Reading",
-        topics: [
-          { name: "Comprehension", concepts: ["Main Idea Identification", "Tone of Passage", "Fact vs Inference"] },
-          { name: "Structure", concepts: ["Parajumbles (Opening/Closing sentence)", "Odd One Out"] }
-        ]
-      }
-    ]
-  },
-  "Innovation & Ent": {
-    icon: Lightbulb,
-    color: "text-orange-600",
-    bg: "bg-orange-50",
-    description: "The Game Changer Section. High ROI.",
-    modules: [
-      {
-        title: "Entrepreneurship Concepts",
-        topics: [
-          { 
-            name: "Types of Entrepreneurs", 
-            concepts: [
-              "Fabian: Skeptical, imitates only when failure is imminent.",
-              "Drone: Refuses to change even if losing money.",
-              "Imitative/Adoptive: Copies successful innovations.",
-              "Innovative: Aggressive, creates new markets."
-            ]
-          },
-          { 
-            name: "Startup Lifecycle", 
-            concepts: [
-              "Bootstrapping: Self-funding.",
-              "Seed Stage: Idea validation.",
-              "Growth Stage: Scaling.",
-              "Exit Strategy: IPO, Acquisition."
-            ]
-          },
-          { 
-            name: "Funding Terminology", 
-            concepts: [
-              "Angel Investor: High net worth individual.",
-              "Venture Capital: Institutional money.",
-              "Valuation: Pre-money vs Post-money.",
-              "Burn Rate: Speed of spending cash.",
-              "Unicorn: Startup valued > $1 Billion."
-            ]
-          }
-        ]
-      },
-      {
-        title: "Government Schemes (Must Know)",
-        topics: [
-          { name: "Start Up India", concepts: ["Launched: 2016", "Tax holidays: 3 years", "Self-certification compliance"] },
-          { name: "MUDRA Yojana", concepts: ["Shishu (upto 50k)", "Kishor (50k-5L)", "Tarun (5L-10L)", "Acronym: Micro Units Development..."] },
-          { name: "AIM (Atal Innovation Mission)", concepts: ["Atal Tinkering Labs (Schools)", "Atal Incubation Centers"] },
-          { name: "Stand Up India", concepts: ["Focus: SC/ST and Women entrepreneurs", "Loan: 10L to 1Cr"] }
-        ]
-      },
-      {
-        title: "Innovation Management",
-        topics: [
-          { name: "IPR (Intellectual Property)", concepts: ["Patent: Inventions (20 years)", "Trademark: Brand/Logo", "Copyright: Art/Lit (Life+60y)", "GI Tag: Geographic Origin"] },
-          { name: "Design Thinking", concepts: ["5 Stages: Empathize -> Define -> Ideate -> Prototype -> Test"] }
-        ]
-      }
-    ]
-  },
-  "General Awareness": {
-    icon: TrendingUp,
-    color: "text-red-600",
-    bg: "bg-red-50",
-    description: "Static GK dominant. Focus on Fact Lists.",
-    modules: [
-      {
-        title: "Indian Polity (Constitution)",
-        topics: [
-          { name: "Key Articles", concepts: ["Art 12-35 (Fundamental Rights)", "Art 51A (Duties)", "Art 352-360 (Emergency)", "Art 370 (Revoked)"] },
-          { name: "Structure", concepts: ["President (Election/Pardon power)", "Parliament (LS/RS Composition)", "Schedules (1-12)"] }
-        ]
-      },
-      {
-        title: "Geography (Static)",
-        topics: [
-          { name: "Physical India", concepts: ["Rivers & Tributaries (Ganga, Godavari)", "Dams & Reservoirs", "Mountain Passes (Nathula, Zojila)"] },
-          { name: "Environment", concepts: ["National Parks (State-wise list)", "Biosphere Reserves", "Ramsar Sites"] }
-        ]
-      },
-      {
-        title: "History",
-        topics: [
-          { name: "Modern History", concepts: ["Gandhian Era (1915-1947)", "INC Sessions (Presidents/Venues)", "Governor Generals/Viceroys"] },
-          { name: "Ancient/Medieval", concepts: ["Indus Valley Sites", "Mughal Empire (Chronology)", "Battles (Panipat, Plassey, Buxar)"] }
-        ]
-      },
-      {
-        title: "Current Affairs (Last 12M)",
-        topics: [
-          { name: "Categories", concepts: ["Nobel Prizes", "Sports (Olympics/Cricket World Cup)", "Summits (G20, BRICS)", "Books & Authors"] }
-        ]
-      }
-    ]
-  }
-};
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 h-screen overflow-hidden">
 
-// --- 2. COMPONENTS ---
-
-const SectionCard = ({ title, data, expanded, onToggle, progress }) => {
-  const Icon = data.icon;
-  return (
-    <div className="mb-4 border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
-      <div 
-        onClick={onToggle}
-        className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${expanded ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
-      >
-        <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-lg ${data.bg} ${data.color}`}>
-            <Icon className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-bold text-lg text-slate-800">{title}</h3>
-            <p className="text-xs text-slate-500 font-medium">
-              {progress.completed}/{progress.total} Topics Mastered
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
-            <div 
-              className={`h-full rounded-full transition-all duration-500 ${data.color.replace('text', 'bg')}`} 
-              style={{ width: `${(progress.completed/progress.total)*100}%` }}
-            ></div>
-          </div>
-          {expanded ? <ChevronDown className="text-slate-400" /> : <ChevronRight className="text-slate-400" />}
-        </div>
-      </div>
-
-      {expanded && (
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 animate-fade-in">
-          {data.description && (
-            <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              {data.description}
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.modules.map((module, mIdx) => (
-              <ModuleCard 
-                key={mIdx} 
-                section={title}
-                module={module} 
-                color={data.color} 
-              />
-            ))}
-          </div>
-        </div>
-      )}
+    <div id="app" class="flex flex-col md:flex-row h-full">
+        <!-- Sidebar and Main Content will be rendered here by JS -->
     </div>
-  );
-};
 
-const ModuleCard = ({ section, module, color }) => {
-  const [showConcepts, setShowConcepts] = useState(null); // stores topic name to show concepts for
-  // Local state wrapper would go here in a real app, using props for now
-  
-  return (
-    <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-      <h4 className={`font-bold mb-3 pb-2 border-b border-slate-100 ${color}`}>{module.title}</h4>
-      <ul className="space-y-2">
-        {module.topics.map((topic, tIdx) => (
-          <li key={tIdx} className="group">
-            <div className="flex items-start justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="rounded text-indigo-600 focus:ring-indigo-500 mt-1"
-                  // Logic for checking off would hook into global state
-                />
-                <span className="text-sm text-slate-700 font-medium group-hover:text-slate-900">
-                  {topic.name}
-                </span>
-              </label>
-              <button 
-                onClick={() => setShowConcepts(showConcepts === topic.name ? null : topic.name)}
-                className="text-xs text-slate-400 hover:text-indigo-600 underline px-2 py-1"
-              >
-                {showConcepts === topic.name ? 'Hide Info' : 'View Info'}
-              </button>
-            </div>
+    <script>
+        // --- 1. DATA STORE (The Knowledge Base) ---
+        const SYLLABUS_DB = {
+            "Quant & DI": {
+                icon: "pie-chart",
+                color: "text-blue-600",
+                bg: "bg-blue-50",
+                barColor: "bg-blue-600",
+                modules: [
+                    {
+                        title: "Arithmetic (High Priority)",
+                        topics: [
+                            { name: "Percentages", concepts: ["Fraction to % Table", "Successive % Change", "Product Constancy Rule", "Population Growth"] },
+                            { name: "Profit & Loss", concepts: ["Marked Price/Discount logic", "Dishonest Shopkeeper", "Buy X Get Y Free", "Profit on SP vs CP"] },
+                            { name: "Time, Speed & Distance", concepts: ["Average Speed", "Relative Speed", "Trains & Platforms", "Boats & Streams", "Circular Motion"] },
+                            { name: "Time & Work", concepts: ["LCM Method", "Efficiency & Days", "Pipes & Cisterns", "Man-Days-Hours Formula"] },
+                            { name: "SI & CI", concepts: ["Diff between SI/CI (2/3 yrs)", "Installment Formulas", "Rule of 72"] }
+                        ]
+                    },
+                    {
+                        title: "Number Systems",
+                        topics: [
+                            { name: "Properties of Numbers", concepts: ["Divisibility Rules", "Unit Digit", "Last Two Digits", "Factors"] },
+                            { name: "HCF & LCM", concepts: ["HCF of Fractions", "Bell Ringing Models", "Product = HCF * LCM"] }
+                        ]
+                    },
+                    {
+                        title: "Algebra & Modern Math",
+                        topics: [
+                            { name: "Linear & Quadratic Eq", concepts: ["Nature of Roots", "Sum/Product of Roots", "Parabola Basics"] },
+                            { name: "Probability", concepts: ["Coins/Dice/Cards", "At least/At most", "And/Or Rules"] },
+                            { name: "Permutation & Comb", concepts: ["Arrangements", "Selection (nCr)", "Dictionary Rank"] },
+                            { name: "Set Theory", concepts: ["Venn Diagrams (2 & 3 Sets)", "Exactly one/two formulas"] }
+                        ]
+                    },
+                    {
+                        title: "Data Interpretation",
+                        topics: [
+                            { name: "Calculation Techniques", concepts: ["Vedic Math", "10% Split Method", "Comparing Fractions"] },
+                            { name: "Chart Types", concepts: ["Pie Charts", "Bar Graphs", "Spider Charts", "Caselets"] }
+                        ]
+                    }
+                ]
+            },
+            "Logical Reasoning": {
+                icon: "brain",
+                color: "text-purple-600",
+                bg: "bg-purple-50",
+                barColor: "bg-purple-600",
+                modules: [
+                    {
+                        title: "Analytical Reasoning",
+                        topics: [
+                            { name: "Linear Arrangement", concepts: ["Single/Double Row", "Uncertain persons"] },
+                            { name: "Circular Arrangement", concepts: ["Facing Center/Out", "Rectangular Table"] },
+                            { name: "Distribution/Matrix", concepts: ["Matching Attributes", "Grid Method"] },
+                            { name: "Blood Relations", concepts: ["Family Tree Symbols", "Coded Relations", "Pointing Type"] },
+                            { name: "Direction Sense", concepts: ["Pythagoras Application", "Shadows Logic", "Degrees"] }
+                        ]
+                    },
+                    {
+                        title: "Verbal & Critical Reasoning",
+                        topics: [
+                            { name: "Syllogisms", concepts: ["Venn Diagram Method", "Possibility Cases", "Reverse Syllogism"] },
+                            { name: "Critical Reasoning", concepts: ["Strong vs Weak Arg", "Implicit Assumptions", "Course of Action"] },
+                            { name: "Coding Decoding", concepts: ["Letter Shifting", "Number Coding", "Chinese Coding"] }
+                        ]
+                    },
+                    {
+                        title: "Visual Reasoning (CMAT Special)",
+                        topics: [
+                            { name: "Visual Puzzles", concepts: ["Paper Folding", "Mirror Images", "Series Completion"] },
+                            { name: "Cubes & Dice", concepts: ["Opposite Faces", "Unfolded Cube", "Painting Logic"] }
+                        ]
+                    }
+                ]
+            },
+            "Language": {
+                icon: "book-open",
+                color: "text-green-600",
+                bg: "bg-green-50",
+                barColor: "bg-green-600",
+                modules: [
+                    {
+                        title: "Vocabulary",
+                        topics: [
+                            { name: "Core Vocab", concepts: ["Root Words", "Synonyms/Antonyms", "Foreign Words"] },
+                            { name: "Usage", concepts: ["Idioms & Phrases", "One Word Substitution", "Confusing Words"] }
+                        ]
+                    },
+                    {
+                        title: "Grammar",
+                        topics: [
+                            { name: "Core Rules", concepts: ["Subject-Verb Agreement", "Tenses", "Modifiers", "Parallelism"] },
+                            { name: "Application", concepts: ["Sentence Correction", "Spotting Errors"] }
+                        ]
+                    },
+                    {
+                        title: "Reading",
+                        topics: [
+                            { name: "Comprehension", concepts: ["Main Idea", "Tone", "Fact vs Inference"] },
+                            { name: "Structure", concepts: ["Parajumbles", "Odd One Out"] }
+                        ]
+                    }
+                ]
+            },
+            "Innovation & Ent": {
+                icon: "lightbulb",
+                color: "text-orange-600",
+                bg: "bg-orange-50",
+                barColor: "bg-orange-600",
+                description: "The Game Changer Section. High ROI.",
+                modules: [
+                    {
+                        title: "Entrepreneurship Concepts",
+                        topics: [
+                            { name: "Types of Entrepreneurs", concepts: ["Fabian (Skeptical)", "Drone (Resistant)", "Imitative (Copies)", "Innovative (New Markets)"] },
+                            { name: "Startup Lifecycle", concepts: ["Bootstrapping", "Seed Stage", "Growth Stage", "Exit (IPO/Acquisition)"] },
+                            { name: "Funding Terminology", concepts: ["Angel Investor", "Venture Capital", "Valuation", "Burn Rate", "Unicorn (> $1B)"] }
+                        ]
+                    },
+                    {
+                        title: "Government Schemes",
+                        topics: [
+                            { name: "Start Up India", concepts: ["2016 Launch", "Tax Holidays", "Self-certification"] },
+                            { name: "MUDRA Yojana", concepts: ["Shishu (<50k)", "Kishor (50k-5L)", "Tarun (5L-10L)"] },
+                            { name: "Atal Innovation Mission", concepts: ["Tinkering Labs", "Incubation Centers"] },
+                            { name: "Stand Up India", concepts: ["SC/ST & Women focus", "10L-1Cr Loan"] }
+                        ]
+                    },
+                    {
+                        title: "Innovation Management",
+                        topics: [
+                            { name: "IPR (Intellectual Property)", concepts: ["Patents (Inventions)", "Trademark (Brand)", "Copyright (Art)", "GI Tag"] },
+                            { name: "Design Thinking", concepts: ["Empathize -> Define -> Ideate -> Prototype -> Test"] }
+                        ]
+                    }
+                ]
+            },
+            "General Awareness": {
+                icon: "trending-up",
+                color: "text-red-600",
+                bg: "bg-red-50",
+                barColor: "bg-red-600",
+                description: "Static GK dominant. Focus on Fact Lists.",
+                modules: [
+                    {
+                        title: "Indian Polity",
+                        topics: [
+                            { name: "Constitution Key Articles", concepts: ["Art 12-35 (Rights)", "Art 51A (Duties)", "Emergency (352-360)"] },
+                            { name: "Structure", concepts: ["President Powers", "Parliament Composition", "Schedules 1-12"] }
+                        ]
+                    },
+                    {
+                        title: "Geography (Static)",
+                        topics: [
+                            { name: "Physical India", concepts: ["Rivers & Tributaries", "Dams", "Mountain Passes"] },
+                            { name: "Environment", concepts: ["National Parks", "Biosphere Reserves", "Ramsar Sites"] }
+                        ]
+                    },
+                    {
+                        title: "History",
+                        topics: [
+                            { name: "Modern History", concepts: ["Gandhian Era", "INC Sessions", "Governor Generals"] },
+                            { name: "Ancient/Medieval", concepts: ["Indus Valley", "Mughal Empire", "Key Battles"] }
+                        ]
+                    },
+                    {
+                        title: "Current Affairs",
+                        topics: [
+                            { name: "Categories", concepts: ["Nobel Prizes", "Sports (Olympics/Cricket)", "Summits (G20)", "Books & Authors"] }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // --- 2. STATE MANAGEMENT ---
+        const state = {
+            activeTab: 'syllabus', // syllabus, strategy, roadmap
+            expandedSection: 'Quant & DI',
+            expandedConcept: null,
+            mobileMenuOpen: false,
+            completedTopics: JSON.parse(localStorage.getItem('cmat_progress')) || {} 
+        };
+
+        // --- 3. CORE LOGIC ---
+        
+        function saveProgress() {
+            localStorage.setItem('cmat_progress', JSON.stringify(state.completedTopics));
+            renderApp(); // Re-render to update progress bars
+        }
+
+        function toggleTopic(topicName) {
+            if (state.completedTopics[topicName]) {
+                delete state.completedTopics[topicName];
+            } else {
+                state.completedTopics[topicName] = true;
+            }
+            saveProgress();
+        }
+
+        function getProgress(sectionKey) {
+            const modules = SYLLABUS_DB[sectionKey].modules;
+            let total = 0;
+            let completed = 0;
+            modules.forEach(m => {
+                m.topics.forEach(t => {
+                    total++;
+                    if (state.completedTopics[t.name]) completed++;
+                });
+            });
+            return { total, completed, percentage: total === 0 ? 0 : (completed/total)*100 };
+        }
+
+        function getDaysLeft() {
+            const targetDate = new Date('2026-01-25');
+            const today = new Date();
+            const diff = targetDate - today;
+            return Math.ceil(diff / (1000 * 60 * 60 * 24));
+        }
+
+        // --- 4. RENDER FUNCTIONS ---
+
+        function renderSidebar() {
+            const navClass = (id) => `flex items-center gap-3 w-full p-3 rounded-lg transition-all font-medium cursor-pointer ${state.activeTab === id ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-700'}`;
+
+            return `
+                <div class="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${state.mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50">
+                        <div class="flex items-center gap-3 text-indigo-700">
+                            <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                                <i data-lucide="zap" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-xl font-extrabold tracking-tight leading-none">CMAT<br/><span class="text-slate-800">NEXUS</span></h1>
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-indigo-50 text-indigo-900 text-xs font-bold px-3 py-1 rounded-full inline-block">
+                            Target: Jan 2026
+                        </div>
+                    </div>
+
+                    <nav class="p-4 space-y-2 flex-1">
+                        <div onclick="setTab('syllabus')" class="${navClass('syllabus')}">
+                            <i data-lucide="list" class="w-5 h-5"></i> <span>Syllabus & Concepts</span>
+                        </div>
+                        <div onclick="setTab('strategy')" class="${navClass('strategy')}">
+                            <i data-lucide="target" class="w-5 h-5"></i> <span>Strategy & Tactics</span>
+                        </div>
+                        <div onclick="setTab('roadmap')" class="${navClass('roadmap')}">
+                            <i data-lucide="clock" class="w-5 h-5"></i> <span>60-Day Roadmap</span>
+                        </div>
+                    </nav>
+
+                    <div class="p-6 bg-slate-50 border-t border-slate-100">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">JD</div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Aspirant</p>
+                                <p class="text-xs text-slate-500">Progress Saved Locally</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mobile Overlay -->
+                ${state.mobileMenuOpen ? `<div onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/20 z-40 md:hidden"></div>` : ''}
+            `;
+        }
+
+        function renderHeader() {
+            const titles = {
+                syllabus: "Knowledge Base",
+                strategy: "Exam Strategy",
+                roadmap: "Preparation Timeline"
+            };
+            const subtitles = {
+                syllabus: "Select a section to access the micro-syllabus and concept cards. Check box to track progress.",
+                strategy: "Master the game mechanics of CMAT 2026.",
+                roadmap: "Your schedule to peak at the right time."
+            };
+
+            return `
+                <div class="md:hidden bg-white p-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+                    <span class="font-bold text-lg text-indigo-700">CMAT NEXUS</span>
+                    <button onclick="toggleMobileMenu()">
+                        <i data-lucide="${state.mobileMenuOpen ? 'x' : 'menu'}"></i>
+                    </button>
+                </div>
+
+                <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 md:pt-0">
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-bold text-slate-800">${titles[state.activeTab]}</h2>
+                        <p class="text-slate-500 mt-1 text-sm md:text-base">${subtitles[state.activeTab]}</p>
+                    </div>
+                    <div class="bg-slate-900 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2 w-fit">
+                        <i data-lucide="clock" class="w-4 h-4 text-indigo-400"></i>
+                        <span class="text-sm font-bold">~${getDaysLeft()} Days Left</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSyllabus() {
+            let html = `<div class="space-y-2 pb-10">`;
             
-            {/* THE CONCEPT CARD (Micro-Syllabus) */}
-            {showConcepts === topic.name && (
-              <div className="mt-2 ml-6 p-3 bg-slate-50 rounded-lg border-l-2 border-indigo-400 text-xs text-slate-600 space-y-1 animate-in slide-in-from-top-1">
-                <p className="font-bold text-slate-500 mb-1 uppercase tracking-wider text-[10px]">Key Concepts / Formulas:</p>
-                {topic.concepts.map((c, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-indigo-400">•</span>
-                    <span>{c}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
+            for (const [key, data] of Object.entries(SYLLABUS_DB)) {
+                const progress = getProgress(key);
+                const isExpanded = state.expandedSection === key;
+                
+                html += `
+                    <div class="mb-4 border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white transition-all">
+                        <div onclick="toggleSection('${key}')" class="p-4 flex items-center justify-between cursor-pointer ${isExpanded ? 'bg-slate-50' : 'hover:bg-slate-50'}">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="p-3 rounded-lg ${data.bg} ${data.color} shrink-0">
+                                    <i data-lucide="${data.icon}" class="w-6 h-6"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-slate-800">${key}</h3>
+                                    <p class="text-xs text-slate-500 font-medium">${progress.completed}/${progress.total} Topics Mastered</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-24 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
+                                    <div class="h-full rounded-full transition-all duration-500 ${data.barColor}" style="width: ${progress.percentage}%"></div>
+                                </div>
+                                <i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="text-slate-400"></i>
+                            </div>
+                        </div>
+                        
+                        ${isExpanded ? `
+                            <div class="p-4 border-t border-slate-100 bg-slate-50/50 animate-fade-in">
+                                ${data.description ? `
+                                    <div class="mb-4 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg flex items-start gap-2 border border-yellow-100">
+                                        <i data-lucide="lightbulb" class="w-4 h-4 mt-0.5 shrink-0"></i>
+                                        ${data.description}
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${data.modules.map(module => `
+                                        <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                            <h4 class="font-bold mb-3 pb-2 border-b border-slate-100 ${data.color} text-sm uppercase tracking-wide">${module.title}</h4>
+                                            <ul class="space-y-3">
+                                                ${module.topics.map(topic => `
+                                                    <li class="group">
+                                                        <div class="flex items-start justify-between">
+                                                            <label class="flex items-center gap-3 cursor-pointer select-none">
+                                                                <div class="relative flex items-center">
+                                                                    <input type="checkbox" 
+                                                                        class="peer h-5 w-5 cursor-pointer appearance-none rounded border border-slate-300 bg-white transition-all checked:border-indigo-600 checked:bg-indigo-600"
+                                                                        ${state.completedTopics[topic.name] ? 'checked' : ''}
+                                                                        onchange="toggleTopic('${topic.name}')"
+                                                                    />
+                                                                    <i data-lucide="check" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none"></i>
+                                                                </div>
+                                                                <span class="text-sm text-slate-700 font-medium group-hover:text-slate-900 ${state.completedTopics[topic.name] ? 'line-through text-slate-400' : ''}">
+                                                                    ${topic.name}
+                                                                </span>
+                                                            </label>
+                                                            <button onclick="toggleConcept('${topic.name}')" class="text-xs text-slate-400 hover:text-indigo-600 underline px-2 py-1 whitespace-nowrap">
+                                                                ${state.expandedConcept === topic.name ? 'Hide Info' : 'View Info'}
+                                                            </button>
+                                                        </div>
+                                                        ${state.expandedConcept === topic.name ? `
+                                                            <div class="mt-2 ml-8 p-3 bg-indigo-50 rounded-lg border-l-4 border-indigo-400 text-xs text-slate-700 space-y-1 animate-slide-down">
+                                                                <p class="font-bold text-indigo-900 mb-1 uppercase tracking-wider text-[10px]">Key Concepts:</p>
+                                                                ${topic.concepts.map(c => `<div class="flex items-start gap-2"><span class="text-indigo-400">•</span><span>${c}</span></div>`).join('')}
+                                                            </div>
+                                                        ` : ''}
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            return html;
+        }
 
-const StrategyVault = () => (
-  <div className="space-y-6">
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Target className="text-red-400" /> The Winning Strategy</h2>
-      <p className="text-slate-300">CMAT is not about solving hard problems; it's about solving easy problems accurately and fast.</p>
-    </div>
+        function renderStrategy() {
+            return `
+                <div class="space-y-6 pb-10 animate-fade-in">
+                    <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-lg">
+                        <h2 class="text-2xl font-bold mb-2 flex items-center gap-2"><i data-lucide="target" class="text-red-400"></i> The Winning Strategy</h2>
+                        <p class="text-slate-300">CMAT is not about solving hard problems; it's about solving easy problems accurately and fast.</p>
+                    </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 mb-3 text-indigo-700 font-bold">
-          <Clock className="w-5 h-5" /> Banking Time
-        </div>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Finish <strong>GK & I&E (40 Qs)</strong> in <strong>30 mins</strong>. 
-          This leaves you <strong>150 mins</strong> for Quant, LR, and Verbal (60 Qs).
-          That's <strong>2.5 mins/question</strong> for Math—huge luxury!
-        </p>
-      </div>
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 mb-3 text-red-700 font-bold">
-          <Award className="w-5 h-5" /> The 330+ Target
-        </div>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          To reach JBIMS/SIMSREE, you need 99.9%ile.
-          <br/>Target: <strong>85-90 correct attempts</strong>.
-          <br/>Quant/LR Accuracy must be near <strong>100%</strong>.
-          <br/>GK is the differentiator.
-        </p>
-      </div>
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 mb-3 text-green-700 font-bold">
-          <BookOpen className="w-5 h-5" /> I&E Hack
-        </div>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Don't use common sense. Memorize definitions.
-          Knowing what a <strong>"Fabian Entrepreneur"</strong> is guarantees +4 marks in 5 seconds.
-          Use the Syllabus tab to learn these.
-        </p>
-      </div>
-    </div>
-  </div>
-);
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-2 mb-3 text-indigo-700 font-bold">
+                                <i data-lucide="clock" class="w-5 h-5"></i> Banking Time
+                            </div>
+                            <p class="text-sm text-slate-600 leading-relaxed">
+                                Finish <strong>GK & I&E (40 Qs)</strong> in <strong>30 mins</strong>. 
+                                This leaves you <strong>150 mins</strong> for Quant, LR, and Verbal (60 Qs).
+                                That's <strong>2.5 mins/question</strong> for Math—huge luxury!
+                            </p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-2 mb-3 text-red-700 font-bold">
+                                <i data-lucide="award" class="w-5 h-5"></i> The 330+ Target
+                            </div>
+                            <p class="text-sm text-slate-600 leading-relaxed">
+                                To reach JBIMS/SIMSREE, you need 99.9%ile.
+                                <br/>Target: <strong>85-90 correct attempts</strong>.
+                                <br/>Quant/LR Accuracy must be near <strong>100%</strong>.
+                            </p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-2 mb-3 text-green-700 font-bold">
+                                <i data-lucide="book-open" class="w-5 h-5"></i> I&E Hack
+                            </div>
+                            <p class="text-sm text-slate-600 leading-relaxed">
+                                Don't use common sense. Memorize definitions.
+                                Knowing what a <strong>"Fabian Entrepreneur"</strong> is guarantees +4 marks in 5 seconds.
+                                Use the Syllabus tab to learn these.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-const WeeklyPlanner = () => {
-  // Simplified static view for the robust guide version
-  const weeks = [
-    { title: "Week 1-2: Foundation", focus: "Arithmetic (Ratio/%) + Grammar + I&E Basics", color: "border-l-blue-500" },
-    { title: "Week 3-4: Logic & Speed", focus: "TSD/Work + Arrangements + Govt Schemes", color: "border-l-purple-500" },
-    { title: "Week 5-6: Modern Math", focus: "Geometry/Prob + Visual Reasoning + Static GK", color: "border-l-green-500" },
-    { title: "Week 7-8: Mastery", focus: "Mocks (2/week) + Analysis + Current Affairs", color: "border-l-red-500" }
-  ];
+        function renderRoadmap() {
+            const weeks = [
+                { title: "Week 1-2: Foundation", focus: "Arithmetic (Ratio/%) + Grammar + I&E Basics", color: "border-l-blue-500" },
+                { title: "Week 3-4: Logic & Speed", focus: "TSD/Work + Arrangements + Govt Schemes", color: "border-l-purple-500" },
+                { title: "Week 5-6: Modern Math", focus: "Geometry/Prob + Visual Reasoning + Static GK", color: "border-l-green-500" },
+                { title: "Week 7-8: Mastery", focus: "Mocks (2/week) + Analysis + Current Affairs", color: "border-l-red-500" }
+            ];
 
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-      <div className="p-4 bg-slate-50 border-b border-slate-100 font-bold text-slate-700">
-        60-Day Roadmap Outline
-      </div>
-      <div className="divide-y divide-slate-100">
-        {weeks.map((w, i) => (
-          <div key={i} className={`p-4 border-l-4 ${w.color} hover:bg-slate-50`}>
-            <h4 className="font-bold text-slate-800">{w.title}</h4>
-            <p className="text-sm text-slate-600 mt-1">Focus: {w.focus}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10 animate-fade-in">
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                            <div class="p-4 bg-slate-50 border-b border-slate-100 font-bold text-slate-700">
+                                60-Day Roadmap Outline
+                            </div>
+                            <div class="divide-y divide-slate-100">
+                                ${weeks.map(w => `
+                                    <div class="p-4 border-l-4 ${w.color} hover:bg-slate-50 transition-colors">
+                                        <h4 class="font-bold text-slate-800">${w.title}</h4>
+                                        <p class="text-sm text-slate-600 mt-1">Focus: ${w.focus}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                <i data-lucide="bookmark" class="text-indigo-500 w-5 h-5"></i> Daily Rituals
+                            </h3>
+                            <ul class="space-y-3 text-sm text-slate-600">
+                                <li class="flex items-start gap-2">
+                                    <span class="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">AM</span>
+                                    <span>Read The Hindu Editorial (30 mins)</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">PM</span>
+                                    <span>Solve 20 Arithmetic Qs (45 mins)</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">Night</span>
+                                    <span>Revise 1 Static GK Topic (15 mins)</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-// --- 3. MAIN APP COMPONENT ---
+        function renderApp() {
+            const app = document.getElementById('app');
+            
+            let mainContent = '';
+            if (state.activeTab === 'syllabus') mainContent = renderSyllabus();
+            else if (state.activeTab === 'strategy') mainContent = renderStrategy();
+            else if (state.activeTab === 'roadmap') mainContent = renderRoadmap();
 
-export default function CMATNexus() {
-  const [activeTab, setActiveTab] = useState('syllabus');
-  const [expandedSection, setExpandedSection] = useState('Quant & DI');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // Calculate dummy progress
-  const getProgress = (sectionKey) => {
-    const modules = SYLLABUS_DB[sectionKey].modules;
-    let total = 0;
-    modules.forEach(m => total += m.topics.length);
-    return { total, completed: Math.floor(total * 0.3) }; // Dummy 30% progress
-  };
+            app.innerHTML = `
+                ${renderSidebar()}
+                <div class="flex-1 p-4 md:p-8 overflow-y-auto h-full bg-slate-100">
+                    <div class="max-w-5xl mx-auto">
+                        ${renderHeader()}
+                        ${mainContent}
+                    </div>
+                </div>
+            `;
+            
+            // Initialize icons
+            lucide.createIcons();
+        }
 
-  const NavItem = ({ id, icon: Icon, label }) => (
-    <button
-      onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
-      className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all ${
-        activeTab === id 
-          ? "bg-indigo-600 text-white shadow-md" 
-          : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
-      }`}
-    >
-      <Icon className="w-5 h-5" />
-      <span className="font-medium">{label}</span>
-    </button>
-  );
+        // --- 5. ACTION HANDLERS ---
+        
+        window.setTab = (tab) => {
+            state.activeTab = tab;
+            state.mobileMenuOpen = false;
+            renderApp();
+        };
 
-  return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col md:flex-row">
-      
-      {/* SIDEBAR */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 border-b border-slate-100 bg-slate-50">
-          <div className="flex items-center gap-3 text-indigo-700">
-            <div className="bg-indigo-600 text-white p-2 rounded-lg">
-              <Zap className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-extrabold tracking-tight leading-none">CMAT<br/><span className="text-slate-800">NEXUS</span></h1>
-            </div>
-          </div>
-          <div className="mt-4 bg-indigo-50 text-indigo-900 text-xs font-bold px-3 py-1 rounded-full inline-block">
-            Target: Jan 2026
-          </div>
-        </div>
+        window.toggleSection = (key) => {
+            state.expandedSection = state.expandedSection === key ? null : key;
+            renderApp();
+        };
+        
+        window.toggleConcept = (name) => {
+            state.expandedConcept = state.expandedConcept === name ? null : name;
+            renderApp();
+        };
 
-        <nav className="p-4 space-y-2">
-          <NavItem id="syllabus" icon={List} label="Syllabus & Concepts" />
-          <NavItem id="strategy" icon={Target} label="Strategy & Tactics" />
-          <NavItem id="roadmap" icon={Clock} label="60-Day Roadmap" />
-        </nav>
+        window.toggleMobileMenu = () => {
+            state.mobileMenuOpen = !state.mobileMenuOpen;
+            renderApp();
+        };
 
-        <div className="absolute bottom-0 w-full p-6 bg-slate-50 border-t border-slate-100">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">JD</div>
-            <div>
-              <p className="text-sm font-bold text-slate-800">Aspirant</p>
-              <p className="text-xs text-slate-500">General Category</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        // Initial Render
+        renderApp();
 
-      {/* MOBILE HEADER */}
-      <div className="md:hidden bg-white p-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
-        <span className="font-bold text-lg text-indigo-700">CMAT NEXUS</span>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X /> : <Menu />}
-        </button>
-      </div>
-
-      {/* MAIN CONTENT */}
-      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
-        <div className="max-w-5xl mx-auto">
-          
-          {/* HEADER */}
-          <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
-                {activeTab === 'syllabus' && "Knowledge Base"}
-                {activeTab === 'strategy' && "Exam Strategy"}
-                {activeTab === 'roadmap' && "Preparation Timeline"}
-              </h2>
-              <p className="text-slate-500 mt-1">
-                {activeTab === 'syllabus' && "Select a section to access the micro-syllabus and concept cards."}
-                {activeTab === 'strategy' && "Master the game mechanics of CMAT 2026."}
-                {activeTab === 'roadmap' && "Your schedule to peak at the right time."}
-              </p>
-            </div>
-            {/* Countdown Pill */}
-            <div className="bg-slate-900 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2">
-              <Clock className="w-4 h-4 text-indigo-400" />
-              <span className="text-sm font-bold">~65 Days Left</span>
-            </div>
-          </div>
-
-          {/* CONTENT AREA */}
-          {activeTab === 'syllabus' && (
-            <div className="space-y-2 animate-in fade-in">
-              {Object.entries(SYLLABUS_DB).map(([key, data]) => (
-                <SectionCard 
-                  key={key}
-                  title={key}
-                  data={data}
-                  expanded={expandedSection === key}
-                  onToggle={() => setExpandedSection(expandedSection === key ? null : key)}
-                  progress={getProgress(key)}
-                />
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'strategy' && <StrategyVault />}
-          
-          {activeTab === 'roadmap' && (
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-               <div className="lg:col-span-2">
-                 <WeeklyPlanner />
-               </div>
-               <div className="space-y-6">
-                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                   <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                     <Bookmark className="text-indigo-500 w-5 h-5" /> Daily Rituals
-                   </h3>
-                   <ul className="space-y-3 text-sm text-slate-600">
-                     <li className="flex items-start gap-2">
-                       <span className="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">AM</span>
-                       <span>Read The Hindu Editorial (30 mins)</span>
-                     </li>
-                     <li className="flex items-start gap-2">
-                       <span className="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">PM</span>
-                       <span>Solve 20 Arithmetic Qs (45 mins)</span>
-                     </li>
-                     <li className="flex items-start gap-2">
-                       <span className="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">Night</span>
-                       <span>Revise 1 Static GK Topic (15 mins)</span>
-                     </li>
-                   </ul>
-                 </div>
-               </div>
-             </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-}
+    </script>
+</body>
+</html>
 
