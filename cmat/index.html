@@ -1,0 +1,599 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  BookOpen, 
+  CheckSquare, 
+  ChevronDown, 
+  ChevronRight, 
+  PieChart, 
+  Zap, 
+  Target, 
+  Clock, 
+  Brain, 
+  Menu, 
+  X, 
+  Award,
+  Lightbulb,
+  TrendingUp,
+  Bookmark,
+  List
+} from 'lucide-react';
+
+// --- 1. THE KNOWLEDGE BASE (Granular Syllabus & Concepts) ---
+
+const SYLLABUS_DB = {
+  "Quant & DI": {
+    icon: PieChart,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    modules: [
+      {
+        title: "Arithmetic (High Priority)",
+        topics: [
+          {
+            name: "Percentages",
+            concepts: [
+              "Fraction to % Conversion Table (1/2 to 1/20)",
+              "Successive Percentage Change Formula (a + b + ab/100)",
+              "Product Constancy Rule (Price x Consumption = Exp)",
+              "Population Growth/Depreciation"
+            ]
+          },
+          {
+            name: "Profit & Loss",
+            concepts: [
+              "Marked Price, Discount, Selling Price Relationship",
+              "False Weights/Dishonest Shopkeeper Logic",
+              "Buy X Get Y Free Concept",
+              "Profit Calculation on Selling Price vs Cost Price"
+            ]
+          },
+          {
+            name: "Time, Speed & Distance",
+            concepts: [
+              "Average Speed (2xy/x+y)",
+              "Relative Speed (Same direction vs Opposite)",
+              "Trains (Crossing pole vs Platform)",
+              "Boats & Streams (Upstream/Downstream)",
+              "Circular Motion Basics",
+              "Races (Linear start/beat)"
+            ]
+          },
+          {
+            name: "Time & Work",
+            concepts: [
+              "LCM Method for Total Work",
+              "Efficiency (Inversely proportional to days)",
+              "Pipes & Cisterns (Negative work for leaks)",
+              "Man-Days-Hours Formula (M1D1H1/W1 = M2D2H2/W2)",
+              "Work in alternate days"
+            ]
+          },
+          {
+            name: "SI & CI",
+            concepts: [
+              "Difference between SI and CI for 2/3 years",
+              "Installment Formulas",
+              "Rule of 72 (Doubling time)"
+            ]
+          }
+        ]
+      },
+      {
+        title: "Number Systems",
+        topics: [
+          {
+            name: "Properties of Numbers",
+            concepts: [
+              "Divisibility Rules (2, 3, 4, 5, 8, 9, 11, 7)",
+              "Unit Digit Calculation (Cyclicity)",
+              "Last Two Digits",
+              "Factors (Sum, Number of factors, Odd/Even factors)"
+            ]
+          },
+          {
+            name: "HCF & LCM",
+            concepts: [
+              "HCF/LCM of Fractions",
+              "Standard Models (Bell ringing, Circular track)",
+              "Product of two numbers = HCF * LCM"
+            ]
+          }
+        ]
+      },
+      {
+        title: "Algebra & Modern Math",
+        topics: [
+          { name: "Linear & Quadratic Eq", concepts: ["Nature of Roots (Discriminant)", "Sum/Product of Roots", "Graph of Parabola (Basics)"] },
+          { name: "Probability", concepts: ["Coins, Dice, Cards Logic", "At least/At most cases", "And/Or probability rules"] },
+          { name: "Permutation & Comb", concepts: ["Arrangements (Linear/Circular)", "Selection (nCr)", "Rank of a word in dictionary"] },
+          { name: "Set Theory", concepts: ["Venn Diagrams (2 & 3 Sets)", "Exactly one, exactly two formulas"] }
+        ]
+      },
+      {
+        title: "Data Interpretation",
+        topics: [
+          { name: "Calculation Techniques", concepts: ["Vedic Math Approximations", "10% and 1% Split Method", "Comparing Fractions"] },
+          { name: "Chart Types", concepts: ["Pie Charts (Degree to %)", "Bar Graphs (Stacked vs Grouped)", "Spider/Radar Charts", "Caselets (Text to Table)"] }
+        ]
+      }
+    ]
+  },
+  "Logical Reasoning": {
+    icon: Brain,
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+    modules: [
+      {
+        title: "Analytical Reasoning",
+        topics: [
+          { name: "Linear Arrangement", concepts: ["Single Row (North/South)", "Double Row (Parallel)", "Uncertain number of persons"] },
+          { name: "Circular Arrangement", concepts: ["Facing Center vs Outwards", "Rectangular/Square Table"] },
+          { name: "Distribution/Matrix", concepts: ["Matching attributes (Person-City-Car-Color)", "Grid method elimination"] },
+          { name: "Blood Relations", concepts: ["Family Tree Symbols", "Coded Relations (A+B means A is father)", "Pointing to a photo type"] },
+          { name: "Direction Sense", concepts: ["Pythagoras Theorem Application", "Shadows (Morning/Evening)", "Degrees of rotation"] }
+        ]
+      },
+      {
+        title: "Verbal & Critical Reasoning",
+        topics: [
+          { name: "Syllogisms", concepts: ["Venn Diagram Method (All/Some/No)", "Possibility cases", "Reverse Syllogism"] },
+          { name: "Critical Reasoning", concepts: ["Strong vs Weak Arguments", "Implicit Assumptions", "Course of Action", "Cause & Effect"] },
+          { name: "Coding Decoding", concepts: ["Letter shifting", "Number coding", "Chinese Coding (Sentences)"] },
+          { name: "Input-Output", concepts: ["Shifting logic", "Mathematical operation logic"] }
+        ]
+      },
+      {
+        title: "Visual Reasoning (CMAT Special)",
+        topics: [
+          { name: "Visual Puzzles", concepts: ["Paper Folding/Cutting", "Mirror/Water Images", "Completing the series", "Embedded Figures"] },
+          { name: "Cubes & Dice", concepts: ["Opposite faces logic", "Unfolded cube matching", "Painting cubes (Cut logic)"] }
+        ]
+      }
+    ]
+  },
+  "Language": {
+    icon: BookOpen,
+    color: "text-green-600",
+    bg: "bg-green-50",
+    modules: [
+      {
+        title: "Vocabulary",
+        topics: [
+          { name: "Core Vocab", concepts: ["Root Words (Etymology)", "Synonyms & Antonyms (High frequency list)", "Foreign Words (e.g., ad hoc, pro bono)"] },
+          { name: "Usage", concepts: ["Idioms & Phrases", "One Word Substitution", "Confusing Words (Affect vs Effect)"] }
+        ]
+      },
+      {
+        title: "Grammar",
+        topics: [
+          { name: "Core Rules", concepts: ["Subject-Verb Agreement", "Tenses (Perfect vs Past Simple)", "Modifiers", "Parallelism", "Articles & Prepositions"] },
+          { name: "Application", concepts: ["Sentence Correction", "Spotting Errors", "Sentence Improvement"] }
+        ]
+      },
+      {
+        title: "Reading",
+        topics: [
+          { name: "Comprehension", concepts: ["Main Idea Identification", "Tone of Passage", "Fact vs Inference"] },
+          { name: "Structure", concepts: ["Parajumbles (Opening/Closing sentence)", "Odd One Out"] }
+        ]
+      }
+    ]
+  },
+  "Innovation & Ent": {
+    icon: Lightbulb,
+    color: "text-orange-600",
+    bg: "bg-orange-50",
+    description: "The Game Changer Section. High ROI.",
+    modules: [
+      {
+        title: "Entrepreneurship Concepts",
+        topics: [
+          { 
+            name: "Types of Entrepreneurs", 
+            concepts: [
+              "Fabian: Skeptical, imitates only when failure is imminent.",
+              "Drone: Refuses to change even if losing money.",
+              "Imitative/Adoptive: Copies successful innovations.",
+              "Innovative: Aggressive, creates new markets."
+            ]
+          },
+          { 
+            name: "Startup Lifecycle", 
+            concepts: [
+              "Bootstrapping: Self-funding.",
+              "Seed Stage: Idea validation.",
+              "Growth Stage: Scaling.",
+              "Exit Strategy: IPO, Acquisition."
+            ]
+          },
+          { 
+            name: "Funding Terminology", 
+            concepts: [
+              "Angel Investor: High net worth individual.",
+              "Venture Capital: Institutional money.",
+              "Valuation: Pre-money vs Post-money.",
+              "Burn Rate: Speed of spending cash.",
+              "Unicorn: Startup valued > $1 Billion."
+            ]
+          }
+        ]
+      },
+      {
+        title: "Government Schemes (Must Know)",
+        topics: [
+          { name: "Start Up India", concepts: ["Launched: 2016", "Tax holidays: 3 years", "Self-certification compliance"] },
+          { name: "MUDRA Yojana", concepts: ["Shishu (upto 50k)", "Kishor (50k-5L)", "Tarun (5L-10L)", "Acronym: Micro Units Development..."] },
+          { name: "AIM (Atal Innovation Mission)", concepts: ["Atal Tinkering Labs (Schools)", "Atal Incubation Centers"] },
+          { name: "Stand Up India", concepts: ["Focus: SC/ST and Women entrepreneurs", "Loan: 10L to 1Cr"] }
+        ]
+      },
+      {
+        title: "Innovation Management",
+        topics: [
+          { name: "IPR (Intellectual Property)", concepts: ["Patent: Inventions (20 years)", "Trademark: Brand/Logo", "Copyright: Art/Lit (Life+60y)", "GI Tag: Geographic Origin"] },
+          { name: "Design Thinking", concepts: ["5 Stages: Empathize -> Define -> Ideate -> Prototype -> Test"] }
+        ]
+      }
+    ]
+  },
+  "General Awareness": {
+    icon: TrendingUp,
+    color: "text-red-600",
+    bg: "bg-red-50",
+    description: "Static GK dominant. Focus on Fact Lists.",
+    modules: [
+      {
+        title: "Indian Polity (Constitution)",
+        topics: [
+          { name: "Key Articles", concepts: ["Art 12-35 (Fundamental Rights)", "Art 51A (Duties)", "Art 352-360 (Emergency)", "Art 370 (Revoked)"] },
+          { name: "Structure", concepts: ["President (Election/Pardon power)", "Parliament (LS/RS Composition)", "Schedules (1-12)"] }
+        ]
+      },
+      {
+        title: "Geography (Static)",
+        topics: [
+          { name: "Physical India", concepts: ["Rivers & Tributaries (Ganga, Godavari)", "Dams & Reservoirs", "Mountain Passes (Nathula, Zojila)"] },
+          { name: "Environment", concepts: ["National Parks (State-wise list)", "Biosphere Reserves", "Ramsar Sites"] }
+        ]
+      },
+      {
+        title: "History",
+        topics: [
+          { name: "Modern History", concepts: ["Gandhian Era (1915-1947)", "INC Sessions (Presidents/Venues)", "Governor Generals/Viceroys"] },
+          { name: "Ancient/Medieval", concepts: ["Indus Valley Sites", "Mughal Empire (Chronology)", "Battles (Panipat, Plassey, Buxar)"] }
+        ]
+      },
+      {
+        title: "Current Affairs (Last 12M)",
+        topics: [
+          { name: "Categories", concepts: ["Nobel Prizes", "Sports (Olympics/Cricket World Cup)", "Summits (G20, BRICS)", "Books & Authors"] }
+        ]
+      }
+    ]
+  }
+};
+
+// --- 2. COMPONENTS ---
+
+const SectionCard = ({ title, data, expanded, onToggle, progress }) => {
+  const Icon = data.icon;
+  return (
+    <div className="mb-4 border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
+      <div 
+        onClick={onToggle}
+        className={`p-4 flex items-center justify-between cursor-pointer transition-colors ${expanded ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-lg ${data.bg} ${data.color}`}>
+            <Icon className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg text-slate-800">{title}</h3>
+            <p className="text-xs text-slate-500 font-medium">
+              {progress.completed}/{progress.total} Topics Mastered
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden hidden sm:block">
+            <div 
+              className={`h-full rounded-full transition-all duration-500 ${data.color.replace('text', 'bg')}`} 
+              style={{ width: `${(progress.completed/progress.total)*100}%` }}
+            ></div>
+          </div>
+          {expanded ? <ChevronDown className="text-slate-400" /> : <ChevronRight className="text-slate-400" />}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50 animate-fade-in">
+          {data.description && (
+            <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              {data.description}
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.modules.map((module, mIdx) => (
+              <ModuleCard 
+                key={mIdx} 
+                section={title}
+                module={module} 
+                color={data.color} 
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ModuleCard = ({ section, module, color }) => {
+  const [showConcepts, setShowConcepts] = useState(null); // stores topic name to show concepts for
+  // Local state wrapper would go here in a real app, using props for now
+  
+  return (
+    <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+      <h4 className={`font-bold mb-3 pb-2 border-b border-slate-100 ${color}`}>{module.title}</h4>
+      <ul className="space-y-2">
+        {module.topics.map((topic, tIdx) => (
+          <li key={tIdx} className="group">
+            <div className="flex items-start justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="rounded text-indigo-600 focus:ring-indigo-500 mt-1"
+                  // Logic for checking off would hook into global state
+                />
+                <span className="text-sm text-slate-700 font-medium group-hover:text-slate-900">
+                  {topic.name}
+                </span>
+              </label>
+              <button 
+                onClick={() => setShowConcepts(showConcepts === topic.name ? null : topic.name)}
+                className="text-xs text-slate-400 hover:text-indigo-600 underline px-2 py-1"
+              >
+                {showConcepts === topic.name ? 'Hide Info' : 'View Info'}
+              </button>
+            </div>
+            
+            {/* THE CONCEPT CARD (Micro-Syllabus) */}
+            {showConcepts === topic.name && (
+              <div className="mt-2 ml-6 p-3 bg-slate-50 rounded-lg border-l-2 border-indigo-400 text-xs text-slate-600 space-y-1 animate-in slide-in-from-top-1">
+                <p className="font-bold text-slate-500 mb-1 uppercase tracking-wider text-[10px]">Key Concepts / Formulas:</p>
+                {topic.concepts.map((c, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-indigo-400">•</span>
+                    <span>{c}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+const StrategyVault = () => (
+  <div className="space-y-6">
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-lg">
+      <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><Target className="text-red-400" /> The Winning Strategy</h2>
+      <p className="text-slate-300">CMAT is not about solving hard problems; it's about solving easy problems accurately and fast.</p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2 mb-3 text-indigo-700 font-bold">
+          <Clock className="w-5 h-5" /> Banking Time
+        </div>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          Finish <strong>GK & I&E (40 Qs)</strong> in <strong>30 mins</strong>. 
+          This leaves you <strong>150 mins</strong> for Quant, LR, and Verbal (60 Qs).
+          That's <strong>2.5 mins/question</strong> for Math—huge luxury!
+        </p>
+      </div>
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2 mb-3 text-red-700 font-bold">
+          <Award className="w-5 h-5" /> The 330+ Target
+        </div>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          To reach JBIMS/SIMSREE, you need 99.9%ile.
+          <br/>Target: <strong>85-90 correct attempts</strong>.
+          <br/>Quant/LR Accuracy must be near <strong>100%</strong>.
+          <br/>GK is the differentiator.
+        </p>
+      </div>
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2 mb-3 text-green-700 font-bold">
+          <BookOpen className="w-5 h-5" /> I&E Hack
+        </div>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          Don't use common sense. Memorize definitions.
+          Knowing what a <strong>"Fabian Entrepreneur"</strong> is guarantees +4 marks in 5 seconds.
+          Use the Syllabus tab to learn these.
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+const WeeklyPlanner = () => {
+  // Simplified static view for the robust guide version
+  const weeks = [
+    { title: "Week 1-2: Foundation", focus: "Arithmetic (Ratio/%) + Grammar + I&E Basics", color: "border-l-blue-500" },
+    { title: "Week 3-4: Logic & Speed", focus: "TSD/Work + Arrangements + Govt Schemes", color: "border-l-purple-500" },
+    { title: "Week 5-6: Modern Math", focus: "Geometry/Prob + Visual Reasoning + Static GK", color: "border-l-green-500" },
+    { title: "Week 7-8: Mastery", focus: "Mocks (2/week) + Analysis + Current Affairs", color: "border-l-red-500" }
+  ];
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="p-4 bg-slate-50 border-b border-slate-100 font-bold text-slate-700">
+        60-Day Roadmap Outline
+      </div>
+      <div className="divide-y divide-slate-100">
+        {weeks.map((w, i) => (
+          <div key={i} className={`p-4 border-l-4 ${w.color} hover:bg-slate-50`}>
+            <h4 className="font-bold text-slate-800">{w.title}</h4>
+            <p className="text-sm text-slate-600 mt-1">Focus: {w.focus}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- 3. MAIN APP COMPONENT ---
+
+export default function CMATNexus() {
+  const [activeTab, setActiveTab] = useState('syllabus');
+  const [expandedSection, setExpandedSection] = useState('Quant & DI');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Calculate dummy progress
+  const getProgress = (sectionKey) => {
+    const modules = SYLLABUS_DB[sectionKey].modules;
+    let total = 0;
+    modules.forEach(m => total += m.topics.length);
+    return { total, completed: Math.floor(total * 0.3) }; // Dummy 30% progress
+  };
+
+  const NavItem = ({ id, icon: Icon, label }) => (
+    <button
+      onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
+      className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all ${
+        activeTab === id 
+          ? "bg-indigo-600 text-white shadow-md" 
+          : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
+      }`}
+    >
+      <Icon className="w-5 h-5" />
+      <span className="font-medium">{label}</span>
+    </button>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col md:flex-row">
+      
+      {/* SIDEBAR */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 border-b border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-3 text-indigo-700">
+            <div className="bg-indigo-600 text-white p-2 rounded-lg">
+              <Zap className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight leading-none">CMAT<br/><span className="text-slate-800">NEXUS</span></h1>
+            </div>
+          </div>
+          <div className="mt-4 bg-indigo-50 text-indigo-900 text-xs font-bold px-3 py-1 rounded-full inline-block">
+            Target: Jan 2026
+          </div>
+        </div>
+
+        <nav className="p-4 space-y-2">
+          <NavItem id="syllabus" icon={List} label="Syllabus & Concepts" />
+          <NavItem id="strategy" icon={Target} label="Strategy & Tactics" />
+          <NavItem id="roadmap" icon={Clock} label="60-Day Roadmap" />
+        </nav>
+
+        <div className="absolute bottom-0 w-full p-6 bg-slate-50 border-t border-slate-100">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">JD</div>
+            <div>
+              <p className="text-sm font-bold text-slate-800">Aspirant</p>
+              <p className="text-xs text-slate-500">General Category</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE HEADER */}
+      <div className="md:hidden bg-white p-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
+        <span className="font-bold text-lg text-indigo-700">CMAT NEXUS</span>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          {isMobileMenuOpen ? <X /> : <Menu />}
+        </button>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <div className="max-w-5xl mx-auto">
+          
+          {/* HEADER */}
+          <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
+                {activeTab === 'syllabus' && "Knowledge Base"}
+                {activeTab === 'strategy' && "Exam Strategy"}
+                {activeTab === 'roadmap' && "Preparation Timeline"}
+              </h2>
+              <p className="text-slate-500 mt-1">
+                {activeTab === 'syllabus' && "Select a section to access the micro-syllabus and concept cards."}
+                {activeTab === 'strategy' && "Master the game mechanics of CMAT 2026."}
+                {activeTab === 'roadmap' && "Your schedule to peak at the right time."}
+              </p>
+            </div>
+            {/* Countdown Pill */}
+            <div className="bg-slate-900 text-white px-4 py-2 rounded-lg shadow-md flex items-center gap-2">
+              <Clock className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-bold">~65 Days Left</span>
+            </div>
+          </div>
+
+          {/* CONTENT AREA */}
+          {activeTab === 'syllabus' && (
+            <div className="space-y-2 animate-in fade-in">
+              {Object.entries(SYLLABUS_DB).map(([key, data]) => (
+                <SectionCard 
+                  key={key}
+                  title={key}
+                  data={data}
+                  expanded={expandedSection === key}
+                  onToggle={() => setExpandedSection(expandedSection === key ? null : key)}
+                  progress={getProgress(key)}
+                />
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'strategy' && <StrategyVault />}
+          
+          {activeTab === 'roadmap' && (
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+               <div className="lg:col-span-2">
+                 <WeeklyPlanner />
+               </div>
+               <div className="space-y-6">
+                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                   <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                     <Bookmark className="text-indigo-500 w-5 h-5" /> Daily Rituals
+                   </h3>
+                   <ul className="space-y-3 text-sm text-slate-600">
+                     <li className="flex items-start gap-2">
+                       <span className="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">AM</span>
+                       <span>Read The Hindu Editorial (30 mins)</span>
+                     </li>
+                     <li className="flex items-start gap-2">
+                       <span className="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">PM</span>
+                       <span>Solve 20 Arithmetic Qs (45 mins)</span>
+                     </li>
+                     <li className="flex items-start gap-2">
+                       <span className="bg-indigo-100 text-indigo-700 font-bold px-2 rounded text-xs mt-0.5">Night</span>
+                       <span>Revise 1 Static GK Topic (15 mins)</span>
+                     </li>
+                   </ul>
+                 </div>
+               </div>
+             </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
