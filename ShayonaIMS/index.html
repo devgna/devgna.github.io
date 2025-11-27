@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shayona IMS | Business Suite v20.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Excel & PDF Export Libraries -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* === APEX DESIGN SYSTEM v20.1 (Stable) === */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+        
+        :root {
+            --primary: #020617;        
+            --accent: #2563eb;         
+            --accent-hover: #1e40af;   
+            --surface: #ffffff; 
+            --bg-body: #f1f5f9;        
+            --border-light: #cbd5e1;   
+            --text-main: #0f172a;      
+            --text-light: #334155;     
+            --text-muted: #64748b;     
+        }
+
+        html { -webkit-font-smoothing: antialiased; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); font-size: 14px; line-height: 1.5; overflow: hidden; }
+        
+        /* === LOADING SCREEN === */
+        #loading-screen { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease-out; }
+        .loader-logo { font-size: 1.75rem; font-weight: 800; color: var(--primary); letter-spacing: -0.03em; margin-bottom: 1.5rem; }
+        .loader-spinner { width: 45px; height: 45px; border: 4px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* === UTILITIES === */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Cards & Layout */
+        .card { background: var(--surface); border: 1px solid var(--border-light); border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-color: #94a3b8; }
+        
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0 1rem; height: 2.5rem; border-radius: 0.375rem; font-weight: 600; transition: all 0.15s; gap: 0.5rem; cursor: pointer; user-select: none; font-size: 0.85rem; border: 1px solid transparent; white-space: nowrap; }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-secondary { background: white; color: var(--text-main); border-color: var(--border-light); }
+        .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; color: black; }
+        .btn-danger { background: #fee2e2; color: #7f1d1d; border-color: #fca5a5; }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-ghost { background: transparent; color: var(--text-light); }
+        .btn-ghost:hover { background: rgba(0,0,0,0.05); color: black; }
+        
+        /* Inputs */
+        .input-group { margin-bottom: 1rem; }
+        .input-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-light); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .input-std { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid var(--border-light); border-radius: 0.375rem; background: white; font-size: 14px; color: black; font-weight: 500; transition: border-color 0.15s; }
+        .input-std:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
+        .input-std::placeholder { color: #94a3b8; }
+        
+        /* Navigation Tabs - Scrollable on mobile */
+        .app-tabs { display: flex; gap: 2px; padding: 0 1rem; border-bottom: 1px solid var(--border-light); background: white; overflow-x: auto; flex-shrink: 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .app-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { padding: 14px 12px; font-size: 0.85rem; font-weight: 600; color: var(--text-light); border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .tab-btn:hover { color: black; background: #f8fafc; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+        
+        /* View System */
+        .view-container { display: none; height: 100%; flex-direction: column; animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1); padding: 1rem; overflow-y: auto; overflow-x: hidden; }
+        .view-container.active { display: flex; }
+        @media (min-width: 768px) { .view-container { padding: 1.5rem; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tables */
+        .table-wrapper { flex: 1; overflow: auto; border-radius: 0.5rem; border: 1px solid var(--border-light); background: white; }
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 600px; /* Ensure tables don't squash on mobile */ } 
+        
+        .data-table th { 
+            background: #f8fafc; 
+            color: var(--text-main); 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            font-weight: 800; 
+            padding: 12px 14px; 
+            text-align: left; 
+            border-bottom: 2px solid var(--border-light); 
+            white-space: nowrap; 
+            position: sticky; top: 0; z-index: 10; 
+            letter-spacing: 0.04em;
+            vertical-align: middle;
+        }
+        
+        .data-table td { 
+            padding: 12px 14px; 
+            white-space: nowrap; 
+            color: var(--text-main); 
+            border-bottom: 1px solid #f1f5f9; 
+            font-size: 0.9rem; 
+            font-weight: 500;
+            vertical-align: middle;
+        }
+        
+        .data-table tbody tr { transition: background 0.1s; }
+        .data-table tbody tr:hover { background: #f1f5f9; }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+
+        /* Helpers */
+        .dt-right { text-align: right !important; }
+        .dt-center { text-align: center !important; }
+        .dt-code { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--accent); }
+
+        /* Status & Badges */
+        .sync-badge { font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 99px; display: flex; align-items: center; gap: 8px; transition: all 0.3s; cursor: pointer; user-select: none; border: 1px solid transparent; white-space: nowrap; }
+        .sync-online { background: #dcfce7; color: #14532d; border-color: #86efac; }
+        .sync-syncing { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+        .sync-offline { background: #fee2e2; color: #7f1d1d; border-color: #fca5a5; }
+        
+        .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; border: 1px solid transparent; }
+        .badge-gray { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
+        .badge-green { background: #dcfce7; color: #14532d; border-color: #86efac; }
+        .badge-blue { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+        .badge-red { background: #fee2e2; color: #7f1d1d; border-color: #fca5a5; }
+
+        /* Toasts */
+        #toast-area { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: 90%; }
+        .toast { pointer-events: auto; min-width: 300px; background: white; border-left: 5px solid; padding: 16px; border-radius: 6px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 14px; font-weight: 600; font-size: 0.95rem; animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+        .toast.success { border-color: var(--success); color: #064e3b; }
+        .toast.error { border-color: var(--danger); color: #7f1d1d; }
+        .toast.info { border-color: var(--accent); color: #1e3a8a; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .empty-state { padding: 5rem 2rem; text-align: center; color: var(--text-light); font-size: 1rem; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden bg-slate-50 text-slate-800">
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen">
+        <div class="loader-logo">SHAYONA WINDOWS</div>
+        <div class="loader-spinner"></div>
+        <div class="mt-4 text-sm text-slate-500 font-bold tracking-wide">LOADING SYSTEM...</div>
+    </div>
+
+    <!-- APP ROOT -->
+    <div id="app-root" class="flex flex-col w-full h-full opacity-0 transition-opacity duration-500">
+        
+        <!-- HEADER -->
+        <header class="h-16 bg-white flex items-center justify-between px-4 md:px-6 border-b border-slate-200 z-30 flex-shrink-0 shadow-sm">
+            <div class="flex items-center gap-3 md:gap-4">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-700 to-indigo-800 flex items-center justify-center font-black text-white text-lg shadow-md">S</div>
+                <div class="hidden sm:block">
+                    <h1 class="text-base font-black text-slate-900 tracking-tight leading-tight">SHAYONA IMS</h1>
+                    <div class="text-[10px] text-slate-500 font-bold tracking-wide">v20.1 (Stable)</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3">
+                <div id="clock" class="font-mono text-xs text-slate-600 hidden lg:block border border-slate-200 px-3 py-1.5 rounded bg-slate-50 font-bold">00:00</div>
+                <button onclick="SyncManager.uiTrigger()" id="sync-btn" class="sync-badge sync-offline" title="Click to Sync / Setup"><i class="fa-solid fa-wifi"></i> <span class="hidden sm:inline">Offline</span></button>
+                <div class="h-5 w-px bg-slate-200 mx-1"></div>
+                <button onclick="Controllers.Data.exportAllZip()" class="btn btn-primary text-xs px-4 h-8 shadow-sm hover:shadow" title="Export All Data (ZIP)">
+                    <i class="fa-solid fa-file-zipper"></i> <span class="hidden sm:inline">Export All</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- NAVIGATION TABS -->
+        <nav class="app-tabs">
+            <button onclick="Router.nav('dashboard')" id="tab-dashboard" class="tab-btn active"><i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Dashboard</span><span class="sm:hidden">Dash</span></button>
+            <button onclick="Router.nav('inventory')" id="tab-inventory" class="tab-btn"><i class="fa-solid fa-boxes-stacked"></i> Products</button>
+            <button onclick="Router.nav('ledger')" id="tab-ledger" class="tab-btn"><i class="fa-solid fa-right-left"></i> <span class="hidden sm:inline">Stock Ledger</span><span class="sm:hidden">Ledger</span></button>
+            <button onclick="Router.nav('orders')" id="tab-orders" class="tab-btn"><i class="fa-solid fa-file-invoice"></i> Orders</button>
+            <button onclick="Router.nav('crm')" id="tab-crm" class="tab-btn"><i class="fa-solid fa-address-book"></i> Clients</button>
+            <button onclick="Router.nav('settings')" id="tab-settings" class="tab-btn"><i class="fa-solid fa-sliders"></i> Settings</button>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <div id="content-area" class="flex-1 overflow-hidden relative bg-slate-50/50">
+            
+            <!-- DASHBOARD -->
+            <div id="view-dashboard" class="view-container active">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+                    <div class="card p-5 border-l-4 border-blue-600 hover:shadow-md cursor-pointer" onclick="Router.nav('inventory')">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Total Products</div>
+                        <div class="text-2xl md:text-3xl font-black text-slate-800" id="kpi-skus">0</div>
+                        <div class="text-sm text-blue-700 font-bold mt-1">Active Inventory</div>
+                    </div>
+                    <div class="card p-5 border-l-4 border-emerald-600 hover:shadow-md">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Stock Value</div>
+                        <div class="text-2xl md:text-3xl font-black text-emerald-700" id="kpi-val">₹0</div>
+                        <div class="text-sm text-emerald-800 font-bold mt-1">Current Assets</div>
+                    </div>
+                    <div class="card p-5 border-l-4 border-purple-600 hover:shadow-md cursor-pointer" onclick="Router.nav('orders')">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Total Orders</div>
+                        <div class="text-2xl md:text-3xl font-black text-purple-700" id="kpi-orders">0</div>
+                        <div class="text-sm text-purple-800 font-bold mt-1">Processed</div>
+                    </div>
+                    <div class="card p-5 border-l-4 border-red-600 hover:shadow-md cursor-pointer" onclick="Router.nav('inventory')">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Low Stock</div>
+                        <div class="text-2xl md:text-3xl font-black text-red-700" id="kpi-alerts">0</div>
+                        <div class="text-sm text-red-700 font-bold mt-1">Action Required</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
+                    <div class="card p-5 md:p-6">
+                        <h3 class="font-bold text-slate-800 mb-5 border-b border-slate-200 pb-3 text-sm uppercase tracking-wide">Quick Actions</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button onclick="UI.Modals.Quote.open()" class="btn btn-primary h-12 md:h-14 shadow-sm text-sm"><i class="fa-solid fa-plus-circle text-lg"></i> New Order</button>
+                            <button onclick="UI.Modals.Item.open()" class="btn btn-secondary h-12 md:h-14 shadow-sm text-sm font-bold text-blue-700"><i class="fa-solid fa-box text-lg"></i> Add Product</button>
+                            <button onclick="Router.nav('ledger')" class="btn btn-secondary h-12 md:h-14 shadow-sm text-sm font-bold text-slate-700"><i class="fa-solid fa-list text-lg"></i> View History</button>
+                            <button onclick="UI.Modals.Client.open()" class="btn btn-secondary h-12 md:h-14 shadow-sm text-sm font-bold text-emerald-700"><i class="fa-solid fa-user-plus text-lg"></i> New Client</button>
+                        </div>
+                    </div>
+
+                    <div class="card flex flex-col h-full overflow-hidden">
+                        <div class="p-4 border-b border-slate-200 bg-slate-50 font-bold text-slate-800 flex justify-between items-center text-xs uppercase tracking-wide">
+                            <span><i class="fa-solid fa-bell text-red-600 mr-2"></i>Reorder Alerts</span>
+                            <button onclick="Router.nav('inventory')" class="text-blue-700 hover:underline cursor-pointer font-bold">View All</button>
+                        </div>
+                        <div id="list-alerts" class="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar bg-white"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INVENTORY -->
+            <div id="view-inventory" class="view-container">
+                <div class="flex flex-col lg:flex-row justify-between mb-4 items-start lg:items-center gap-4">
+                    <div class="flex flex-wrap gap-2 bg-white p-1 rounded-md border border-slate-300 shadow-sm w-full lg:w-auto">
+                        <button onclick="Views.Inventory.filter(null)" id="filter-all" class="flex-1 lg:flex-none px-4 py-1.5 rounded text-xs font-bold bg-slate-800 text-white shadow text-center">All</button>
+                        <button onclick="Views.Inventory.filter('Profile')" id="filter-profile" class="flex-1 lg:flex-none px-4 py-1.5 rounded text-xs font-bold text-slate-600 hover:bg-slate-100 text-center">Profiles</button>
+                        <button onclick="Views.Inventory.filter('Hardware')" id="filter-hardware" class="flex-1 lg:flex-none px-4 py-1.5 rounded text-xs font-bold text-slate-600 hover:bg-slate-100 text-center">Hardware</button>
+                        <button onclick="Views.Inventory.filter('Glass')" id="filter-glass" class="flex-1 lg:flex-none px-4 py-1.5 rounded text-xs font-bold text-slate-600 hover:bg-slate-100 text-center">Glass</button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto items-center">
+                         <div class="relative flex-1 w-full lg:w-64 group">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                            <input type="text" id="inv-search" oninput="Utils.debounce(Views.Inventory.render, 300)()" placeholder="Search Code, Name..." class="input-std pl-10 pr-8 h-10 text-sm font-medium border-slate-300 focus:border-blue-500 w-full">
+                            <i onclick="document.getElementById('inv-search').value=''; Views.Inventory.render()" class="fa-solid fa-times absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs cursor-pointer hover:text-red-600 p-1"></i>
+                        </div>
+                        
+                        <div class="flex rounded shadow-sm bg-white border border-slate-300">
+                            <button onclick="Controllers.Data.exportInventory('excel')" class="btn btn-ghost h-10 text-green-700 hover:bg-green-50 px-3 border-r border-slate-200" title="Export Excel"><i class="fa-solid fa-file-excel text-lg"></i></button>
+                            <button onclick="Controllers.Data.exportInventory('pdf')" class="btn btn-ghost h-10 text-red-700 hover:bg-red-50 px-3" title="Export PDF"><i class="fa-solid fa-file-pdf text-lg"></i></button>
+                        </div>
+
+                        <input type="file" id="inventory-import-file" accept=".csv" class="hidden" onchange="Controllers.Inventory.importCSV(this)">
+                        <button onclick="Controllers.Inventory.triggerImport()" class="btn btn-secondary shadow-md h-10 text-sm px-4 w-full sm:w-auto border-slate-300 text-slate-700"><i class="fa-solid fa-file-import"></i></button>
+                        <button onclick="UI.Modals.Item.open()" class="btn btn-primary shadow-md h-10 text-sm px-4 w-full sm:w-auto"><i class="fa-solid fa-plus"></i> Product</button>
+                    </div>
+                </div>
+                <div class="card flex-1 flex flex-col overflow-hidden">
+                    <div class="table-wrapper custom-scrollbar border-0">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-32">Code</th>
+                                    <th>Product Name</th>
+                                    <th>Type / Variant</th>
+                                    <th class="dt-right">Rate</th>
+                                    <th class="dt-center">Stock</th>
+                                    <th class="dt-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-inventory"></tbody>
+                        </table>
+                    </div>
+                    <div class="bg-white border-t border-slate-200 p-3 px-6 text-xs font-bold text-slate-600 flex justify-between items-center rounded-b-lg">
+                        <span id="inv-count" class="text-slate-800">0 Products</span>
+                        <span id="inv-total-val" class="text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded border border-emerald-200">Value: ₹0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEDGER -->
+            <div id="view-ledger" class="view-container">
+                <div class="flex flex-col sm:flex-row justify-between mb-4 gap-4 items-start sm:items-center">
+                    <h2 class="text-xl font-bold text-slate-800 tracking-tight">Stock Movements</h2>
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                         <div class="relative w-full sm:w-72 group">
+                            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                            <input type="text" id="ledger-search" oninput="Utils.debounce(Views.Ledger.render, 300)()" placeholder="Search Ref, Code, Date..." class="input-std pl-10 pr-8 h-10 text-sm border-slate-300 w-full">
+                        </div>
+                        <div class="flex rounded shadow-sm bg-white border border-slate-300 w-full sm:w-auto justify-center">
+                            <button onclick="Controllers.Data.exportLedger('excel')" class="btn btn-ghost h-10 text-green-700 hover:bg-green-50 px-4 border-r border-slate-200 font-bold flex-1 sm:flex-none" title="Export Excel"><i class="fa-solid fa-file-excel text-lg"></i></button>
+                            <button onclick="Controllers.Data.exportLedger('pdf')" class="btn btn-ghost h-10 text-red-700 hover:bg-red-50 px-4 font-bold flex-1 sm:flex-none" title="Export PDF"><i class="fa-solid fa-file-pdf text-lg"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card flex-1 flex flex-col overflow-hidden">
+                    <div class="table-wrapper custom-scrollbar border-0">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Type</th>
+                                    <th>Ref #</th>
+                                    <th>Product</th>
+                                    <th class="dt-right">Change</th>
+                                    <th class="dt-right">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-ledger"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ORDERS -->
+            <div id="view-orders" class="view-container">
+                <div class="flex flex-col sm:flex-row justify-between mb-4 items-center gap-4">
+                    <div class="relative w-full sm:w-72">
+                        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                        <input type="text" id="quote-search" oninput="Utils.debounce(Views.Orders.render, 300)()" placeholder="Search ID, Client..." class="input-std pl-10 pr-8 h-10 text-sm border-slate-300 w-full">
+                         <i onclick="document.getElementById('quote-search').value=''; Views.Orders.render()" class="fa-solid fa-times absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs cursor-pointer hover:text-red-600 p-1"></i>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto items-center">
+                        <div class="flex rounded shadow-sm bg-white border border-slate-300">
+                            <button onclick="Controllers.Data.exportOrders('excel')" class="btn btn-ghost h-10 text-green-700 hover:bg-green-50 px-3 border-r border-slate-200" title="Export Excel"><i class="fa-solid fa-file-excel text-lg"></i></button>
+                            <button onclick="Controllers.Data.exportOrders('pdf')" class="btn btn-ghost h-10 text-red-700 hover:bg-red-50 px-3" title="Export PDF"><i class="fa-solid fa-file-pdf text-lg"></i></button>
+                        </div>
+                        <button onclick="UI.Modals.Quote.open()" class="btn btn-primary shadow-md h-10 text-sm px-4 w-full sm:w-auto"><i class="fa-solid fa-plus"></i> New Order</button>
+                    </div>
+                </div>
+                <div class="card flex-1 flex flex-col overflow-hidden">
+                    <div class="table-wrapper custom-scrollbar border-0">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Client Name</th>
+                                    <th class="dt-center">Items</th>
+                                    <th class="dt-right">Total Value</th>
+                                    <th class="dt-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-orders"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLIENTS -->
+            <div id="view-crm" class="view-container">
+                <div class="flex flex-col sm:flex-row justify-between mb-4 items-center gap-4">
+                     <div class="relative w-full sm:w-72">
+                        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                        <input type="text" id="crm-search" oninput="Utils.debounce(Views.CRM.renderList, 300)()" placeholder="Search Name, Phone..." class="input-std pl-10 pr-8 h-10 text-sm border-slate-300 w-full">
+                        <i onclick="document.getElementById('crm-search').value=''; Views.CRM.renderList()" class="fa-solid fa-times absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs cursor-pointer hover:text-red-600 p-1"></i>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto items-center">
+                        <div class="flex rounded shadow-sm bg-white border border-slate-300">
+                            <button onclick="Controllers.Data.exportClients('excel')" class="btn btn-ghost h-10 text-green-700 hover:bg-green-50 px-3 border-r border-slate-200" title="Export Excel"><i class="fa-solid fa-file-excel text-lg"></i></button>
+                            <button onclick="Controllers.Data.exportClients('pdf')" class="btn btn-ghost h-10 text-red-700 hover:bg-red-50 px-3" title="Export PDF"><i class="fa-solid fa-file-pdf text-lg"></i></button>
+                        </div>
+                        <button onclick="UI.Modals.Client.open()" class="btn btn-primary shadow-md h-10 text-sm px-4 w-full sm:w-auto"><i class="fa-solid fa-user-plus"></i> Add Client</button>
+                    </div>
+                </div>
+                <div class="card flex-1 flex flex-col overflow-hidden">
+                    <div class="table-wrapper custom-scrollbar border-0">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Client Name</th>
+                                    <th>Phone Number</th>
+                                    <th>Address / Location</th>
+                                    <th class="dt-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-crm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div id="view-settings" class="view-container">
+                <div class="max-w-2xl w-full mx-auto card p-6 md:p-8 overflow-y-auto custom-scrollbar bg-white shadow-md">
+                    <h3 class="text-xl font-black text-slate-900 mb-6 pb-4 border-b border-slate-200">System Configuration</h3>
+                    
+                    <!-- GitHub Sync Config -->
+                    <div id="settings-sync-section" class="bg-indigo-50 p-5 md:p-6 rounded-lg border border-indigo-200 mb-8 transition-colors duration-500">
+                        <h4 class="font-bold text-indigo-900 mb-2 flex items-center gap-2 text-sm uppercase tracking-wide"><i class="fa-brands fa-github text-xl"></i> Cloud Sync (GitHub Gist)</h4>
+                        <p class="text-sm text-indigo-800 mb-5 font-medium">Sync data across devices using a private GitHub Gist.</p>
+                        
+                        <div class="input-group mb-4">
+                            <label class="input-label text-indigo-900">GitHub Personal Access Token</label>
+                            <input type="password" id="gh-token" class="input-std font-mono text-sm border-indigo-300 focus:border-indigo-600 bg-white" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                            <button onclick="SyncManager.UI.showConnect()" class="btn btn-secondary border-indigo-300 text-indigo-900 font-bold flex-1 hover:bg-indigo-100"><i class="fa-solid fa-link"></i> Connect Existing</button>
+                            <button onclick="SyncManager.UI.createNew()" class="btn btn-primary bg-indigo-700 border-indigo-800 hover:bg-indigo-800 flex-1"><i class="fa-solid fa-plus-circle"></i> Create New Gist</button>
+                        </div>
+
+                        <div id="gist-id-container" class="hidden animate-fade-in mb-2">
+                            <div class="input-group">
+                                <label class="input-label text-indigo-900">Gist ID</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="gh-gist-id" class="input-std font-mono text-sm border-indigo-300 bg-white" placeholder="e.g. 8f4b...">
+                                    <button onclick="SyncManager.saveConfig()" class="btn btn-primary bg-indigo-700 text-sm whitespace-nowrap">Save & Sync</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="sync-meta" class="text-xs text-indigo-600 font-mono text-right hidden font-bold">Last Sync: Never</div>
+                    </div>
+
+                    <!-- Local Backup -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-blue-50 p-5 rounded-lg border border-blue-200">
+                            <h4 class="font-bold text-blue-900 mb-2 text-sm uppercase">Backup Data</h4>
+                            <button onclick="Controllers.Data.backup()" class="btn btn-secondary border-blue-300 text-blue-800 w-full hover:bg-blue-100"><i class="fa-solid fa-cloud-arrow-down"></i> Download JSON</button>
+                        </div>
+                        <div class="bg-slate-50 p-5 rounded-lg border border-slate-300">
+                            <h4 class="font-bold text-slate-800 mb-2 text-sm uppercase">Restore Data</h4>
+                            <div class="flex gap-2">
+                                <input type="file" id="restore-file" accept=".json" class="block w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-white file:text-slate-800 hover:file:bg-slate-200 cursor-pointer"/>
+                                <button onclick="Controllers.Data.restore()" class="btn btn-secondary border-slate-400 font-bold">Upload</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="border-t border-red-200 pt-6 mt-6">
+                        <h4 class="font-black text-red-800 mb-4 text-xs uppercase tracking-wider">Danger Zone</h4>
+                        <div class="flex flex-col gap-4">
+                            <div class="flex justify-between items-center p-3 bg-red-50 rounded border border-red-100">
+                                <div><div class="font-bold text-slate-800 text-sm">Factory Reset</div><div class="text-xs text-red-600 font-medium">Wipes local data only.</div></div>
+                                <button onclick="Controllers.Data.reset()" class="btn btn-danger text-xs font-bold">Reset App</button>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-red-50 rounded border border-red-100">
+                                <div><div class="font-bold text-red-800 text-sm">Delete Cloud Data</div><div class="text-xs text-red-600 font-medium">Irreversible. Destroys Gist.</div></div>
+                                <button onclick="SyncManager.deleteCloudData()" class="btn btn-danger text-xs bg-red-100 border-red-300 text-red-800 hover:bg-red-200 font-bold">Delete Cloud</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TOAST AREA -->
+    <div id="toast-area"></div>
+
+    <!-- === MODALS === -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 backdrop-blur-sm transition-opacity opacity-0 duration-200 cursor-pointer p-4">
+        
+        <!-- CLIENT MODAL -->
+        <div id="modal-client" class="modal-content bg-white rounded-lg shadow-2xl w-full max-w-md m-auto hidden transform transition-all scale-95 duration-200 z-50 cursor-auto border border-slate-200" onclick="event.stopPropagation()">
+            <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+                <h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">Client Profile</h3>
+                <button onclick="UI.Modals.close()" class="text-slate-400 hover:text-red-600 transition text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-5">
+                <div class="input-group"><label class="input-label">Client Name *</label><input id="c-name" class="input-std" placeholder="Full Name"></div>
+                <div class="input-group"><label class="input-label">Phone *</label><input id="c-phone" class="input-std" placeholder="10 digits"></div>
+                <div class="input-group"><label class="input-label">Address</label><textarea id="c-addr" class="input-std h-24 placeholder-slate-400" placeholder="Billing Address"></textarea></div>
+            </div>
+            <div class="p-5 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-lg">
+                <button onclick="UI.Modals.close()" class="btn btn-secondary font-bold">Cancel</button>
+                <button onclick="Controllers.CRM.saveClient()" class="btn btn-primary font-bold">Save Client</button>
+            </div>
+        </div>
+
+        <!-- PRODUCT MODAL -->
+        <div id="modal-item" class="modal-content bg-white rounded-lg shadow-2xl w-full max-w-lg m-auto hidden transform transition-all scale-95 duration-200 z-50 cursor-auto border border-slate-200" onclick="event.stopPropagation()">
+            <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-lg">
+                <h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">Product Details</h3>
+                <button onclick="UI.Modals.close()" class="text-slate-400 hover:text-red-600 transition text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="input-group"><label class="input-label">Category</label><select id="i-type" class="input-std"><option value="Profile">Profile</option><option value="Hardware">Hardware</option><option value="Glass">Glass</option><option value="Other">Other</option></select></div>
+                    <div class="input-group"><label class="input-label">Product Code *</label><input id="i-code" class="input-std font-mono uppercase font-bold" placeholder="e.g. PRO-60W"></div>
+                </div>
+                <div class="input-group"><label class="input-label">Description *</label><input id="i-desc" class="input-std" placeholder="Item Name"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="input-group"><label class="input-label">Variant/Color</label><input id="i-color" class="input-std" placeholder="e.g. White"></div>
+                    <div class="input-group"><label class="input-label">Unit</label><input id="i-unit" class="input-std" placeholder="m, sqft, pcs"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="input-group"><label class="input-label">Rate (₹)</label><input id="i-rate" type="number" min="0" class="input-std font-bold"></div>
+                    <div class="input-group"><label class="input-label">Low Stock Level</label><input id="i-min" type="number" min="0" class="input-std" value="10"></div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded border border-blue-200"><label class="input-label text-blue-900">Opening Stock</label><input id="i-stock" type="number" min="0" class="input-std border-blue-300 font-bold text-blue-900" placeholder="Qty"></div>
+            </div>
+            <div class="p-5 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 rounded-b-lg">
+                <button onclick="UI.Modals.close()" class="btn btn-secondary font-bold">Cancel</button>
+                <button onclick="Controllers.Inventory.saveItem()" class="btn btn-primary font-bold">Save Product</button>
+            </div>
+        </div>
+
+        <!-- ORDER MODAL (Responsive Stack) -->
+        <div id="modal-quote" class="modal-content bg-white w-full h-full hidden flex-col cursor-auto absolute inset-0 z-50" onclick="event.stopPropagation()">
+            <div class="h-16 border-b border-slate-200 flex justify-between items-center px-4 md:px-6 bg-slate-50 flex-shrink-0">
+                <div class="font-black text-lg md:text-xl text-slate-800 flex items-center gap-3"><i class="fa-solid fa-cart-arrow-down text-blue-600"></i> New Order</div>
+                <button onclick="UI.Modals.close()" class="text-slate-400 hover:text-red-600 transition text-2xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+                <!-- Sidebar Control -->
+                <div class="w-full md:w-96 border-b md:border-b-0 md:border-r border-slate-200 bg-white p-4 md:p-6 overflow-y-auto z-10 shadow-lg flex-shrink-0">
+                    <div class="mb-4 md:mb-6 input-group">
+                        <label class="input-label">Client *</label>
+                        <div class="flex gap-2">
+                            <select id="q-client" class="input-std bg-slate-50 font-bold text-slate-700"></select>
+                            <button onclick="UI.Modals.Client.open()" class="btn btn-secondary px-3 border-slate-300 text-slate-600 hover:text-blue-700" title="New Client"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 md:p-5 rounded-lg border border-slate-200 shadow-inner">
+                        <h4 class="font-bold text-slate-800 text-xs uppercase border-b border-slate-200 pb-3 mb-4 tracking-wide">Add Product</h4>
+                        <div class="input-group">
+                            <label class="input-label">Select Product</label>
+                            <select id="q-item-select" class="input-std text-sm font-medium" onchange="Controllers.Sales.updateRatePreview()"></select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <div class="input-group"><label class="input-label">Qty</label><input id="q-qty" type="number" min="1" value="1" class="input-std text-center font-bold text-lg"></div>
+                            <div class="input-group"><label class="input-label">Rate</label><input id="q-rate" type="number" min="0" class="input-std text-right font-bold text-lg"></div>
+                        </div>
+                        <button onclick="Controllers.Sales.addItem()" class="btn btn-primary w-full h-10 shadow-md mt-4 font-bold">Add to Order</button>
+                    </div>
+                </div>
+                <!-- Table View -->
+                <div class="flex-1 bg-slate-50/50 p-4 md:p-8 overflow-y-auto flex flex-col">
+                    <div class="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden mb-6 flex-1">
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th class="pl-6">Code</th>
+                                        <th>Product</th>
+                                        <th class="dt-center">Qty</th>
+                                        <th class="dt-right">Rate</th>
+                                        <th class="dt-right">Total</th>
+                                        <th class="pr-6 dt-right"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="q-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-lg border border-slate-200 shadow-sm gap-4">
+                        <div class="text-xl font-black text-slate-800">Total: <span id="q-grand-total" class="text-blue-700 ml-2">₹0</span></div>
+                        <div class="flex gap-4 w-full sm:w-auto">
+                            <button onclick="UI.Modals.close()" class="btn btn-secondary font-bold px-6 flex-1 sm:flex-none">Discard</button>
+                            <button onclick="Controllers.Sales.saveQuote()" class="btn btn-primary px-8 shadow-lg bg-blue-600 border-blue-700 hover:bg-blue-700 font-bold flex-1 sm:flex-none">Complete Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESTOCK MODAL -->
+        <div id="modal-restock" class="modal-content bg-white rounded-lg shadow-2xl w-full max-w-sm m-auto hidden transform transition-all scale-95 duration-200 cursor-auto border border-slate-200" onclick="event.stopPropagation()">
+            <div class="p-5 border-b border-slate-200 bg-slate-50 rounded-t-lg"><h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">Add Stock</h3></div>
+            <div class="p-6 space-y-5">
+                <input type="hidden" id="rs-id"><div id="rs-title" class="text-sm font-bold bg-slate-100 p-3 rounded border border-slate-200 text-slate-700"></div>
+                <div class="input-group"><label class="input-label text-emerald-800">Quantity (+)</label><input id="rs-qty" type="number" min="1" class="input-std font-black text-xl text-emerald-700 border-emerald-300 focus:border-emerald-500"></div>
+                <div class="input-group"><label class="input-label">Unit Cost (Avg)</label><input id="rs-rate" type="number" min="0" class="input-std font-bold"></div>
+            </div>
+            <div class="p-5 border-t border-slate-200 flex justify-end gap-3"><button onclick="UI.Modals.close()" class="btn btn-secondary font-bold">Cancel</button><button onclick="Controllers.Inventory.confirmRestock()" class="btn btn-primary font-bold">Update Stock</button></div>
+        </div>
+    </div>
+
+    <script>
+        /* === CORE LOGIC === */
+
+        const Utils = {
+            uuid: () => {
+                if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            },
+            fmt: (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0),
+            date: (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            sanitize: (str) => { const t = document.createElement('div'); t.textContent = str; return t.innerHTML; },
+            debounce: (func, wait) => { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; },
+            toast: (msg, type = 'success') => {
+                const area = document.getElementById('toast-area');
+                if (!area) return;
+                const t = document.createElement('div');
+                t.className = `toast ${type}`;
+                t.innerHTML = `<i class="fa-solid ${type==='error'?'fa-circle-exclamation text-red-600':'fa-circle-check text-emerald-600'} text-xl"></i> <span>${msg}</span>`;
+                area.appendChild(t);
+                setTimeout(() => { t.style.transform = 'translateX(100%)'; setTimeout(() => t.remove(), 300); }, 3000);
+            },
+            parseSearch: (item, searchTerm, numericFields = []) => {
+                if (!searchTerm) return true;
+                const terms = searchTerm.toLowerCase().split(',').map(t => t.trim()).filter(t => t);
+                return terms.every(term => {
+                    const operatorMatch = term.match(/^([<>]=?|=)([\d\.]+)$/);
+                    if (operatorMatch) {
+                        const op = operatorMatch[1];
+                        const val = parseFloat(operatorMatch[2]);
+                        return numericFields.some(field => {
+                            const itemVal = parseFloat(item[field] || 0);
+                            if (op === '>') return itemVal > val;
+                            if (op === '<') return itemVal < val;
+                            if (op === '>=') return itemVal >= val;
+                            if (op === '<=') return itemVal <= val;
+                            if (op === '=') return itemVal === val;
+                            return false;
+                        });
+                    }
+                    return Object.values(item).some(val => String(val).toLowerCase().includes(term));
+                });
+            }
+        };
+
+        /* === GITHUB SYNC ENGINE === */
+        const SyncManager = {
+            config: { token: '', gistId: '' },
+            filename: 'shayona_db.json',
+            init() {
+                this.config.token = localStorage.getItem('gh_token') || '';
+                this.config.gistId = localStorage.getItem('gh_gist_id') || '';
+                if(this.config.token) document.getElementById('gh-token').value = this.config.token;
+                if(this.config.gistId) {
+                    document.getElementById('gh-gist-id').value = this.config.gistId;
+                    document.getElementById('gist-id-container').classList.remove('hidden');
+                    this.pull();
+                } else {
+                    this.updateStatus('offline');
+                }
+            },
+            updateStatus(status) {
+                const el = document.getElementById('sync-btn');
+                if(!el) return;
+                
+                if(status === 'syncing') {
+                    el.className = 'sync-badge sync-syncing';
+                    el.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> <span class="hidden sm:inline">Syncing</span>';
+                } else if(status === 'offline') {
+                    el.className = 'sync-badge sync-offline';
+                    el.innerHTML = '<i class="fa-solid fa-wifi"></i> <span class="hidden sm:inline">Offline</span>';
+                } else if(status === 'error') {
+                    el.className = 'sync-badge sync-offline';
+                    el.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span class="hidden sm:inline">Error</span>';
+                } else {
+                    el.className = 'sync-badge sync-online';
+                    el.innerHTML = '<i class="fa-solid fa-check"></i> <span class="hidden sm:inline">Connected</span>';
+                }
+            },
+            uiTrigger() {
+                if(!this.config.token || !this.config.gistId) {
+                    Router.nav('settings');
+                    const section = document.getElementById('settings-sync-section');
+                    section.classList.add('bg-indigo-100');
+                    setTimeout(() => section.classList.remove('bg-indigo-100'), 1000);
+                    Utils.toast('Please configure Sync', 'info');
+                } else {
+                    this.pull(true);
+                }
+            },
+            async saveConfig() {
+                const token = document.getElementById('gh-token').value.trim();
+                const gistId = document.getElementById('gh-gist-id').value.trim();
+                if(!token) return Utils.toast('Token Required', 'error');
+                this.config = { token, gistId };
+                localStorage.setItem('gh_token', token);
+                localStorage.setItem('gh_gist_id', gistId);
+                if(!gistId) await this.createNew();
+                else await this.pull(true);
+            },
+            async createNew() {
+                const token = document.getElementById('gh-token').value.trim();
+                if(!token) return Utils.toast('Enter Token First', 'error');
+                this.updateStatus('syncing');
+                try {
+                    const res = await fetch('https://api.github.com/gists', {
+                        method: 'POST',
+                        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ description: "Shayona IMS Database", public: false, files: { [this.filename]: { content: JSON.stringify(Store.state) } } })
+                    });
+                    if(!res.ok) throw new Error('Failed to create Gist');
+                    const data = await res.json();
+                    this.config.gistId = data.id;
+                    localStorage.setItem('gh_gist_id', data.id);
+                    document.getElementById('gh-gist-id').value = data.id;
+                    document.getElementById('gist-id-container').classList.remove('hidden');
+                    Utils.toast('Cloud DB Created');
+                    this.updateStatus('online');
+                } catch(e) { Utils.toast(e.message, 'error'); this.updateStatus('error'); }
+            },
+            async push() {
+                if(!this.config.token || !this.config.gistId) return;
+                if(!navigator.onLine) { this.updateStatus('offline'); return; }
+                this.updateStatus('syncing');
+                try {
+                    Store.state.meta.lastUpdated = Date.now();
+                    const res = await fetch(`https://api.github.com/gists/${this.config.gistId}`, {
+                        method: 'PATCH',
+                        headers: { 'Authorization': `token ${this.config.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ files: { [this.filename]: { content: JSON.stringify(Store.state) } } })
+                    });
+                    if(!res.ok) throw new Error('Sync Failed');
+                    this.updateStatus('online');
+                } catch(e) { this.updateStatus('error'); }
+            },
+            async pull(force = false) {
+                if(!this.config.token || !this.config.gistId) return;
+                if(!navigator.onLine) return;
+                this.updateStatus('syncing');
+                try {
+                    const res = await fetch(`https://api.github.com/gists/${this.config.gistId}`, { headers: { 'Authorization': `token ${this.config.token}` } });
+                    if(!res.ok) throw new Error('Fetch Failed');
+                    const data = await res.json();
+                    if(data.files && data.files[this.filename]) {
+                        const cloudState = JSON.parse(data.files[this.filename].content);
+                        if(force || (cloudState.meta?.lastUpdated > (Store.state.meta?.lastUpdated || 0))) {
+                            Store.state = cloudState;
+                            Store.save(false, false);
+                            Utils.toast('Cloud Data Synced');
+                            if(Router.current === 'inventory') Views.Inventory.render();
+                            else if(Router.current === 'dashboard') Views.Dashboard.render();
+                        }
+                    }
+                    this.updateStatus('online');
+                } catch(e) { this.updateStatus('error'); Utils.toast(e.message, 'error'); }
+            },
+            async deleteCloudData() {
+                if(!this.config.token || !this.config.gistId) return Utils.toast('Not connected', 'error');
+                if(!confirm("WARNING: This will PERMANENTLY DELETE the Gist.")) return;
+                if(prompt("Type 'DELETE' to confirm:") !== 'DELETE') return;
+                try {
+                    const res = await fetch(`https://api.github.com/gists/${this.config.gistId}`, { method: 'DELETE', headers: { 'Authorization': `token ${this.config.token}` } });
+                    if(res.ok || res.status === 204) {
+                        localStorage.removeItem('gh_gist_id');
+                        this.config.gistId = '';
+                        document.getElementById('gh-gist-id').value = '';
+                        document.getElementById('gist-id-container').classList.add('hidden');
+                        Utils.toast('Cloud Data Destroyed');
+                        this.updateStatus('offline');
+                    }
+                } catch(e) { Utils.toast('Delete Failed', 'error'); }
+            },
+            UI: { showConnect: () => { document.getElementById('gist-id-container').classList.remove('hidden'); document.getElementById('gh-gist-id').focus(); }, createNew: () => { SyncManager.saveConfig(); } }
+        };
+
+        const Store = {
+            key: 'shayona_ims_v13',
+            state: { meta: { version: 13, lastUpdated: 0 }, clients: [], inventory: [], stock_ledger: [], orders: [], seq: { o: 1000 } },
+            init() {
+                const s = localStorage.getItem(this.key);
+                if(s) { try { this.state = JSON.parse(s); } catch(e) { console.error(e); } } else { this.seed(); }
+                SyncManager.init();
+            },
+            save(recordUndo = false, pushToCloud = true) { 
+                this.state.meta.lastUpdated = Date.now();
+                localStorage.setItem(this.key, JSON.stringify(this.state)); 
+                if(pushToCloud) { if(this.pushTimer) clearTimeout(this.pushTimer); this.pushTimer = setTimeout(() => SyncManager.push(), 3000); }
+            },
+            seed() {
+                this.state.inventory = [];
+                this.save(false, false);
+            }
+        };
+
+        const Controllers = {
+            Inventory: {
+                triggerImport() {
+                    document.getElementById('inventory-import-file').click();
+                },
+                importCSV(input) {
+                    const file = input.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const text = e.target.result;
+                        // Robust CSV Parsing
+                        const rows = [];
+                        let currentRow = [];
+                        let currentVal = '';
+                        let insideQuote = false;
+                        
+                        for (let i = 0; i < text.length; i++) {
+                            const char = text[i];
+                            const nextChar = text[i+1];
+                            if (char === '"') {
+                                if (insideQuote && nextChar === '"') { currentVal += '"'; i++; } 
+                                else { insideQuote = !insideQuote; }
+                            } else if (char === ',' && !insideQuote) {
+                                currentRow.push(currentVal.trim()); currentVal = '';
+                            } else if ((char === '\n' || char === '\r') && !insideQuote) {
+                                if (char === '\r' && nextChar === '\n') i++;
+                                currentRow.push(currentVal.trim());
+                                if (currentRow.length > 0 && (currentRow.length > 1 || currentRow[0] !== '')) rows.push(currentRow);
+                                currentRow = []; currentVal = '';
+                            } else { currentVal += char; }
+                        }
+                        if (currentVal || currentRow.length > 0) { currentRow.push(currentVal.trim()); rows.push(currentRow); }
+
+                        if (rows.length < 2) return Utils.toast('Empty or Invalid CSV', 'error');
+                        
+                        let added = 0;
+                        let duplicates = 0;
+                        
+                        // Start from 1 to skip header
+                        for (let i = 1; i < rows.length; i++) {
+                            const col = rows[i];
+                            if (col.length < 2) continue;
+                            
+                            const code = col[0]?.trim();
+                            if (!code) continue;
+                            
+                            // Check Duplicate
+                            if (Store.state.inventory.some(x => x.code === code)) {
+                                duplicates++;
+                                continue;
+                            }
+                            
+                            // Parse Type / Variant
+                            let type = "Other";
+                            let color = "Standard";
+                            const typeVar = col[2]?.trim() || "";
+                            
+                            if (typeVar.includes("/")) {
+                                const parts = typeVar.split("/");
+                                type = parts[0].trim();
+                                color = parts[1].trim();
+                            } else if (typeVar) {
+                                if (["Profile","Hardware","Glass"].includes(typeVar)) { type = typeVar; color = "Standard"; } 
+                                else { color = typeVar; }
+                            }
+                            
+                            const rateRaw = (col[3] || "0").replace(/[^0-9.]/g, '');
+                            const stockRaw = (col[4] || "0").replace(/[^0-9.]/g, '');
+
+                            const item = {
+                                id: Utils.uuid(),
+                                code: code,
+                                desc: col[1]?.trim() || "Imported Item",
+                                type: type,
+                                color: color,
+                                rate: parseFloat(rateRaw) || 0,
+                                stock: parseFloat(stockRaw) || 0,
+                                unit: 'pc', 
+                                min: 10
+                            };
+                            
+                            Store.state.inventory.push(item);
+                            added++;
+                            
+                            if (item.stock > 0) {
+                                this.logTx(item.id, 'OPEN', 'Opening Stock', item.stock, item.stock);
+                            }
+                        }
+                        
+                        Store.save(true);
+                        Views.Inventory.render();
+                        Utils.toast(`Imported ${added} products. Ignored ${duplicates} duplicates.`);
+                        input.value = ''; 
+                    };
+                    reader.readAsText(file);
+                },
+                saveItem() {
+                    const code = document.getElementById('i-code').value.trim();
+                    const desc = document.getElementById('i-desc').value.trim();
+                    if(!code || !desc) return Utils.toast('Required Fields Missing', 'error');
+                    if(Store.state.inventory.some(i=>i.code===code)) return Utils.toast('Product Code Exists', 'error');
+                    
+                    const item = {
+                        id: Utils.uuid(), code: code.toUpperCase(), desc,
+                        type: document.getElementById('i-type').value,
+                        color: document.getElementById('i-color').value || 'N/A',
+                        unit: document.getElementById('i-unit').value,
+                        rate: parseFloat(document.getElementById('i-rate').value) || 0,
+                        stock: parseFloat(document.getElementById('i-stock').value) || 0,
+                        min: parseFloat(document.getElementById('i-min').value)||0
+                    };
+                    Store.state.inventory.push(item);
+                    if(item.stock > 0) this.logTx(item.id, 'OPEN', 'Initial', item.stock, item.stock);
+                    Store.save(true); UI.Modals.close(); Views.Inventory.render(); Utils.toast('Product Added');
+                },
+                confirmRestock() {
+                    const id = document.getElementById('rs-id').value;
+                    const qty = parseFloat(document.getElementById('rs-qty').value);
+                    if(!qty || qty <= 0) return Utils.toast('Invalid Quantity', 'error');
+                    const i = Store.state.inventory.find(x=>x.id===id);
+                    if(!i) return;
+                    i.stock += qty;
+                    this.logTx(id, `IN-${Date.now().toString().slice(-4)}`, 'Restock', qty, i.stock);
+                    Store.save(true); UI.Modals.close(); Views.Inventory.render(); Utils.toast('Stock Updated');
+                },
+                logTx(itemId, ref, type, change, balance) {
+                    Store.state.stock_ledger.push({ id: Utils.uuid(), date: new Date().toISOString(), itemId, ref, type, change, balance });
+                },
+                deleteItem(id) {
+                    if(confirm("Permanently delete this product and all its history? This action cannot be undone.")) {
+                        // Cascade Delete: Remove Ledger entries first
+                        Store.state.stock_ledger = Store.state.stock_ledger.filter(l => l.itemId !== id);
+                        // Remove Item
+                        Store.state.inventory = Store.state.inventory.filter(i => i.id !== id);
+                        
+                        Store.save(true); 
+                        Views.Inventory.render(); 
+                        Utils.toast('Product & History Deleted');
+                    }
+                }
+            },
+            CRM: {
+                saveClient() {
+                    const name = document.getElementById('c-name').value.trim();
+                    if(!name) return Utils.toast('Name Required', 'error');
+                    Store.state.clients.push({ id: Utils.uuid(), name, phone: document.getElementById('c-phone').value, addr: document.getElementById('c-addr').value.trim() });
+                    Store.save(true); UI.Modals.close(); Views.CRM.renderList(); Utils.toast('Client Added');
+                }
+            },
+            Sales: {
+                tempItems: [],
+                updateRatePreview() {
+                    const i = Store.state.inventory.find(x=>x.code===document.getElementById('q-item-select').value);
+                    if(i) document.getElementById('q-rate').value = i.rate;
+                },
+                addItem() {
+                    const sku = document.getElementById('q-item-select').value;
+                    const qty = parseFloat(document.getElementById('q-qty').value);
+                    const rate = parseFloat(document.getElementById('q-rate').value);
+                    if(!sku || qty <= 0) return Utils.toast('Invalid Item/Qty', 'error');
+                    const master = Store.state.inventory.find(i=>i.code===sku);
+                    const existing = this.tempItems.find(x => x.itemId === master.id);
+                    if(existing) existing.qty += qty;
+                    else this.tempItems.push({ id: Utils.uuid(), sku: master.code, desc: master.desc, qty, rate, itemId: master.id });
+                    this.renderTemp();
+                },
+                removeItem(id) { this.tempItems = this.tempItems.filter(x => x.id !== id); this.renderTemp(); },
+                renderTemp() {
+                    const tbody = document.getElementById('q-tbody');
+                    let total = 0;
+                    tbody.innerHTML = this.tempItems.length ? this.tempItems.map(i => {
+                        const lineTotal = i.qty * i.rate;
+                        total += lineTotal;
+                        return `<tr><td class="pl-6 font-mono font-bold text-blue-600">${i.sku}</td><td>${i.desc}</td><td class="dt-center font-bold">${i.qty}</td><td class="dt-right">₹${i.rate}</td><td class="dt-right font-bold text-slate-800">₹${lineTotal}</td><td class="pr-6 dt-right"><i onclick="Controllers.Sales.removeItem('${i.id}')" class="fa-solid fa-trash text-slate-300 hover:text-red-500 cursor-pointer"></i></td></tr>`;
+                    }).join('') : '<tr><td colspan="6" class="text-center py-8 text-slate-400 italic">No products added</td></tr>';
+                    document.getElementById('q-grand-total').innerText = Utils.fmt(total);
+                },
+                saveQuote() {
+                    const cid = document.getElementById('q-client').value;
+                    if(!cid || !this.tempItems.length) return Utils.toast('Client & Products Required', 'error');
+                    const client = Store.state.clients.find(c=>c.id===cid);
+                    const orderId = `ORD-${Store.state.seq.o++}`;
+                    let err = false;
+                    this.tempItems.forEach(l => { if(Store.state.inventory.find(i=>i.id===l.itemId).stock < l.qty) { Utils.toast(`Low Stock: ${l.sku}`, 'error'); err=true; } });
+                    if(err) return;
+                    
+                    const totalVal = this.tempItems.reduce((s,i) => s + (i.qty*i.rate), 0);
+                    this.tempItems.forEach(l => {
+                        const inv = Store.state.inventory.find(i=>i.id===l.itemId);
+                        inv.stock -= l.qty;
+                        Controllers.Inventory.logTx(inv.id, orderId, 'Sales', -l.qty, inv.stock);
+                    });
+                    
+                    Store.state.orders.push({ id: orderId, date: new Date().toISOString(), clientId: cid, clientName: client.name, items: [...this.tempItems], totalItems: this.tempItems.length, totalValue: totalVal });
+                    Store.save(true); UI.Modals.close(); Views.Orders.render(); Views.Dashboard.render(); Utils.toast('Order Processed');
+                }
+            },
+            Data: {
+                backup() { const a=document.createElement('a'); a.href='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(Store.state)); a.download=`ShayonaIMS_Backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); },
+                restore() {
+                    const f = document.getElementById('restore-file').files[0];
+                    if(!f) return Utils.toast('Select File', 'error');
+                    const r = new FileReader();
+                    r.onload = async (e) => { 
+                        try { 
+                            const data = JSON.parse(e.target.result); 
+                            if(!data.inventory) throw new Error("Invalid Data");
+                            
+                            if(confirm("WARNING: This will overwrite LOCAL data and immediately PUSH to Cloud Gist. This action cannot be undone. Are you sure?")) {
+                                Store.state = data; 
+                                Store.state.meta.lastUpdated = Date.now(); // Ensure timestamp is fresh so it wins conflict resolution
+                                localStorage.setItem(Store.key, JSON.stringify(Store.state));
+                                
+                                // Trigger immediate sync if configured
+                                if(SyncManager.config.token && SyncManager.config.gistId) {
+                                    Utils.toast('Syncing restored data to Cloud...', 'info');
+                                    await SyncManager.push();
+                                }
+                                
+                                Utils.toast('Restore & Sync Complete', 'success');
+                                setTimeout(() => location.reload(), 1500);
+                            }
+                        } catch(err) { 
+                            console.error(err);
+                            Utils.toast('Invalid File', 'error'); 
+                        } 
+                    };
+                    r.readAsText(f);
+                },
+                reset() { if(confirm("Reset Everything?")) { localStorage.removeItem(Store.key); localStorage.removeItem('gh_token'); localStorage.removeItem('gh_gist_id'); location.reload(); } },
+                
+                // EXPORT ENGINE
+                exportInventory(fmt, returnBlob = false) {
+                    const source = returnBlob ? Store.state.inventory : Views.Inventory.currentData;
+                    const data = source.map(i => ({ "Product Code": i.code, "Description": i.desc, "Type": i.type, "Stock": i.stock, "Unit": i.unit, "Rate": i.rate, "Value": i.stock*i.rate }));
+                    return this.processExport(data, fmt, "Inventory_Report", returnBlob);
+                },
+                exportLedger(fmt, returnBlob = false) {
+                    const source = returnBlob ? Store.state.stock_ledger : Views.Ledger.currentData;
+                    const data = source.map(l => {
+                        const i = Store.state.inventory.find(x=>x.id===l.itemId) || {code:'DEL', desc:'Unknown'};
+                        return { "Date": new Date(l.date).toLocaleString(), "Type": l.type, "Reference": l.ref, "Product": i.code, "Change": l.change, "Balance": l.balance };
+                    });
+                    return this.processExport(data, fmt, "Stock_Ledger", returnBlob);
+                },
+                exportOrders(fmt, returnBlob = false) {
+                    const source = returnBlob ? Store.state.orders : Views.Orders.currentData;
+                    const data = source.map(o => ({ "Order ID": o.id, "Date": new Date(o.date).toLocaleDateString(), "Client": o.clientName, "Items": o.totalItems, "Total Value": o.totalValue || 0 }));
+                    return this.processExport(data, fmt, "Orders_Report", returnBlob);
+                },
+                exportClients(fmt, returnBlob = false) {
+                    const source = returnBlob ? Store.state.clients : Views.CRM.currentData;
+                    const data = source.map(c => ({ "Name": c.name, "Phone": c.phone, "Address": c.addr }));
+                    return this.processExport(data, fmt, "Client_List", returnBlob);
+                },
+                processExport(data, fmt, name, returnBlob = false) {
+                    if(!data.length && !returnBlob) return Utils.toast('No Data', 'info');
+                    if(fmt === 'excel') {
+                        const wb = XLSX.utils.book_new();
+                        const ws = XLSX.utils.json_to_sheet(data);
+                        const wscols = Object.keys(data[0] || {}).map(k => ({ wch: Math.max(k.length, 15) }));
+                        ws['!cols'] = wscols;
+                        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                        if(returnBlob) return XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
+                        XLSX.writeFile(wb, `${name}.xlsx`);
+                    } else {
+                        const doc = new jspdf.jsPDF('l', 'mm', 'a4');
+                        doc.setFontSize(16); doc.text("Shayona Windows", 14, 15);
+                        doc.setFontSize(10); doc.text(name.replace('_', ' '), 14, 22);
+                        doc.text(`Date: ${new Date().toLocaleString()}`, 200, 15, { align: 'right' });
+                        doc.autoTable({ head: [Object.keys(data[0] || {})], body: data.map(Object.values), startY: 28, theme: 'grid', styles: { fontSize: 8, cellPadding: 3 } });
+                        if(returnBlob) return doc.output('blob');
+                        doc.save(`${name}.pdf`);
+                    }
+                },
+                async exportAllZip() {
+                    Utils.toast('Preparing Export All...', 'info');
+                    const zip = new JSZip();
+                    
+                    zip.file("Inventory.xlsx", this.exportInventory('excel', true));
+                    zip.file("Inventory.pdf", this.exportInventory('pdf', true));
+                    zip.file("Stock_Ledger.xlsx", this.exportLedger('excel', true));
+                    zip.file("Stock_Ledger.pdf", this.exportLedger('pdf', true));
+                    zip.file("Orders.xlsx", this.exportOrders('excel', true));
+                    zip.file("Orders.pdf", this.exportOrders('pdf', true));
+                    zip.file("Clients.xlsx", this.exportClients('excel', true));
+                    zip.file("Clients.pdf", this.exportClients('pdf', true));
+
+                    try {
+                        const content = await zip.generateAsync({type:"blob"});
+                        const link = document.createElement("a");
+                        link.href = URL.createObjectURL(content);
+                        link.download = `ShayonaIMS_Export_All_${Date.now()}.zip`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        Utils.toast('Export All Downloaded');
+                    } catch(e) {
+                        console.error(e);
+                        Utils.toast('Zip Creation Failed', 'error');
+                    }
+                }
+            }
+        };
+
+        const Views = {
+            Inventory: {
+                currentData: [], filterType: null,
+                filter(t) { this.filterType = t; 
+                    document.querySelectorAll('#view-inventory .flex button').forEach(b => b.classList.replace('bg-slate-800','text-slate-600'));
+                    document.querySelectorAll('#view-inventory .flex button').forEach(b => b.classList.replace('text-white','hover:bg-slate-100'));
+                    this.render(); 
+                },
+                render() {
+                    const query = document.getElementById('inv-search').value;
+                    let d = Store.state.inventory.filter(i => Utils.parseSearch(i, query, ['stock', 'rate']));
+                    if(this.filterType) d = d.filter(i=>i.type===this.filterType);
+                    this.currentData = d;
+                    document.getElementById('inv-count').innerText = `${d.length} Products`;
+                    document.getElementById('inv-total-val').innerText = `Value: ${Utils.fmt(d.reduce((a,b)=>a+(b.stock*b.rate),0))}`;
+                    const tbody = document.getElementById('tbody-inventory');
+                    if(d.length===0) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No products found</td></tr>`; return; }
+                    tbody.innerHTML = d.map(i => `<tr><td class="dt-code font-bold text-blue-700">${i.code}</td><td><div class="font-bold text-slate-800">${Utils.sanitize(i.desc)}</div></td><td><span class="badge badge-gray text-xs">${i.type}</span> <span class="text-xs text-slate-500 ml-1">${i.color}</span></td><td class="dt-right font-medium">₹${i.rate}</td><td class="dt-center font-bold ${i.stock<=i.min?'text-red-600 bg-red-50 rounded':''}">${i.stock} <span class="text-[10px] font-normal text-slate-400">${i.unit}</span></td><td class="dt-right"><button onclick="UI.Modals.Restock.open('${i.id}')" class="btn btn-secondary h-8 px-3 text-emerald-700 font-bold mr-2 text-xs" title="Restock">Add Stock</button><button onclick="Controllers.Inventory.deleteItem('${i.id}')" class="btn btn-ghost h-8 w-8 text-slate-400 hover:text-red-500 rounded-full"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('');
+                }
+            },
+            Ledger: {
+                currentData: [],
+                render() {
+                    const query = document.getElementById('ledger-search').value;
+                    let d = Store.state.stock_ledger.slice().reverse();
+                    d = d.filter(l => {
+                        const i = Store.state.inventory.find(x=>x.id===l.itemId);
+                        return Utils.parseSearch({ ...l, code: i?.code, desc: i?.desc }, query, ['change']);
+                    });
+                    this.currentData = d;
+                    const tbody = document.getElementById('tbody-ledger');
+                    if(d.length===0) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No movements found</td></tr>`; return; }
+                    tbody.innerHTML = d.map(l => {
+                        const i = Store.state.inventory.find(x=>x.id===l.itemId) || {code:'DEL', desc:'-'};
+                        return `<tr><td class="text-xs text-slate-500 font-medium">${Utils.date(l.date)}</td><td><span class="badge ${l.change>0?'badge-green':'badge-red'}">${l.type}</span></td><td class="font-mono text-xs text-slate-600 font-bold">${l.ref}</td><td><div class="font-bold text-xs text-slate-700">${i.code}</div><div class="text-[10px] text-slate-400">${Utils.sanitize(i.desc)}</div></td><td class="dt-right font-bold ${l.change>0?'text-emerald-700':'text-red-700'}">${l.change>0?'+':''}${l.change}</td><td class="dt-right font-mono text-xs font-bold text-slate-700 bg-slate-50 rounded px-2">${l.balance}</td></tr>`;
+                    }).join('');
+                }
+            },
+            Orders: {
+                currentData: [],
+                render() {
+                    const query = document.getElementById('quote-search').value;
+                    let d = Store.state.orders.slice().reverse();
+                    d = d.filter(o => Utils.parseSearch(o, query, ['totalValue']));
+                    this.currentData = d;
+                    const tbody = document.getElementById('tbody-orders');
+                    if(d.length===0) { tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No orders found</td></tr>`; return; }
+                    tbody.innerHTML = d.map(q => `<tr><td class="font-mono font-black text-purple-800">${q.id}</td><td class="text-xs text-slate-500 font-medium">${Utils.date(q.date)}</td><td class="font-bold text-slate-700">${Utils.sanitize(q.clientName)}</td><td class="dt-center text-slate-600 font-medium"><span class="bg-slate-100 px-2 py-1 rounded text-xs">${q.totalItems} Items</span></td><td class="dt-right font-black text-slate-800">${Utils.fmt(q.totalValue||0)}</td><td class="dt-center"><span class="badge badge-green">Completed</span></td></tr>`).join('');
+                }
+            },
+            CRM: {
+                currentData: [],
+                renderList() {
+                    const query = document.getElementById('crm-search').value;
+                    let d = Store.state.clients.filter(c => Utils.parseSearch(c, query));
+                    this.currentData = d;
+                    const tbody = document.getElementById('tbody-crm');
+                    if(d.length===0) { tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No clients found</td></tr>`; return; }
+                    tbody.innerHTML = d.map(c => `<tr><td class="font-bold text-slate-800">${Utils.sanitize(c.name)}</td><td class="font-medium text-slate-600">${c.phone}</td><td class="text-slate-500 text-xs max-w-xs truncate">${Utils.sanitize(c.addr)}</td><td class="dt-right text-xs"><button class="btn btn-ghost px-3 h-8 text-slate-500 hover:text-blue-700 font-bold">Edit</button></td></tr>`).join('');
+                }
+            },
+            Dashboard: {
+                render() {
+                    const d = Store.state;
+                    document.getElementById('kpi-skus').innerText = d.inventory.length;
+                    const val = d.inventory.reduce((s,i) => s + (i.stock * i.rate), 0);
+                    document.getElementById('kpi-val').innerText = Utils.fmt(val);
+                    document.getElementById('kpi-orders').innerText = d.orders.length; 
+                    const alerts = d.inventory.filter(i=>i.stock <= i.min);
+                    document.getElementById('kpi-alerts').innerText = alerts.length;
+                    document.getElementById('list-alerts').innerHTML = alerts.length ? alerts.map(i => `<div class="flex justify-between items-center p-3 bg-red-50 rounded border border-red-100 mb-2"><span class="font-bold text-slate-800 text-xs">${i.code}</span><span class="text-red-700 font-bold text-xs bg-white px-2 py-1 rounded border border-red-200">${i.stock} ${i.unit}</span></div>`).join('') : '<div class="text-center text-slate-400 text-xs py-8 italic">Inventory healthy</div>';
+                }
+            }
+        };
+
+        const Router = {
+            current: 'dashboard',
+            nav(id) {
+                this.current = id;
+                document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+                
+                document.getElementById(`view-${id}`).classList.add('active');
+                document.getElementById(`tab-${id}`).classList.add('active');
+                
+                if(id==='dashboard') Views.Dashboard.render();
+                if(id==='inventory') Views.Inventory.render();
+                if(id==='ledger') Views.Ledger.render();
+                if(id==='orders') Views.Orders.render();
+                if(id==='crm') Views.CRM.renderList();
+            }
+        };
+
+        const UI = {
+            Modals: {
+                open(id) { 
+                    const m = document.getElementById(id);
+                    if(m) {
+                        document.getElementById('modal-overlay').classList.remove('hidden', 'opacity-0'); 
+                        m.classList.remove('hidden', 'scale-95');
+                    }
+                },
+                close() { 
+                    document.querySelectorAll('.modal-content').forEach(m => m.classList.add('hidden', 'scale-95')); 
+                    document.getElementById('modal-overlay').classList.add('hidden', 'opacity-0'); 
+                },
+                Client: { 
+                    open: () => { 
+                        ['c-name','c-phone','c-addr'].forEach(i => {
+                            const el = document.getElementById(i);
+                            if(el) el.value = '';
+                        }); 
+                        UI.Modals.open('modal-client'); 
+                        setTimeout(() => {
+                            const input = document.getElementById('c-name');
+                            if(input) input.focus();
+                        }, 100);
+                    }
+                },
+                Item: { open: () => { ['i-code','i-desc','i-rate','i-stock'].forEach(i=>document.getElementById(i).value=''); UI.Modals.open('modal-item'); document.getElementById('i-code').focus(); }},
+                Quote: { open: () => { 
+                    Controllers.Sales.tempItems = [];
+                    const clients = Store.state.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+                    document.getElementById('q-client').innerHTML = `<option value="">Select Client</option>${clients}`;
+                    const items = Store.state.inventory.map(i=>`<option value="${i.code}">${i.code} - ${i.desc} (Stk: ${i.stock})</option>`).join('');
+                    document.getElementById('q-item-select').innerHTML = `<option value="">Select Product</option>${items}`;
+                    Controllers.Sales.renderTemp();
+                    UI.Modals.open('modal-quote');
+                }},
+                Restock: { open: (id) => {
+                    const i = Store.state.inventory.find(x=>x.id===id);
+                    document.getElementById('rs-id').value = id;
+                    document.getElementById('rs-title').innerText = `${i.desc} (Current: ${i.stock})`;
+                    document.getElementById('rs-qty').value = '';
+                    document.getElementById('rs-rate').value = i.rate;
+                    UI.Modals.open('modal-restock');
+                    setTimeout(()=>document.getElementById('rs-qty').focus(), 100);
+                }}
+            }
+        };
+
+        window.onload = () => { 
+            setTimeout(() => { 
+                const ls = document.getElementById('loading-screen');
+                const app = document.getElementById('app-root');
+                if(ls) { ls.style.opacity = '0'; setTimeout(()=>ls.remove(), 500); }
+                if(app) app.style.opacity = '1'; 
+            }, 1000);
+            
+            Store.init(); 
+            Router.nav('dashboard'); 
+
+            setInterval(() => {
+                const el = document.getElementById('clock');
+                if(el) el.innerText = new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+            }, 1000); 
+
+            document.addEventListener('keydown', (e) => { 
+                if (e.key === 'Escape') UI.Modals.close();
+            });
+            
+            document.getElementById('modal-overlay').addEventListener('click', (e) => {
+                if(e.target.id === 'modal-overlay') UI.Modals.close();
+            });
+            window.addEventListener('storage', (e) => { if(e.key === Store.key) { Store.state = JSON.parse(e.newValue); Router.nav(Router.current); } });
+        };
+    </script>
+</body>
+</html>
