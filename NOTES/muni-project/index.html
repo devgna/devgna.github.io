@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sociology Project: Feminism</title>
+    <style>
+        /* General Page Layout for A4 Printing */
+        @page {
+            size: A4;
+            margin: 2.5cm;
+        }
+        body {
+            font-family: 'Nirmala UI', 'Kalpurush', 'Bengali', sans-serif;
+            line-height: 1.6;
+            color: #000;
+            background-color: #fff;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28pt;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 18pt;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            page-break-after: avoid;
+        }
+        h3 {
+            font-size: 14pt;
+            font-weight: bold;
+        }
+        p {
+            text-align: justify;
+            margin-bottom: 1em;
+            font-size: 12pt;
+        }
+        ul, ol {
+            margin-bottom: 1em;
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 0.5em;
+        }
+
+        /* Cover Page Styling */
+        .cover-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 90vh; /* Approximate A4 height visible */
+            text-align: center;
+            border: 5px double #000;
+            padding: 40px;
+            page-break-after: always;
+        }
+        .cover-title {
+            font-size: 36pt;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .cover-subtitle {
+            font-size: 20pt;
+            margin-bottom: 60px;
+        }
+        .student-details {
+            font-size: 16pt;
+            text-align: left;
+            width: 80%;
+            margin-top: 50px;
+        }
+        .student-details p {
+            margin: 10px 0;
+            border-bottom: 1px dotted #000;
+        }
+
+        /* Index/TOC Styling */
+        .toc {
+            page-break-after: always;
+        }
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dotted #ccc;
+            padding: 5px 0;
+            font-size: 14pt;
+        }
+
+        /* Section Breaks */
+        .section-break {
+            page-break-before: always;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        caption {
+            font-weight: bold;
+            margin-bottom: 10px;
+            caption-side: bottom;
+        }
+
+        /* Improved Diagram / Flowchart Styling */
+        .diagram-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            background-color: #fafafa;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        
+        /* Flowchart (Left to Right) */
+        .flow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: nowrap; /* Prevent wrapping which messes up arrows */
+        }
+        .flow-box {
+            border: 2px solid #333;
+            padding: 15px;
+            border-radius: 8px;
+            background: #fff;
+            width: 140px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        .flow-arrow {
+            font-size: 24px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        /* Tree Diagram (Top down branching) */
+        .tree-diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .tree-root {
+            border: 2px solid #2c3e50;
+            background-color: #e0f7fa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            z-index: 1;
+        }
+        .tree-connector-vertical {
+            width: 2px;
+            height: 20px;
+            background-color: #333;
+            margin-bottom: 0;
+        }
+        .tree-connector-horizontal {
+            width: 80%; /* Adjust based on number of items */
+            height: 2px;
+            background-color: #333;
+            margin-bottom: 10px;
+        }
+        .tree-branches {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tree-branch-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 80px;
+        }
+        .tree-connector-small-vertical {
+            width: 2px;
+            height: 10px;
+            background-color: #333;
+            margin-bottom: 5px;
+            margin-top: -10px; /* Pull up to touch horizontal line */
+        }
+        .tree-leaf {
+            border: 1px solid #555;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            font-size: 11pt;
+            text-align: center;
+            width: 90%;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Graph/Chart CSS Implementation */
+        .chart-wrapper {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #eee;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+        .chart-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            height: 250px;
+            border-left: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding-left: 10px;
+            padding-bottom: 5px;
+            gap: 20px;
+        }
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1; /* Distribute space evenly */
+        }
+        .bar {
+            width: 80%; /* Relative to group */
+            max-width: 50px;
+            background-color: #4a90e2;
+            color: white; /* Optional: text inside bar */
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            font-size: 10px;
+            border: 1px solid #333;
+            transition: height 0.5s;
+        }
+        .bar-label {
+            margin-top: 10px;
+            font-size: 12px;
+            text-align: center;
+        }
+        /* Specific colors for grouped bars */
+        .bar.male { background-color: #34495e; }
+        .bar.female { background-color: #e74c3c; }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .color-box { width: 15px; height: 15px; border: 1px solid #000; }
+
+        /* Print helper */
+        @media print {
+            body { font-size: 12pt; }
+            .cover-page { border: 2px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="cover-title">প্রকল্প রূপায়ণ</div>
+        <div class="cover-subtitle">নারীবাদ: এর দৃষ্টিভঙ্গি ও নারীবাদের বিভিন্ন ধরণ</div>
+        
+        <div style="font-size: 18pt; margin-top: 20px;">
+            <strong>বিষয়: সমাজতত্ত্ব (Sociology)</strong>
+        </div>
+
+        <div class="student-details">
+            <p>শিক্ষার্থীর নাম: _____________________________</p>
+            <p>শ্রেণি: ________________ বিভাগ: _____________</p>
+            <p>রোল নং: __________________________________</p>
+            <p>রেজিস্ট্রেশন নং: ___________________________</p>
+            <p>বিদ্যালয়ের নাম: ___________________________</p>
+            <p>জমাদানের তারিখ: __________________________</p>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+        <h1>সূচিপত্র</h1>
+        <div class="toc-item"><span>১. ভূমিকা (Introduction)</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>২. নারীবাদের ধারণা ও সংজ্ঞা</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>৩. নারীবাদের ইতিহাস (বৈশ্বিক ও ভারতীয়)</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>৪. সমাজতাত্ত্বিক দৃষ্টিভঙ্গি</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>৫. নারীবাদের বিভিন্ন ধরণ</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>৬. ভারতীয় প্রেক্ষাপটে নারীবাদ</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>৭. নারীবাদের চ্যালেঞ্জ ও সমালোচনা</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>৮. বর্তমান পরিস্থিতি ও পরিসংখ্যান</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>৯. উপসংহার (Conclusion)</span> <span>পৃষ্ঠা নং: ___</span></div>
+        <div class="toc-item"><span>১০. তথ্যসূত্র (Bibliography)</span> <span>পৃষ্ঠা নং: ___</span></div>
+    </div>
+
+    <!-- Main Content -->
+
+    <!-- Introduction -->
+    <div class="section-break">
+        <h2>১. ভূমিকা (Introduction)</h2>
+        <p>
+            সমাজতত্ত্বের আলোচনায় লিঙ্গ বৈষম্য এবং নারীর অবস্থান একটি অত্যন্ত গুরুত্বপূর্ণ বিষয়। মানব সমাজের অর্ধেক অংশ জুড়ে রয়েছে নারী, অথচ ইতিহাসের দীর্ঘ সময় ধরে তারা সামাজিক, রাজনৈতিক ও অর্থনৈতিক অধিকার থেকে বঞ্চিত। এই বঞ্চনা, শোষণ এবং বৈষম্যের বিরুদ্ধে যে মতাদর্শ ও আন্দোলন গড়ে উঠেছে, তাই হলো নারীবাদ বা ফেমিনিজম (Feminism)।
+        </p>
+        <p>
+            বর্তমান সমাজে নারীর ক্ষমতায়ন এবং লিঙ্গ সমতা অর্জনের লক্ষ্যে নারীবাদ একটি শক্তিশালী হাতিয়ার হিসেবে কাজ করছে। সমাজবিজ্ঞানের ছাত্রছাত্রী হিসেবে আমাদের বোঝা প্রয়োজন যে, নারীবাদ কেবল নারীদের অধিকার আদায়ের আন্দোলন নয়, বরং এটি সমাজকে দেখার একটি বিশেষ দৃষ্টিভঙ্গি। এই প্রকল্পের মাধ্যমে আমরা নারীবাদের সংজ্ঞা, এর ঐতিহাসিক বিবর্তন, বিভিন্ন সমাজতাত্ত্বিক দৃষ্টিভঙ্গি এবং ভারতে এর প্রাসঙ্গিকতা সম্পর্কে বিস্তারিত আলোচনা করব।
+        </p>
+    </div>
+
+    <!-- Concept -->
+    <div>
+        <h2>২. নারীবাদের ধারণা ও সংজ্ঞা (Concept of Feminism)</h2>
+        <p>
+            সাধারণভাবে, নারীবাদ হলো এমন একটি মতাদর্শ যা বিশ্বাস করে যে নারী ও পুরুষ—উভয়েই মানুষ হিসেবে সমান অধিকার ও মর্যাদার অধিকারী। এটি পিতৃতান্ত্রিক সমাজ ব্যবস্থার সমালোচনা করে এবং নারীর অধস্তনতার কারণ অনুসন্ধান করে।
+        </p>
+        <h3>সংজ্ঞা:</h3>
+        <p>
+            সমাজতাত্ত্বিক <strong>অলিভিয়া ব্যাঙ্কস (Olive Banks)</strong>-এর মতে, "নারীবাদ হলো সেই সব আন্দোলন ও মতাদর্শের সমষ্টি যা নারীর অধস্তন অবস্থান পরিবর্তন করতে চায় এবং তাদের সামাজিক মর্যাদা বৃদ্ধি করতে চায়।"
+        </p>
+        <p>
+            মূলত, নারীবাদ তিনটি মূল স্তম্ভের উপর দাঁড়িয়ে আছে:
+        </p>
+        <ol>
+            <li>সমাজ ব্যবস্থায় নারীরা পুরুষের তুলনায় অধস্তন বা শোষিত।</li>
+            <li>এই অধস্তনতা বা বৈষম্য প্রাকৃতিক নয়, বরং সামাজিক ও সাংস্কৃতিকভাবে নির্মিত।</li>
+            <li>যৌথ প্রচেষ্টার মাধ্যমে এই ব্যবস্থার পরিবর্তন সম্ভব।</li>
+        </ol>
+
+        <h3>পিতৃতন্ত্র (Patriarchy):</h3>
+        <p>
+            নারীবাদের আলোচনায় 'পিতৃতন্ত্র' শব্দটি কেন্দ্রীয়। পিতৃতন্ত্র হলো এমন একটি সমাজ ব্যবস্থা যেখানে ক্ষমতা, নিয়ন্ত্রণ এবং সম্পত্তির মালিকানা মূলত পুরুষের হাতে থাকে। এই ব্যবস্থায় নারীকে পুরুষের অধীনস্থ হিসেবে দেখা হয়।
+        </p>
+
+        <!-- Diagram 1: Patriarchy Flow (Placed in Context) -->
+        <div class="diagram-container">
+            <h3>চিত্র ১: পিতৃতন্ত্র ও লিঙ্গ বৈষম্যের সম্পর্ক</h3>
+            <div class="flow-diagram">
+                <div class="flow-box">পিতৃতন্ত্র<br>(Patriarchy)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">ক্ষমতার অসম বণ্টন<br>(Unequal Power)</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box">লিঙ্গ বৈষম্য<br>(Gender Inequality)</div>
+            </div>
+        </div>
+
+        <h3>লিঙ্গ বনাম সামাজিক লিঙ্গ (Sex vs. Gender):</h3>
+        <p>
+            নারীবাদীরা 'Sex' (জৈবিক লিঙ্গ) এবং 'Gender' (সামাজিক লিঙ্গ)-এর মধ্যে পার্থক্য করেন।
+        </p>
+        <ul>
+            <li><strong>Sex (জৈবিক লিঙ্গ):</strong> এটি নারী ও পুরুষের শারীরিক বা জৈবিক পার্থক্য (যেমন ক্রোমোজোম, হরমোন)। এটি অপরিবর্তনীয়।</li>
+            <li><strong>Gender (সামাজিক লিঙ্গ):</strong> এটি সমাজ কর্তৃক নির্ধারিত নারী ও পুরুষের ভূমিকা, আচরণ ও প্রত্যাশা। যেমন—"মেয়েরা কাঁদবে, ছেলেরা কাঁদবে না" বা "মেয়েরা ঘরের কাজ করবে"—এগুলি জেন্ডারের ধারণা, যা সমাজ তৈরি করেছে এবং যা পরিবর্তনযোগ্য।</li>
+        </ul>
+    </div>
+
+    <!-- History -->
+    <div>
+        <h2>৩. নারীবাদের ইতিহাস: বৈশ্বিক ও ভারতীয় প্রেক্ষিত</h2>
+        <p>
+            নারীবাদের ইতিহাসকে সাধারণত তিনটি বা চারটি 'ঢেউ' (Waves) বা তরঙ্গে ভাগ করা হয়।
+        </p>
+
+        <h3>প্রথম তরঙ্গ (First Wave): ১৮০০-এর শেষ থেকে ১৯২০</h3>
+        <p>
+            এই পর্যায়টি মূলত যুক্তরাজ্য এবং যুক্তরাষ্ট্রে শুরু হয়েছিল। এর প্রধান লক্ষ্য ছিল নারীদের ভোটাধিকার (Suffrage) এবং সম্পত্তির অধিকার আদায় করা। মেরি ওলস্টোনক্র্যাফট (Mary Wollstonecraft) ছিলেন এই সময়ের একজন অন্যতম তাত্ত্বিক। ১৯১৮ সালে ব্রিটেনে এবং ১৯২০ সালে আমেরিকায় নারীরা ভোটাধিকার পেলে এই তরঙ্গের প্রাথমিক লক্ষ্য পূরণ হয়।
+        </p>
+
+        <h3>দ্বিতীয় তরঙ্গ (Second Wave): ১৯৬০ থেকে ১৯৮০-র দশক</h3>
+        <p>
+            দ্বিতীয় তরঙ্গের স্লোগান ছিল—"The Personal is Political" (ব্যক্তিগতই রাজনৈতিক)। এই সময়ে কর্মক্ষেত্রে সমতা, প্রজনন অধিকার, পারিবারিক সহিংসতা এবং যৌনতার মতো বিষয়গুলি সামনে আসে। সিমন দ্য বোভোয়া (Simone de Beauvoir)-এর বিখ্যাত বই 'The Second Sex' এই সময়ে অত্যন্ত প্রভাব ফেলেছিল।
+        </p>
+
+        <h3>তৃতীয় ও চতুর্থ তরঙ্গ (Third & Fourth Wave): ১৯৯০ থেকে বর্তমান</h3>
+        <p>
+            তৃতীয় তরঙ্গ নারীদের জাতি, বর্ণ, ধর্ম এবং শ্রেণির বৈচিত্র্যকে স্বীকার করে। এটি কেবল শ্বেতাঙ্গ নারীদের কথা না বলে, কৃষ্ণাঙ্গ ও তৃতীয় বিশ্বের নারীদের কথাও বলে। বর্তমানে চতুর্থ তরঙ্গে ডিজিটাল অ্যাক্টিভিজম বা সোশ্যাল মিডিয়ার মাধ্যমে (যেমন #MeToo আন্দোলন) নারীবাদ নতুন রূপ পেয়েছে।
+        </p>
+
+        <h3>ভারতীয় প্রেক্ষাপট (Indian Context):</h3>
+        <p>
+            ভারতে নারীবাদের ইতিহাস পশ্চিমের থেকে কিছুটা ভিন্ন। 
+        </p>
+        <ul>
+            <li><strong>ঔপনিবেশিক যুগ:</strong> রাজা রামমোহন রায় এবং ঈশ্বরচন্দ্র বিদ্যাসাগরের মতো সমাজ সংস্কারকরা সতীদাহ প্রথা রদ ও বিধবা বিবাহ প্রচলনের মাধ্যমে নারীমুক্তির সূচনা করেন।</li>
+            <li><strong>স্বাধীনতা সংগ্রাম:</strong> মহাত্মা গান্ধীর ডাকে বহু নারী স্বাধীনতা আন্দোলনে যোগ দেন, যা তাদের ঘরের বাইরে আসার সুযোগ করে দেয়।</li>
+            <li><strong>স্বাধীনতার পরবর্তী কাল:</strong> ১৯৭০-এর দশকের পর ভারতে স্বায়ত্তশাসিত নারী আন্দোলন (Autonomous Women's Movement) শুরু হয়, যা যৌতুক, ধর্ষণ এবং মদ্যপানের বিরুদ্ধে সোচ্চার হয়।</li>
+        </ul>
+    </div>
+
+    <!-- Sociological Perspectives -->
+    <div class="section-break">
+        <h2>৪. সমাজতাত্ত্বিক দৃষ্টিভঙ্গি (Sociological Perspectives)</h2>
+        
+        <h3>১. কার্যকরীতাবাদী দৃষ্টিভঙ্গি (Functionalist Perspective)</h3>
+        <p>
+            কার্যকরীতাবাদীরা (যেমন ট্যালকট পার্সনস) সমাজকে একটি দেহের মতো মনে করেন যেখানে প্রতিটি অংশের নির্দিষ্ট কাজ আছে। ১৯৫০-এর দশকে তারা মনে করতেন যে লিঙ্গভিত্তিক শ্রম বিভাজন সমাজের স্থিতিশীলতার জন্য প্রয়োজন। তাদের মতে, পুরুষরা 'ইনস্ট্রুমেন্টাল' (অর্থ উপার্জনকারী) ভূমিকা পালন করবে এবং নারীরা 'এক্সপ্রেসিভ' (সন্তান পালন ও আবেগিক সমর্থন) ভূমিকা পালন করবে। আধুনিক নারীবাদীরা এই মতবাদকে সমালোচনা করেন কারণ এটি নারীর অধস্তনতাকে 'স্বাভাবিক' বলে দাবি করে।
+        </p>
+
+        <h3>২. সংঘাতবাদী দৃষ্টিভঙ্গি (Conflict Perspective)</h3>
+        <p>
+            কার্ল মার্ক্স এবং ফ্রেডরিখ এঙ্গেলসের তত্ত্বের ওপর ভিত্তি করে এই দৃষ্টিভঙ্গি গড়ে উঠেছে। এখানে সমাজকে পুরুষ এবং নারীর মধ্যে ক্ষমতার সংঘাত হিসেবে দেখা হয়। এঙ্গেলসের মতে, ব্যক্তিগত সম্পত্তির উদ্ভবই নারীদের দাসত্বে পরিণত করেছে। পুরুষরা সম্পত্তির উত্তরাধিকার নিশ্চিত করার জন্য নারীর যৌনতা ও প্রজনন ক্ষমতার ওপর নিয়ন্ত্রণ প্রতিষ্ঠা করে।
+        </p>
+
+        <h3>৩. প্রতীকী আন্তঃক্রিয়াবাদী দৃষ্টিভঙ্গি (Symbolic Interactionist Perspective)</h3>
+        <p>
+            এই দৃষ্টিভঙ্গিটি 'মাইক্রো' বা ক্ষুদ্র পরিসরে আলোচনা করে। এরা দেখান যে, আমরা দৈনন্দিন জীবনে কীভাবে যোগাযোগের মাধ্যমে 'লিঙ্গ' তৈরি করি। একে বলা হয় "Doing Gender"। অর্থাৎ, আমরা সমাজে নির্দিষ্ট পোশাক পরে, নির্দিষ্ট ভঙ্গিতে কথা বলে প্রতিনিয়ত প্রমাণ করি যে আমরা পুরুষ বা নারী।
+        </p>
+
+        <h3>৪. নারীবাদী অবস্থান তত্ত্ব (Feminist Standpoint Theory)</h3>
+        <p>
+            ডরোথি স্মিথ (Dorothy Smith) এই তত্ত্বের প্রবক্তা। এই তত্ত্ব অনুযায়ী, সমাজতত্ত্ব ও বিজ্ঞান এতদিন কেবল পুরুষের দৃষ্টিকোণ (Male perspective) থেকে লেখা হয়েছে। নারীদের অভিজ্ঞতা, তাদের দৈনন্দিন জীবন এবং তাদের জগতকে বোঝার জন্য একটি ভিন্ন 'অবস্থান' বা দৃষ্টিভঙ্গি প্রয়োজন।
+        </p>
+    </div>
+
+    <!-- Types of Feminism -->
+    <div>
+        <h2>৫. নারীবাদের বিভিন্ন ধরণ (Types of Feminism)</h2>
+        <p>নারীবাদ কোনো একক মতবাদ নয়, এর বিভিন্ন শাখা রয়েছে। প্রধান ধরণগুলির একটি ধারণা মানচিত্র নিচে দেওয়া হলো এবং তারপরে বিস্তারিত আলোচনা করা হলো:</p>
+
+        <!-- Diagram 2: Types of Feminism Map (Contextual & Improved) -->
+        <div class="diagram-container">
+            <h3>চিত্র ২: নারীবাদের প্রধান ধরণসমূহ</h3>
+            <div class="tree-diagram">
+                <div class="tree-root">নারীবাদ (Feminism)</div>
+                <div class="tree-connector-vertical"></div>
+                <div class="tree-connector-horizontal"></div>
+                
+                <div class="tree-branches">
+                    <!-- Branch 1 -->
+                    <div class="tree-branch-item">
+                        <div class="tree-connector-small-vertical"></div>
+                        <div class="tree-leaf">উদার<br>নারীবাদ</div>
+                    </div>
+                    <!-- Branch 2 -->
+                    <div class="tree-branch-item">
+                        <div class="tree-connector-small-vertical"></div>
+                        <div class="tree-leaf">মার্ক্সবাদী<br>নারীবাদ</div>
+                    </div>
+                    <!-- Branch 3 -->
+                    <div class="tree-branch-item">
+                        <div class="tree-connector-small-vertical"></div>
+                        <div class="tree-leaf">র‍্যাডিকাল<br>নারীবাদ</div>
+                    </div>
+                    <!-- Branch 4 -->
+                    <div class="tree-branch-item">
+                        <div class="tree-connector-small-vertical"></div>
+                        <div class="tree-leaf">সমাজতান্ত্রিক<br>নারীবাদ</div>
+                    </div>
+                    <!-- Branch 5 -->
+                    <div class="tree-branch-item">
+                        <div class="tree-connector-small-vertical"></div>
+                        <div class="tree-leaf">পরিবেশ<br>নারীবাদ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>ক. উদার নারীবাদ (Liberal Feminism)</h3>
+        <p>
+            উদার নারীবাদীরা মনে করেন, বিদ্যমান সমাজ ব্যবস্থার মধ্যেই সংস্কারের মাধ্যমে নারী মুক্তি সম্ভব। তারা বিপ্লবে বিশ্বাসী নন, বরং শিক্ষা, আইন এবং সামাজিক নীতির পরিবর্তনের মাধ্যমে সমতা আনতে চান। তাদের মূল দাবি হলো—সমান কাজে সমান বেতন, ভোটাধিকার এবং শিক্ষার সুযোগ।
+        </p>
+
+        <h3>খ. উগ্র বা মূলগত নারীবাদ (Radical Feminism)</h3>
+        <p>
+            র‍্যাডিকাল নারীবাদীদের মতে, নারীর শোষণের মূল কারণ হলো 'পিতৃতন্ত্র'। তারা মনে করেন, পুরুষের আধিপত্যই সকল সমস্যার মূল। শুলমিয়াথ ফায়ারস্টোন (Shulamith Firestone)-এর মতে, সন্তান ধারণের জৈবিক দায়িত্ব নারীকে দুর্বল করেছে। এই মতবাদ পরিবার প্রথা এবং প্রজনন ব্যবস্থাকে চ্যালেঞ্জ জানায়।
+        </p>
+
+        <h3>গ. মার্ক্সবাদী নারীবাদ (Marxist Feminism)</h3>
+        <p>
+            এই মতবাদ অনুযায়ী, পুঁজিবাদ (Capitalism) হলো নারী শোষণের প্রধান কারণ। পুঁজিবাদী ব্যবস্থায় নারীদের গৃহকর্মকে 'অবৈতনিক শ্রম' (Unpaid labour) হিসেবে ব্যবহার করা হয়, যা পুঁজিপতিদের মুনাফা বাড়াতে সাহায্য করে। পুঁজিবাদ ধ্বংস হলেই নারী মুক্তি সম্ভব।
+        </p>
+
+        <h3>ঘ. সমাজতান্ত্রিক নারীবাদ (Socialist Feminism)</h3>
+        <p>
+            এটি মার্ক্সবাদ এবং র‍্যাডিকাল নারীবাদের সংমিশ্রণ। এরা মনে করেন, নারীর শোষণের জন্য 'পুঁজিবাদ' এবং 'পিতৃতন্ত্র'—উভয়েই দায়ী। একে 'দ্বৈত ব্যবস্থা তত্ত্ব' (Dual Systems Theory) বলা হয়।
+        </p>
+
+        <h3>ঙ. সাংস্কৃতিক নারীবাদ (Cultural Feminism)</h3>
+        <p>
+            এই শাখাটি নারীর বিশেষ গুণাবলীকে (যেমন—যত্ন, মমতা, শান্তিপ্রিয়তা) উদযাপন করে। এরা পুরুষের মতো হতে চায় না, বরং মনে করে নারীর এই গুণগুলো সমাজের জন্য অপরিহার্য এবং এগুলোর সঠিক মূল্যায়ন হওয়া উচিত।
+        </p>
+
+        <h3>চ. পরিবেশ-নারীবাদ (Ecofeminism)</h3>
+        <p>
+            বন্দনা শিবা (Vandana Shiva) প্রমুখ এই ধারার প্রবক্তা। তারা পরিবেশের ওপর মানুষের শোষণ এবং নারীর ওপর পুরুষের শোষণের মধ্যে মিল খুঁজে পান। তারা মনে করেন, প্রকৃতি এবং নারী উভয়েই পিতৃতান্ত্রিক উন্নয়ন মডেলের শিকার।
+        </p>
+
+        <h3>ছ. অন্তর্বিভাজিত নারীবাদ (Intersectional Feminism)</h3>
+        <p>
+            এটি একটি অত্যন্ত গুরুত্বপূর্ণ আধুনিক ধারণা। এটি বলে যে, একজন নারী কেবল 'নারী' হওয়ার জন্য শোষিত হয় না। তার বর্ণ, শ্রেণি, ধর্ম বা জাতিসত্তা তার অভিজ্ঞতাকে প্রভাবিত করে। ভারতে একজন উচ্চবর্ণের নারী এবং একজন দলিত নারীর শোষণের অভিজ্ঞতা এক নয়।
+        </p>
+    </div>
+
+    <!-- Indian Context & Challenges -->
+    <div class="section-break">
+        <h2>৬. ভারতীয় প্রেক্ষাপটে নারীবাদ</h2>
+        <p>
+            ভারতে নারীবাদ পশ্চিমা ধাঁচের অন্ধ অনুকরণ নয়। ভারতের সামাজিক কাঠামো, বিশেষ করে জাতিভেদ প্রথা (Caste system) এবং ধর্মের প্রভাব এখানে নারীবাদকে একটি ভিন্ন রূপ দিয়েছে।
+        </p>
+        <ul>
+            <li><strong>সংবিধান ও আইন:</strong> ভারতীয় সংবিধানে অনুচ্ছেদ ১৪ (সমতা) এবং অনুচ্ছেদ ১৫ (বৈষম্যহীনতা) নারীর অধিকার রক্ষা করে। হিন্দু উত্তরাধিকার আইন (২০০৫) নারীদের পৈতৃক সম্পত্তিতে সমান অধিকার দিয়েছে।</li>
+            <li><strong>রাজনীতি:</strong> ৭৩তম ও ৭৪তম সংবিধান সংশোধনীর মাধ্যমে পঞ্চায়েত ও পুরসভায় নারীদের জন্য ৩৩% আসন সংরক্ষণ করা হয়েছে, যা গ্রামীণ নারীদের ক্ষমতায়নে বিশাল ভূমিকা রেখেছে।</li>
+            <li><strong>দলিত নারীবাদ:</strong> ভারতে গত কয়েক দশকে দলিত নারীবাদ একটি শক্তিশালী ধারা হিসেবে উঠে এসেছে, যারা মনে করেন মূলধারার ভারতীয় নারীবাদ (যা মূলত উচ্চবর্ণের নারীদের দ্বারা পরিচালিত) দলিত নারীদের কষ্টের কথা তুলে ধরতে ব্যর্থ হয়েছে।</li>
+        </ul>
+
+        <h2>৭. নারীবাদের চ্যালেঞ্জ ও সমালোচনা</h2>
+        <p>
+            নারীবাদ বিশ্বজুড়ে অনেক পরিবর্তন আনলেও, এটি বিভিন্ন চ্যালেঞ্জের সম্মুখীন:
+        </p>
+        <ol>
+            <li><strong>ভুল ধারণা:</strong> অনেকে মনে করেন নারীবাদ মানেই 'পুরুষ-বিদ্বেষ' (Man-hating)। কিন্তু প্রকৃত নারীবাদ পুরুষের বিরুদ্ধে নয়, বরং পিতৃতান্ত্রিক কাঠামোর বিরুদ্ধে।</li>
+            <li><strong>সাংস্কৃতিক প্রতিরোধ:</strong> অনেক ঐতিহ্যবাহী সমাজ নারীবাদকে 'পশ্চিমা সংস্কৃতি' বলে প্রত্যাখ্যান করে এবং মনে করে এটি পারিবারিক মূল্যবোধ নষ্ট করছে।</li>
+            <li><strong>অভ্যন্তরীণ বিরোধ:</strong> শ্বেতাঙ্গ নারীবাদী এবং তৃতীয় বিশ্বের নারীবাদীদের (Third World Feminists) মধ্যে অগ্রাধিকার নিয়ে মতপার্থক্য রয়েছে।</li>
+        </ol>
+    </div>
+
+    <!-- Present Situation & Statistics (Graphs moved here) -->
+    <div class="section-break">
+        <h2>৮. বর্তমান পরিস্থিতি ও পরিসংখ্যান (Present Situation & Trends)</h2>
+        <p>
+            নারীবাদী আন্দোলন ও আইনি সংস্কারের ফলে ভারতে নারীদের অবস্থানে ইতিবাচক পরিবর্তন এসেছে, তবে এখনো অনেক পথ চলা বাকি। নিচে শিক্ষা, রাজনীতি এবং সুরক্ষার ক্ষেত্রে বর্তমান পরিস্থিতি লেখচিত্রের মাধ্যমে তুলে ধরা হলো।
+        </p>
+
+        <!-- Graph 1: Literacy Rate -->
+        <div class="chart-wrapper">
+            <h3 class="chart-title">লেখচিত্র ১: ভারতে নারী ও পুরুষের সাক্ষরতার হার (১৯৫১-২০১১)</h3>
+            <p>
+                শিক্ষার হার বৃদ্ধি নারীর ক্ষমতায়নের অন্যতম সূচক। নিচের লেখচিত্রে দেখা যাচ্ছে, স্বাধীনতার পর থেকে নারী সাক্ষরতার হার উল্লেখযোগ্যভাবে বৃদ্ধি পেয়েছে।
+            </p>
+            <p style="font-size: 10pt; text-align: center;">(উৎস: ভারতের আদমশুমারি বা Census of India)</p>
+            
+            <div class="bar-chart">
+                <!-- 1951 -->
+                <div class="bar-group">
+                    <div class="bar male" style="height: 60px;">২৭%</div>
+                    <div class="bar female" style="height: 20px;">৯%</div>
+                    <div class="bar-label">১৯৫১</div>
+                </div>
+                <!-- 1981 -->
+                <div class="bar-group">
+                    <div class="bar male" style="height: 110px;">৫৬%</div>
+                    <div class="bar female" style="height: 60px;">৩০%</div>
+                    <div class="bar-label">১৯৮১</div>
+                </div>
+                <!-- 2001 -->
+                <div class="bar-group">
+                    <div class="bar male" style="height: 150px;">৭৫%</div>
+                    <div class="bar female" style="height: 108px;">৫৪%</div>
+                    <div class="bar-label">২০০১</div>
+                </div>
+                <!-- 2011 -->
+                <div class="bar-group">
+                    <div class="bar male" style="height: 164px;">৮২%</div>
+                    <div class="bar female" style="height: 130px;">৬৫%</div>
+                    <div class="bar-label">২০১১</div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item"><div class="color-box" style="background-color: #34495e;"></div> পুরুষ</div>
+                <div class="legend-item"><div class="color-box" style="background-color: #e74c3c;"></div> নারী</div>
+            </div>
+
+            <!-- Data Table for Student -->
+            <table style="width: 80%; margin: 20px auto;">
+                <caption>লেখচিত্রের তথ্য সারণী (শতাংশে)</caption>
+                <tr>
+                    <th>বছর</th>
+                    <th>পুরুষ</th>
+                    <th>নারী</th>
+                </tr>
+                <tr><td>১৯৫১</td><td>২৭.১৬</td><td>৮.৮৬</td></tr>
+                <tr><td>১৯৮১</td><td>৫৬.৩৮</td><td>২৯.৭৬</td></tr>
+                <tr><td>২০০১</td><td>৭৫.২৬</td><td>৫৩.৬৭</td></tr>
+                <tr><td>২০১১</td><td>৮২.১৪</td><td>৬৫.৪৬</td></tr>
+            </table>
+        </div>
+
+        <!-- Graph 2: Women in Parliament -->
+        <div class="chart-wrapper">
+            <h3 class="chart-title">লেখচিত্র ২: লোকসভায় নারীদের প্রতিনিধিত্ব (শতাংশ)</h3>
+            <p>
+                রাজনীতিতে নারীদের অংশগ্রহণ বাড়ছে, তবে তা জনসংখ্যার অনুপাতে এখনো কম। ২০১৯ সালের নির্বাচনে লোকসভায় নারীর অংশগ্রহণ সর্বোচ্চ পর্যায়ে পৌঁছেছে।
+            </p>
+            <p style="font-size: 10pt; text-align: center;">(স্বাধীনতার পর থেকে ধীরে ধীরে বৃদ্ধি)</p>
+
+            <div class="bar-chart" style="align-items: flex-end; justify-content: space-around; padding-right: 20px;">
+                <div class="bar-group" style="width: auto;">
+                    <div class="bar" style="height: 40px; width: 40px; background-color: #27ae60;">৪.৪%</div>
+                    <div class="bar-label">১৯৫২</div>
+                </div>
+                <div class="bar-group" style="width: auto;">
+                    <div class="bar" style="height: 80px; width: 40px; background-color: #27ae60;">৮.১%</div>
+                    <div class="bar-label">১৯৯৯</div>
+                </div>
+                <div class="bar-group" style="width: auto;">
+                    <div class="bar" style="height: 108px; width: 40px; background-color: #27ae60;">১০.৯%</div>
+                    <div class="bar-label">২০০৯</div>
+                </div>
+                <div class="bar-group" style="width: auto;">
+                    <div class="bar" style="height: 144px; width: 40px; background-color: #27ae60;">১৪.৪%</div>
+                    <div class="bar-label">২০১৯</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 10px; font-size: 12px;">বছর (লোকসভা নির্বাচন)</div>
+        </div>
+
+        <!-- Graph 3: Crimes Against Women -->
+        <div class="chart-wrapper">
+            <h3 class="chart-title">লেখচিত্র ৩: নারীদের বিরুদ্ধে নথিভুক্ত অপরাধের প্রবণতা (২০১৮-২০২২)</h3>
+            <p>
+                দুর্ভাগ্যবশত, নারীদের বিরুদ্ধে অপরাধ এখনো একটি বড় চ্যালেঞ্জ। নিচে সাম্প্রতিক বছরগুলোর অপরাধের পরিসংখ্যান (লক্ষে) দেখানো হলো।
+            </p>
+            <p style="font-size: 10pt; text-align: center;">(উৎস: NCRB ডেটা; সংখ্যা লক্ষে)</p>
+            
+            <div class="bar-chart" style="justify-content: space-between; padding: 0 40px;">
+                <div class="bar-group">
+                    <div class="bar" style="height: 100px; background-color: #8e44ad;">৩.৭৮</div>
+                    <div class="bar-label">২০১৮</div>
+                </div>
+                <div class="bar-group">
+                    <div class="bar" style="height: 105px; background-color: #8e44ad;">৪.০৫</div>
+                    <div class="bar-label">২০১৯</div>
+                </div>
+                <div class="bar-group">
+                    <div class="bar" style="height: 98px; background-color: #8e44ad;">৩.৭১</div>
+                    <div class="bar-label">২০২০</div>
+                </div>
+                <div class="bar-group">
+                    <div class="bar" style="height: 115px; background-color: #8e44ad;">৪.২৮</div>
+                    <div class="bar-label">২০২১</div>
+                </div>
+                <div class="bar-group">
+                    <div class="bar" style="height: 120px; background-color: #8e44ad;">৪.৪৫</div>
+                    <div class="bar-label">২০২২</div>
+                </div>
+            </div>
+            <p style="font-size: 10pt; margin-top: 15px;">*দ্রষ্টব্য: ২০২০ সালে কোভিড-১৯ লকডাউনের কারণে নথিভুক্ত অপরাধের সংখ্যা সাময়িকভাবে কমেছিল।</p>
+        </div>
+    </div>
+
+    <!-- Conclusion -->
+    <div>
+        <h2>৯. উপসংহার (Conclusion)</h2>
+        <p>
+            পরিশেষে বলা যায়, নারীবাদ সমাজতত্ত্বের একটি জীবন্ত এবং বিকাশমান শাখা। এটি আমাদের চোখ খুলে দিয়েছে যে, এতদিন আমরা সমাজকে কেবল পুরুষের দৃষ্টিতে দেখেছি। নারীবাদ সমাজকে আরও গণতান্ত্রিক, মানবিক এবং সমতাপূর্ণ করে তোলার স্বপ্ন দেখে।
+        </p>
+        <p>
+            ভারতে শিক্ষার হার বৃদ্ধি এবং কর্মক্ষেত্রে নারীদের অংশগ্রহণ বাড়লেও, নারী নির্যাতন ও লিঙ্গ বৈষম্য এখনও প্রবল। তাই আজও নারীবাদের প্রাসঙ্গিকতা ফুরিয়ে যায়নি। একটি সুস্থ সমাজ গড়তে হলে নারী ও পুরুষকে একে অপরের প্রতিপক্ষ না ভেবে সহযোগী হিসেবে এগিয়ে আসতে হবে। সমাজতত্ত্বের ছাত্র হিসেবে এই সচেতনতা ছড়িয়ে দেওয়াই আমাদের লক্ষ্য হওয়া উচিত।
+        </p>
+    </div>
+
+    <!-- Bibliography -->
+    <div class="section-break">
+        <h2>১০. তথ্যসূত্র (Bibliography)</h2>
+        <p>এই প্রকল্পটি তৈরি করতে নিম্নলিখিত উৎসগুলির সাহায্য নেওয়া হয়েছে:</p>
+        <ul>
+            <li>ভট্টাচার্য, সুদেষ্ণা (২০১৮)। <em>সমাজতত্ত্ব ও ভারতীয় সমাজ</em>। কলকাতা: প্রগ্রেসিভ পাবলিশার্স।</li>
+            <li>গঙ্গোপাধ্যায়, অনাদি (২০২০)। <em>নারীবাদের তাত্ত্বিক রূপরেখা</em>। ঢাকা: বাংলা একাডেমি।</li>
+            <li>Giddens, Anthony (2013). <em>Sociology</em> (7th Edition). Polity Press.</li>
+            <li>Haralambos, M., & Holborn, M. (2014). <em>Sociology: Themes and Perspectives</em>. HarperCollins.</li>
+            <li>Bhasin, Kamla (2000). <em>Understanding Gender</em>. Women Unlimited.</li>
+            <li>বিভিন্ন ইন্টারনেট উৎস এবং সমাজতাত্ত্বিক জার্নাল।</li>
+        </ul>
+    </div>
+
+</body>
+</html>
