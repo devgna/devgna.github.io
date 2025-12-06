@@ -3,24 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OST - Open Source Technology</title>
+    <title>ID Photo Printer (5.5cm x 8.5cm)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            background-color: #f9fafb;
+        /* PRINT SPECIFIC CSS 
+           This ensures physical dimensions are respected by the printer driver 
+        */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+            /* Hide UI elements during print */
+            .no-print {
+                display: none !important;
+            }
+            /* Ensure the A4 container is the only thing visible and formatted correctly */
+            #print-area {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 210mm;
+                height: 297mm;
+                overflow: hidden;
+                box-shadow: none;
+                margin: 0;
+                border: none;
+                transform: scale(1) !important; /* Reset any screen scaling */
+            }
         }
+
+        /* SCREEN PREVIEW CSS */
+        .a4-sheet {
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+            margin: 0 auto;
+            overflow: hidden;
+            /* Flex layout to center the content on the paper */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20mm; /* Start printing a bit down from the top edge */
+        }
+
+        /* EXACT DIMENSIONS 
+           5.5cm = 55mm
+           8.5cm = 85mm
+        */
+        .id-card-slot {
+            width: 55mm;
+            height: 85mm;
+            position: relative;
+            border: 1px dashed #ccc; /* Guide line for cutting */
+            overflow: hidden;
+            background-color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* This ensures the image fills the slot perfectly (cropping) 
+           without stretching (aspect ratio preserved)
+        */
+        .id-card-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            object-position: center top; /* Focus on faces usually at top/center */
+        }
+        
+        /* Thin cut lines for precision */
+        .cut-mark-tl, .cut-mark-tr, .cut-mark-bl, .cut-mark-br {
+            position: absolute;
+            width: 4mm;
+            height: 4mm;
+            border-color: #000;
+            border-style: solid;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Corner markers to help cutting */
+        .cut-mark-tl { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+        .cut-mark-tr { top: -1px; right: -1px; border-width: 1px 1px 0 0; }
+        .cut-mark-bl { bottom: -1px; left: -1px; border-width: 0 0 1px 1px; }
+        .cut-mark-br { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="max-w-3xl w-full bg-white shadow-lg rounded-2xl p-6 text-center">
-        <h1 class="text-3xl font-bold text-gray-800">SEM-4</h1>
-        <p class="text-gray-600 mt-2">Index</p>
-        <ul class="mt-4 space-y-3 text-lg">
-            <!-- Add your chapters here -->
-            <li><a href="OST/index.html" class="text-blue-600 hover:underline">OST- Open Source Technology</a></li> 
-            <li><a href="SE/index.html" class="text-blue-600 hover:underline">SE - Software Technology</a></li> 
-            <li><a href="CN/index.html" class="text-blue-600 hover:underline">CN - Computer Networks</a></li>
-        </ul>
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
+
+    <!-- CONTROLS HEADER (Hidden when printing) -->
+    <div class="no-print fixed top-0 left-0 right-0 bg-white border-b border-slate-200 z-50 shadow-sm p-4">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <div class="flex items-center gap-2">
+                <i data-lucide="id-card" class="text-blue-600 w-6 h-6"></i>
+                <h1 class="text-xl font-bold text-slate-800">ID Photo Printer</h1>
+            </div>
+
+            <div class="flex flex-wrap gap-4 justify-center">
+                <!-- Upload 1 -->
+                <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition border border-slate-300">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    <span>Select Photo 1</span>
+                    <input type="file" id="upload1" accept="image/*" class="hidden" onchange="handleImage(this, 'preview1', 'placeholder1')">
+                </label>
+
+                <!-- Upload 2 -->
+                <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition border border-slate-300">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    <span>Select Photo 2</span>
+                    <input type="file" id="upload2" accept="image/*" class="hidden" onchange="handleImage(this, 'preview2', 'placeholder2')">
+                </label>
+            </div>
+
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg transition transform hover:scale-105">
+                <i data-lucide="printer" class="w-5 h-5"></i>
+                Print ID Sheet
+            </button>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="max-w-5xl mx-auto mt-2 text-center text-sm text-slate-500 bg-yellow-50 p-2 rounded border border-yellow-200">
+            ⚠️ <strong>Printer Settings:</strong> Select "A4 Paper" and Scale "100%" (or Actual Size). Do not use "Fit to Page".
+        </div>
     </div>
+
+    <!-- MAIN PREVIEW AREA -->
+    <div class="pt-32 pb-12 px-4 flex justify-center items-start min-h-screen overflow-auto">
+        
+        <!-- This is the actual A4 Page wrapper -->
+        <div id="print-area" class="a4-sheet ring-1 ring-slate-200">
+            
+            <!-- Title on the paper (Optional, helpful for organizing) -->
+            <div class="w-full text-center mb-8 mt-4 text-slate-300 uppercase tracking-widest text-xs font-mono">
+                ID Photo Cut Sheet (5.5cm x 8.5cm)
+            </div>
+
+            <!-- Photos Container -->
+            <div class="flex flex-row gap-8 items-center justify-center">
+                
+                <!-- Photo 1 Slot -->
+                <div class="flex flex-col items-center gap-2">
+                    <div class="id-card-slot shadow-sm">
+                        <img id="preview1" src="" class="hidden">
+                        <div id="placeholder1" class="text-slate-400 flex flex-col items-center gap-1">
+                            <i data-lucide="image" class="w-8 h-8 opacity-50"></i>
+                            <span class="text-xs">Photo 1</span>
+                        </div>
+                        <!-- Cutting guides -->
+                        <div class="cut-mark-tl"></div>
+                        <div class="cut-mark-tr"></div>
+                        <div class="cut-mark-bl"></div>
+                        <div class="cut-mark-br"></div>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-mono tracking-tight">5.5cm x 8.5cm</span>
+                </div>
+
+                <!-- Photo 2 Slot -->
+                <div class="flex flex-col items-center gap-2">
+                    <div class="id-card-slot shadow-sm">
+                        <img id="preview2" src="" class="hidden">
+                        <div id="placeholder2" class="text-slate-400 flex flex-col items-center gap-1">
+                            <i data-lucide="image" class="w-8 h-8 opacity-50"></i>
+                            <span class="text-xs">Photo 2</span>
+                        </div>
+                        <!-- Cutting guides -->
+                        <div class="cut-mark-tl"></div>
+                        <div class="cut-mark-tr"></div>
+                        <div class="cut-mark-bl"></div>
+                        <div class="cut-mark-br"></div>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-mono tracking-tight">5.5cm x 8.5cm</span>
+                </div>
+
+            </div>
+
+            <!-- Helper Text on Paper -->
+            <div class="mt-12 text-center text-slate-300 text-[10px] font-sans max-w-[100mm]">
+                <p>Cut along the corner guides.</p>
+            </div>
+
+        </div>
+
+        <!-- Scale warning for mobile users -->
+        <div class="no-print absolute top-full mt-4 text-xs text-slate-400 md:hidden text-center pb-8">
+            Pinch to zoom. This preview represents an actual A4 sheet.
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        function handleImage(input, imgId, placeholderId) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(imgId);
+                    const placeholder = document.getElementById(placeholderId);
+                    
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
 </body>
 </html>
+
