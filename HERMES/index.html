@@ -1,782 +1,1377 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  ChevronRight, ChevronLeft, Cpu, Shield, Activity, Zap, Server, Network, 
-  BarChart2, CheckCircle, Layers, ArrowRight, Target, Lightbulb, 
-  AlertTriangle, Globe, Lock, Code, Database, Terminal, Play, Maximize, Minimize
-} from 'lucide-react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, 
-  ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area 
-} from 'recharts';
+<!DOCTYPE html>
+<html lang="en">
 
-// --- Configuration & Data (Sourced from HERMES Paper) ---
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HERMES - icSoftComp 2025 Presentation</title>
 
-const PRIMARY_COLOR = "#0f172a"; // Slate 900
-const ACCENT_COLOR = "#2563eb"; // Blue 600
+    <!-- Preload Critical Assets -->
+    <link rel="preload"
+        href="https://github.com/devgna/devgna.github.io/blob/b3b8c8e76bb895f87e794b6002c1906e2edcd4c8/HERMES/Images/f8ca047c-3661-459c-a8f3-cfd67ae1d3b1.jpg?raw=true"
+        as="image">
+    <link rel="preload"
+        href="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/b39a94b3-a960-420e-951e-7294eaa0537a.jpg?raw=true"
+        as="image">
 
-// Comparison Data (Table 1 & 2)
-const accuracyData = [
-  { name: 'Snort', value: 84.7, fill: '#cbd5e1' },
-  { name: 'Suricata', value: 85.9, fill: '#cbd5e1' },
-  { name: 'ML-Only', value: 91.3, fill: '#93c5fd' },
-  { name: 'HERMES', value: 94.7, fill: '#2563eb' },
-];
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
 
-// Latency vs Throughput Data (Fig. 3 Approximation)
-const latencyData = [
-  { pps: '2k', HERMES: 1.2, Suricata: 1.3, ML_Only: 2.1 },
-  { pps: '5k', HERMES: 1.5, Suricata: 1.6, ML_Only: 2.8 },
-  { pps: '8k', HERMES: 1.8, Suricata: 1.9, ML_Only: 3.2 },
-  { pps: '10k', HERMES: 2.2, Suricata: 2.4, ML_Only: 3.8 },
-  { pps: '12k', HERMES: 2.5, Suricata: 3.2, ML_Only: 4.5 },
-  { pps: '15k', HERMES: 2.8, Suricata: 4.2, ML_Only: 5.3 }, // HERMES holds well
-  { pps: '18k', HERMES: 4.1, Suricata: 5.8, ML_Only: 6.5 },
-  { pps: '20k', HERMES: 6.2, Suricata: 7.5, ML_Only: 7.8 },
-];
+    <style>
+        /* --- 1. CSS VARIABLES & SEMANTICS --- */
+        :root {
+            /* Palette */
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --slate-50: #f8fafc;
 
-const powerData = [
-  { name: 'x86 NIDS', watts: 12.8, fill: '#ef4444' }, // Proxy for standard server/desktop NIDS
-  { name: 'ML-Only (Pi)', watts: 5.4, fill: '#f97316' },
-  { name: 'HERMES (Pi)', watts: 4.2, fill: '#22c55e' },
-];
+            /* Semantic Mapping */
+            --primary: #2563eb;
+            /* Blue-600 */
+            --primary-light: #eff6ff;
+            /* Blue-50 */
+            --primary-dark: #1d4ed8;
+            /* Blue-700 */
+            --success: #22c55e;
+            /* Green */
+            --success-light: #dcfce7;
+            --danger: #ef4444;
+            /* Red */
+            --danger-light: #fef2f2;
+            --warning: #f97316;
+            /* Orange */
+            --warning-light: #fff7ed;
+            --info: #a855f7;
+            /* Purple */
+            --info-light: #f3e8ff;
+            --highlight: #eab308;
+            /* Yellow */
 
-// --- Components ---
-
-const SlideLayout = ({ children, slideNumber, title }) => (
-  <div className="h-full w-full flex flex-col bg-white text-slate-900 relative overflow-hidden font-sans selection:bg-blue-100">
-    {/* Header - Logos & Conf Info */}
-    <div className="h-20 border-b border-slate-200 flex justify-between items-center px-8 bg-slate-50/80 backdrop-blur-sm">
-      <div className="flex items-center gap-6 h-full py-2">
-         {/* Springer Logo Placeholder */}
-         <div className="flex flex-col items-center justify-center">
-            <img 
-            src="https://github.com/devgna/devgna.github.io/blob/b3b8c8e76bb895f87e794b6002c1906e2edcd4c8/HERMES/Images/f8ca047c-3661-459c-a8f3-cfd67ae1d3b1.jpg?raw=true" 
-            alt="Springer" 
-            className="h-10 object-contain" 
-            onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} 
-            />
-            <span className="hidden text-[10px] text-slate-400 border border-dashed border-slate-300 px-2 py-1">Springer Logo</span>
-         </div>
-         
-         {/* Divider */}
-         <div className="h-8 w-px bg-slate-300"></div>
-
-         {/* icSoftComp Logo Placeholder */}
-         <div className="flex flex-col items-center justify-center">
-            <img 
-            src="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/b39a94b3-a960-420e-951e-7294eaa0537a.jpg?raw=true" 
-            alt="icSoftComp" 
-            className="h-12 object-contain" 
-            onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} 
-            />
-            <span className="hidden text-[10px] text-slate-400 border border-dashed border-slate-300 px-2 py-1">icSoftComp Logo</span>
-         </div>
-      </div>
-      <div className="text-right">
-        <div className="flex items-center justify-end gap-2 mb-1">
-             <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">Paper ID: 679</span>
-             <span className="text-xs font-bold text-slate-700">icSoftComp 2025</span>
-        </div>
-        <p className="text-[10px] text-slate-500 font-medium">Dec 11 (Thu) • Slot S11 • 9:00–10:30 IST</p>
-      </div>
-    </div>
-
-    {/* Main Content Area */}
-    <div className="flex-1 px-12 py-8 flex flex-col relative z-10 overflow-hidden">
-      {title && (
-        <div className="mb-6 border-b border-slate-100 pb-2">
-            <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-            <div className="w-1.5 h-8 bg-blue-600 rounded-full"></div>
-            {title}
-            </h2>
-        </div>
-      )}
-      <div className="flex-1 h-full w-full">
-        {children}
-      </div>
-    </div>
-
-    {/* Footer */}
-    <div className="h-10 bg-slate-50 border-t border-slate-200 flex justify-between items-center px-12 text-[11px] text-slate-500 font-medium">
-      <span className="flex items-center gap-2">
-        <Server size={12} className="text-blue-500"/> 
-        CSIC CHARUSAT
-      </span>
-      <span className="uppercase tracking-widest text-slate-400 font-semibold">HERMES: Hybrid AI/ML Edge Security</span>
-      <span className="bg-slate-200 text-slate-700 w-6 h-6 flex items-center justify-center rounded-full font-bold text-[10px]">{slideNumber}</span>
-    </div>
-  </div>
-);
-
-// --- Content Slides ---
-
-const TitleSlide = () => (
-  <div className="h-full flex flex-col justify-center items-center text-center space-y-12 animate-in fade-in duration-700">
-    <div className="space-y-6 max-w-5xl">
-      <div className="inline-block px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-bold tracking-wide border border-blue-100 mb-4">
-        Paper ID: 679 • Network Security Track
-      </div>
-      <h1 className="text-6xl font-extrabold text-slate-900 leading-tight tracking-tight">
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-500">HERMES</span>
-      </h1>
-      <h2 className="text-3xl font-bold text-slate-800 leading-snug">
-        Design and Deployment of a Hybrid AI/ML Network Security System
-        <span className="block text-2xl font-medium text-slate-500 mt-2">on ARM Clusters for Edge Environments</span>
-      </h2>
-    </div>
-    
-    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl w-full max-w-3xl transform hover:scale-[1.01] transition-transform duration-500">
-      <div className="grid grid-cols-2 gap-12 text-left relative">
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-100"></div>
-        <div>
-          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-3">Authors</p>
-          <ul className="space-y-4">
-            {/* Arpan Raval */}
-            <li className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100 shadow-sm relative group">
-                    <img 
-                        src="https://www.charusat.ac.in/cmpica/images/faculty_photo/ARPANKUMAR%20RAVAL.png" 
-                        alt="Arpan Raval" 
-                        className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="w-full h-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">AR</div>'}}
-                    />
-                </div>
-                <div>
-                    <span className="block font-bold text-slate-900 text-lg">Arpan Raval</span>
-                    <span className="text-xs text-blue-600 font-bold uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-full">Presenter</span>
-                </div>
-            </li>
-            
-            {/* Devgna Vyas - Updated Image and Matching Style */}
-            <li className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-100 shadow-sm relative group">
-                   <img 
-                        src="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/Gemini_Generated_Image_1bwcfd1bwcfd1bwc.png?raw=true" 
-                        alt="Devgna Vyas" 
-                        className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">DV</div>'}}
-                    />
-                </div>
-                <div>
-                    <span className="block font-bold text-slate-900 text-lg">Devgna Vyas</span>
-                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full">Co-Author</span>
-                </div>
-            </li>
-          </ul>
-        </div>
-        <div className="pl-4">
-          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-3">Affiliation & Support</p>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-                <img 
-                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeSyxavDfHVrlJqN3bArfNlscYKhKpk80-hg&s" 
-                    alt="CSIC Logo" 
-                    className="w-10 h-10 object-contain"
-                />
-                <div>
-                    <div className="font-bold text-slate-800 text-sm">CSIC CHARUSAT</div>
-                    <div className="text-[10px] text-slate-500">Cloud & Security Research Lab</div>
-                </div>
-            </div>
-            <div className="flex items-center gap-3">
-                <img 
-                    src="https://ihubgujarat.in/assets/img/SSIP_Logo.png" 
-                    alt="SSIP Logo" 
-                    className="w-10 h-10 object-contain"
-                />
-                <div>
-                    <div className="font-bold text-slate-800 text-sm">Supported by SSIP</div>
-                    <div className="text-[10px] text-slate-500">Student Startup & Innovation Policy</div>
-                </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const MotivationSlide = () => (
-  <div className="flex flex-col h-full justify-center gap-10">
-    <div className="grid grid-cols-2 gap-10">
-      <div className="bg-gradient-to-br from-blue-50 to-white p-8 rounded-2xl border border-blue-100 shadow-sm">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-blue-100 rounded-lg text-blue-700"><Activity size={32} /></div>
-          <h3 className="text-2xl font-bold text-slate-800">The Edge Explosion</h3>
-        </div>
-        <p className="text-slate-600 text-lg leading-relaxed">
-          IoT and Edge devices are now critical infrastructure. Computation is shifting from cloud to device (Fog/Edge), drastically expanding the attack surface for SMBs and smart cities.
-        </p>
-      </div>
-      <div className="bg-gradient-to-br from-orange-50 to-white p-8 rounded-2xl border border-orange-100 shadow-sm">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-orange-100 rounded-lg text-orange-700"><Lock size={32} /></div>
-          <h3 className="text-2xl font-bold text-slate-800">The Security Gap</h3>
-        </div>
-        <p className="text-slate-600 text-lg leading-relaxed">
-          Traditional NIDS (Snort/Suricata) are too resource-heavy for Raspberry Pi-class devices. Conversely, cloud-based inspection introduces unacceptable latency ({'>'}100ms) for real-time control.
-        </p>
-      </div>
-    </div>
-    <div className="w-full bg-slate-800 text-white p-6 rounded-xl flex items-center justify-center shadow-lg transform hover:-translate-y-1 transition-transform">
-      <p className="text-xl font-medium">
-        <span className="text-blue-400 font-bold uppercase tracking-wider mr-3">Core Question:</span> 
-        "How do we secure low-power ARM devices against Zero-Day attacks without draining their limited battery & CPU?"
-      </p>
-    </div>
-  </div>
-);
-
-const ProblemSlide = () => (
-  <div className="h-full flex flex-col justify-center">
-    <div className="grid grid-cols-3 gap-8">
-      {[
-        { 
-            icon: Zap, color: "text-yellow-600", bg: "bg-yellow-50", 
-            title: "Resource Constraints", 
-            desc: "Edge nodes (e.g., Raspberry Pi 5) have limited thermal envelopes (5W) and shared RAM for apps + security." 
-        },
-        { 
-            icon: Layers, color: "text-blue-600", bg: "bg-blue-50", 
-            title: "Static Signatures Fail", 
-            desc: "Rule-based systems (Snort) cannot detect polymorphic or zero-day attacks, which are increasingly common in IoT botnets." 
-        },
-        { 
-            icon: Cpu, color: "text-red-600", bg: "bg-red-50", 
-            title: "AI Overhead", 
-            desc: "Standard Deep Learning models (ResNet/VGG) are too heavy for ARMv8-A inference, causing packet drops > 30%." 
+            /* Layout */
+            --base-width: 1280px;
+            --base-height: 720px;
+            --header-height: 80px;
+            --footer-height: 40px;
         }
-      ].map((item, i) => (
-        <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center group hover:border-blue-200 transition-colors">
-          <div className={`w-20 h-20 ${item.bg} rounded-full flex items-center justify-center mb-6 ${item.color} group-hover:scale-110 transition-transform duration-300`}>
-            <item.icon size={40} />
-          </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-4">{item.title}</h3>
-          <p className="text-slate-600 leading-relaxed">
-            {item.title === "AI Overhead" ? (
-                <>Standard Deep Learning models (ResNet/VGG) are too heavy for ARMv8-A inference, causing packet drops {'>'} 30%.</>
-            ) : item.desc}
-          </p>
-        </div>
-      ))}
-    </div>
-  </div>
-);
 
-const ObjectivesSlide = () => (
-  <div className="h-full flex items-center justify-center">
-    <div className="bg-white rounded-2xl p-10 border border-slate-200 w-full shadow-lg relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
-      <ul className="space-y-8">
-        {[
-          { text: "Develop a Hybrid NIDS architecture combining lightweight rule filtering with Deep Learning.", icon: Layers },
-          { text: "Optimize DNN models for ARMv8-A using 8-bit Quantization (TFLite/ONNX).", icon: Cpu },
-          { text: "Ensure real-time throughput (>10k pps) with low power consumption (<5W).", icon: Activity },
-          { text: "Validate scalability using K3s (Lightweight Kubernetes) on Raspberry Pi clusters.", icon: Server }
-        ].map((obj, i) => (
-          <li key={i} className="flex items-center gap-6 text-xl text-slate-700">
-            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 text-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
-              <obj.icon size={24} />
-            </div>
-            <span className="font-medium">
-                {obj.text.includes(">10k") ? (
-                    <>Ensure real-time throughput ({'>'}10k pps) with low power consumption ({'<'}5W).</>
-                ) : obj.text}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </div>
-);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const ArchitectureSlide = () => (
-  <div className="h-full flex flex-col justify-center gap-8">
-    <div className="bg-slate-50 p-6 rounded-xl border border-dashed border-slate-300 mb-2">
-       <div className="flex justify-center items-center gap-12">
-          {/* Node Representation */}
-          <div className="flex flex-col items-center">
-             <div className="w-32 h-20 bg-slate-800 rounded-lg flex items-center justify-center text-white shadow-lg mb-2 relative">
-                <span className="absolute -top-2 -right-2 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></span>
-                <Cpu size={32} />
-             </div>
-             <p className="text-xs font-bold text-slate-600 uppercase">Raspberry Pi Node 1</p>
-          </div>
-          <div className="h-px w-20 bg-slate-400 border-t border-dashed"></div>
-          <div className="flex flex-col items-center">
-             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 border-4 border-blue-200 shadow-inner">
-                <Server size={32} />
-             </div>
-             <p className="text-xs font-bold text-blue-600 mt-2 uppercase">K3s Orchestrator</p>
-          </div>
-          <div className="h-px w-20 bg-slate-400 border-t border-dashed"></div>
-          <div className="flex flex-col items-center">
-             <div className="w-32 h-20 bg-slate-800 rounded-lg flex items-center justify-center text-white shadow-lg mb-2 relative">
-                <span className="absolute -top-2 -right-2 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></span>
-                <Cpu size={32} />
-             </div>
-             <p className="text-xs font-bold text-slate-600 uppercase">Raspberry Pi Node 2</p>
-          </div>
-       </div>
-    </div>
+        body {
+            background-color: var(--slate-900);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: var(--slate-800);
+        }
 
-    <div className="relative">
-       <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -z-10 transform -translate-y-1/2"></div>
-       <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-slate-200 p-4 rounded-xl text-center shadow-sm z-10">
-             <div className="text-slate-500 text-xs uppercase font-bold mb-2">Ingest</div>
-             <div className="font-bold text-slate-800 text-lg">Libpcap</div>
-             <div className="text-xs text-slate-400">Zero-Copy Capture</div>
-          </div>
-          <div className="bg-white border-2 border-green-500 p-4 rounded-xl text-center shadow-md z-10 relative overflow-hidden">
-             <div className="bg-green-500 text-white text-[10px] font-bold py-1 absolute top-0 left-0 right-0">STAGE 1</div>
-             <div className="mt-4 font-bold text-green-700 text-lg">Hyperscan</div>
-             <div className="text-xs text-slate-500">Signature Filter</div>
-             <div className="text-[10px] bg-green-50 text-green-800 rounded px-2 py-0.5 mt-1 inline-block">Drops 80% Traffic</div>
-          </div>
-          <div className="bg-white border-2 border-purple-500 p-4 rounded-xl text-center shadow-md z-10 relative overflow-hidden">
-             <div className="bg-purple-500 text-white text-[10px] font-bold py-1 absolute top-0 left-0 right-0">STAGE 2</div>
-             <div className="mt-4 font-bold text-purple-700 text-lg">ONNX Runtime</div>
-             <div className="text-xs text-slate-500">Quantized DNN</div>
-             <div className="text-[10px] bg-purple-50 text-purple-800 rounded px-2 py-0.5 mt-1 inline-block">Detects Zero-Day</div>
-          </div>
-          <div className="bg-white border-2 border-red-500 p-4 rounded-xl text-center shadow-sm z-10">
-             <div className="text-red-500 text-xs uppercase font-bold mb-2">Action</div>
-             <div className="font-bold text-slate-800 text-lg">Redis + Log</div>
-             <div className="text-xs text-slate-400">Distributed Alerting</div>
-          </div>
-       </div>
-    </div>
-  </div>
-);
+        /* --- 2. LAYOUT ENGINE --- */
+        #scaler {
+            width: var(--base-width);
+            height: var(--base-height);
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+        }
 
-const MethodologySlide = () => (
-  <div className="grid grid-cols-2 gap-8 h-full">
-    <div className="bg-slate-50 p-8 rounded-2xl border border-slate-200 flex flex-col justify-center">
-      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-        <Database size={24} className="text-blue-600"/> Data & Training
-      </h3>
-      <div className="space-y-6 relative pl-4 border-l-2 border-slate-200">
-        <div className="relative">
-            <div className="absolute -left-[25px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white"></div>
-            <h4 className="font-bold text-slate-800">Dataset Merging</h4>
-            <p className="text-sm text-slate-600">Merged CIC-IDS2017 & UNSW-NB15 to create a diverse attack surface (2.8M+ flows).</p>
-        </div>
-        <div className="relative">
-            <div className="absolute -left-[25px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white"></div>
-            <h4 className="font-bold text-slate-800">DNN Architecture</h4>
-            <p className="text-sm text-slate-600">3-Layer Fully Connected Network (64-32-16 Neurons). Trained offline with Temporal Split.</p>
-        </div>
-        <div className="relative">
-            <div className="absolute -left-[25px] top-1 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white"></div>
-            <h4 className="font-bold text-purple-700">ARM Optimization</h4>
-            <p className="text-sm text-slate-600">Converted to <span className="font-bold">INT8 Quantized TFLite</span> format, then exported to ONNX for 4x faster inference on Cortex-A76.</p>
-        </div>
-      </div>
-    </div>
-    
-    <div className="flex flex-col gap-6">
-       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex-1">
-          <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <Terminal size={20} className="text-slate-500"/> Deployment Stack
-          </h3>
-          <ul className="space-y-2 text-sm text-slate-600">
-            <li className="flex justify-between border-b border-slate-100 pb-1">
-                <span>OS</span> <span className="font-mono font-bold text-slate-800">Ubuntu Server 22.04</span>
-            </li>
-            <li className="flex justify-between border-b border-slate-100 pb-1">
-                <span>Orchestrator</span> <span className="font-mono font-bold text-slate-800">K3s (Kubernetes)</span>
-            </li>
-            <li className="flex justify-between border-b border-slate-100 pb-1">
-                <span>Runtime</span> <span className="font-mono font-bold text-slate-800">Docker + ONNX</span>
-            </li>
-            <li className="flex justify-between border-b border-slate-100 pb-1">
-                <span>Packet I/O</span> <span className="font-mono font-bold text-slate-800">AF_PACKET (Zero Copy)</span>
-            </li>
-          </ul>
-       </div>
-       <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex-1 flex flex-col justify-center text-center">
-            <p className="text-blue-800 font-medium mb-2">Model Size Reduction</p>
-            <div className="text-4xl font-extrabold text-blue-600">75%</div>
-            <p className="text-xs text-blue-400 mt-1">Via Post-Training Quantization</p>
-       </div>
-    </div>
-  </div>
-);
+        #presentation-container {
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            position: relative;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
 
-const SetupSlide = () => (
-  <div className="h-full flex flex-col justify-center space-y-8">
-    <div className="flex items-center gap-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-        <div className="w-16 h-16 bg-white rounded-lg border border-slate-300 flex items-center justify-center shadow-sm">
-            <img src="https://assets.raspberrypi.com/static/raspberry-pi-5-hero-3d5f83ae3a7042a420b22a07c1228222.png" alt="RPi5" className="w-12 h-12 object-contain" onError={(e) => e.target.style.display='none'} />
-            <Cpu className="text-slate-400 w-8 h-8" />
-        </div>
-        <div>
-            <h3 className="text-xl font-bold text-slate-800">Raspberry Pi 5 Cluster</h3>
-            <p className="text-slate-500">2 Nodes • Quad-core Cortex-A76 @ 2.4GHz • 8GB LPDDR4X</p>
-        </div>
-    </div>
+        body.is-fullscreen #presentation-container {
+            border-radius: 0;
+        }
 
-    <div className="grid grid-cols-2 gap-8">
-      <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm relative">
-         <div className="absolute top-0 right-0 bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-bl-lg">TRAFFIC GEN</div>
-         <h4 className="font-bold text-blue-600 mb-4 flex items-center gap-2"><Activity size={18}/> Attack Injection</h4>
-         <div className="space-y-3">
-            {[
-                { name: "ARP Spoofing", tool: "Scapy" },
-                { name: "SSH Brute-force", tool: "Hydra" },
-                { name: "DNS Tunneling", tool: "Iodine" },
-                { name: "Port Scanning", tool: "Nmap" }
-            ].map((a, i) => (
-                <div key={i} className="flex justify-between text-sm">
-                    <span className="text-slate-700">{a.name}</span>
-                    <span className="text-slate-400 font-mono text-xs">{a.tool}</span>
+        /* Sidebar Progress */
+        .progress-bar-container {
+            position: absolute;
+            left: 0;
+            top: var(--header-height);
+            bottom: var(--footer-height);
+            width: 4px;
+            background: var(--slate-100);
+            z-index: 50;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: var(--primary);
+            transition: height 0.5s ease;
+        }
+
+        /* Header */
+        .slide-header {
+            height: var(--header-height);
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 20;
+            position: relative;
+        }
+
+        .header-logo {
+            height: 42px;
+            object-fit: contain;
+        }
+
+        .header-divider {
+            height: 28px;
+            width: 1px;
+            background-color: var(--slate-200);
+            margin: 0 20px;
+        }
+
+        .header-tag {
+            background-color: var(--primary);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Footer */
+        .slide-footer {
+            height: var(--footer-height);
+            background-color: var(--slate-50);
+            border-top: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            font-size: 11px;
+            color: var(--slate-500);
+            font-weight: 600;
+            z-index: 20;
+        }
+
+        .slide-number {
+            background: var(--slate-200);
+            color: var(--slate-700);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        /* Content Area */
+        .slide-content-wrapper {
+            flex: 1;
+            padding: 40px 60px;
+            position: relative;
+            overflow: hidden;
+            background: white;
+        }
+
+        /* --- 3. SLIDE TRANSITIONS & ANIMATIONS --- */
+        .slide {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 40px 60px;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 10;
+        }
+
+        .slide.leaving {
+            display: flex;
+            opacity: 0;
+            transform: translateX(-40px);
+            z-index: 9;
+        }
+
+        /* Staggered Element Animations */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-100 {
+            animation-delay: 100ms;
+        }
+
+        .delay-200 {
+            animation-delay: 200ms;
+        }
+
+        .delay-300 {
+            animation-delay: 300ms;
+        }
+
+        .delay-400 {
+            animation-delay: 400ms;
+        }
+
+        /* --- 4. TYPOGRAPHY & COMPONENTS --- */
+        h1 {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1px;
+        }
+
+        h2.slide-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--slate-800);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            border-bottom: 2px solid var(--slate-100);
+            padding-bottom: 12px;
+        }
+
+        .title-accent {
+            width: 6px;
+            height: 32px;
+            background-color: var(--primary);
+            border-radius: 4px;
+        }
+
+        p,
+        li {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--slate-600);
+            margin-bottom: 12px;
+        }
+
+        strong {
+            color: var(--slate-800);
+            font-weight: 700;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border: 1px solid var(--slate-200);
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            height: 100%;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Grids */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            height: 100%;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            height: 100%;
+        }
+
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* --- 5. UI CONTROLS --- */
+        .controls-layer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: none;
+            /* Let clicks pass through to container */
+            z-index: 100;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-group {
+            pointer-events: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: white;
+            border: 1px solid var(--slate-200);
+            color: var(--slate-700);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: var(--slate-800);
+            color: white;
+            border-color: var(--slate-800);
+        }
+
+        .btn-primary:hover {
+            background: var(--slate-700);
+        }
+
+        .btn:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .btn-primary:focus {
+            outline-color: var(--slate-500);
+        }
+
+        /* Table Styles */
+        table tbody tr {
+            border-bottom: 1px solid var(--slate-100);
+            transition: background-color 0.2s ease;
+        }
+
+        table tbody tr:hover {
+            background-color: var(--slate-50);
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: var(--slate-50);
+        }
+
+        table tbody tr:nth-child(even):hover {
+            background-color: var(--slate-100);
+        }
+
+        table td {
+            padding: 16px 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="scaler">
+        <div id="presentation-container">
+
+            <!-- HEADER -->
+            <header class="slide-header">
+                <div class="flex-center" style="gap: 24px;">
+                    <img src="https://github.com/devgna/devgna.github.io/blob/b3b8c8e76bb895f87e794b6002c1906e2edcd4c8/HERMES/Images/f8ca047c-3661-459c-a8f3-cfd67ae1d3b1.jpg?raw=true"
+                        alt="Springer" class="header-logo">
+                    <div class="header-divider"></div>
+                    <img src="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/b39a94b3-a960-420e-951e-7294eaa0537a.jpg?raw=true"
+                        alt="icSoftComp" class="header-logo">
                 </div>
-            ))}
-         </div>
-      </div>
-      <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm relative">
-         <div className="absolute top-0 right-0 bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-bl-lg">BASELINES</div>
-         <h4 className="font-bold text-orange-600 mb-4 flex items-center gap-2"><BarChart2 size={18}/> Comparisons</h4>
-         <ul className="space-y-3 text-sm text-slate-600">
-            <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                <strong>Snort 2.9.19:</strong> Community Rules
-            </li>
-            <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                <strong>Suricata 6.0.8:</strong> Emerging Threats Set
-            </li>
-            <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                <strong>ML-Only:</strong> Full DNN without Rule Filter
-            </li>
-         </ul>
-      </div>
-    </div>
-  </div>
-);
+                <div style="text-align: right;">
+                    <div style="margin-bottom: 4px;">
+                        <span class="header-tag">Paper ID: 679</span>
+                        <span
+                            style="font-size: 12px; font-weight: 700; color: var(--slate-700); margin-left: 12px;">icSoftComp
+                            2025</span>
+                    </div>
+                    <div style="font-size: 10px; color: var(--slate-500); font-weight: 500;">Dec 11 (Thu) • Slot S11 •
+                        9:00–10:30 IST</div>
+                </div>
+            </header>
 
-const ResultsSlide = () => (
-  <div className="grid grid-cols-2 gap-8 h-full">
-    {/* Detection Accuracy */}
-    <div className="flex flex-col gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex-1">
-            <h4 className="font-bold text-slate-700 mb-4 text-center">Detection Accuracy Comparison</h4>
-            <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={accuracyData} layout="vertical" margin={{top: 5, right: 30, left: 40, bottom: 5}}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0"/>
-                <XAxis type="number" domain={[80, 100]} hide />
-                <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 11, fontWeight: 600, fill: '#64748b'}} />
-                <RechartsTooltip cursor={{fill: 'transparent'}} />
-                <Bar dataKey="value" barSize={24} radius={[0, 4, 4, 0]}>
-                    {accuracyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                </Bar>
-                </BarChart>
-            </ResponsiveContainer>
-        </div>
-        
-        {/* Key Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-            <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-center">
-                <div className="text-2xl font-extrabold text-green-600">0.9%</div>
-                <div className="text-[10px] uppercase font-bold text-green-800">False Positive Rate</div>
+            <!-- SIDEBAR PROGRESS -->
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
             </div>
-            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
-                <div className="text-2xl font-extrabold text-blue-600">94.7%</div>
-                <div className="text-[10px] uppercase font-bold text-blue-800">Zero-Day Detection</div>
-            </div>
-        </div>
-    </div>
 
-    {/* Latency Chart */}
-    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-        <h4 className="font-bold text-slate-700 mb-2 text-center">Latency vs Throughput (pps)</h4>
-        <div className="flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={latencyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="pps" tick={{fontSize: 10}} />
-                    <YAxis label={{ value: 'Latency (ms)', angle: -90, position: 'insideLeft', fontSize: 10 }} tick={{fontSize: 10}}/>
-                    <RechartsTooltip />
-                    <Legend verticalAlign="top" height={36} iconType="circle" />
-                    <Line type="monotone" dataKey="HERMES" stroke="#2563eb" strokeWidth={3} activeDot={{ r: 8 }} />
-                    <Line type="monotone" dataKey="Suricata" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" />
-                    <Line type="monotone" dataKey="ML_Only" stroke="#f97316" strokeWidth={2} />
-                </LineChart>
-            </ResponsiveContainer>
-        </div>
-        <p className="text-xs text-center text-slate-400 mt-2 italic">HERMES maintains &lt;3ms latency up to 15k pps</p>
-    </div>
-  </div>
-);
+            <!-- SLIDE CONTENT WRAPPER -->
+            <main class="slide-content-wrapper">
 
-const ContributionsSlide = () => (
-  <div className="h-full flex items-center justify-center">
-    <div className="grid grid-cols-2 gap-8 w-full">
-        <div className="bg-white p-8 rounded-2xl border-l-8 border-blue-600 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="text-xl font-bold text-slate-800 mb-2">1. Hybrid Architecture</h3>
-            <p className="text-slate-600">Novel dual-stage design tailored for Edge, filtering 80% of traffic via rules to protect the ML model.</p>
-        </div>
-        <div className="bg-white p-8 rounded-2xl border-l-8 border-purple-600 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="text-xl font-bold text-slate-800 mb-2">2. ARM Optimization</h3>
-            <p className="text-slate-600">First demonstration of INT8 quantized ONNX inference on K3s-managed Raspberry Pi 5 clusters.</p>
-        </div>
-        <div className="bg-white p-8 rounded-2xl border-l-8 border-green-600 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="text-xl font-bold text-slate-800 mb-2">3. Energy Efficiency</h3>
-            <p className="text-slate-600">Achieved 4.2W power consumption, a 67% reduction compared to standard x86-based NIDS deployments.</p>
-        </div>
-        <div className="bg-white p-8 rounded-2xl border-l-8 border-orange-600 shadow-sm hover:shadow-md transition-shadow">
-            <h3 className="text-xl font-bold text-slate-800 mb-2">4. Zero-Day Resilience</h3>
-            <p className="text-slate-600">Validated 94.7% detection rate against unseen attacks (Zero-Day) where static rules failed completely.</p>
-        </div>
-    </div>
-  </div>
-);
+                <!-- SLIDE 1: TITLE -->
+                <div class="slide active" id="slide-0">
+                    <div class="flex-col flex-center" style="height: 100%; text-align: center; gap: 40px;">
+                        <div class="animate-in delay-100">
+                            <div
+                                style="display: inline-block; padding: 6px 16px; background: var(--primary-light); color: var(--primary); border-radius: 20px; font-weight: 700; font-size: 14px; margin-bottom: 24px; border: 1px solid #dbeafe;">
+                                Paper ID: 679 • Network Security Track
+                            </div>
+                            <h1>
+                                <span
+                                    style="background: linear-gradient(to right, var(--primary-dark), var(--primary)); -webkit-background-clip: text; color: transparent;">HERMES</span>
+                            </h1>
+                            <h2
+                                style="font-size: 32px; font-weight: 700; color: var(--slate-800); line-height: 1.4; border: none; padding: 0;">
+                                Design and Deployment of a Hybrid AI/ML Network Security System
+                                <span
+                                    style="display: block; font-size: 24px; color: var(--slate-500); font-weight: 500; margin-top: 12px;">on
+                                    ARM Clusters for Edge Environments</span>
+                            </h2>
+                        </div>
 
-const LimitationsSlide = () => (
-  <div className="h-full flex flex-col justify-center gap-8">
-     <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-           <AlertTriangle className="text-amber-600"/> Limitations
-        </h3>
-        <ul className="space-y-4">
-           <li className="flex gap-4">
-              <span className="font-bold text-amber-600">01</span>
-              <div>
-                 <strong className="text-slate-800 block">Encrypted Traffic Inspection</strong>
-                 <p className="text-slate-600 text-sm">Current Deep Packet Inspection (DPI) cannot inspect payload of TLS 1.3 traffic without decryption (MITM), which is resource-intensive.</p>
-              </div>
-           </li>
-           <li className="flex gap-4">
-              <span className="font-bold text-amber-600">02</span>
-              <div>
-                 <strong className="text-slate-800 block">Model Staleness</strong>
-                 <p className="text-slate-600 text-sm">The quantized model is static. It does not learn online. Periodic retraining and OTA updates are required to maintain accuracy.</p>
-              </div>
-           </li>
-           <li className="flex gap-4">
-              <span className="font-bold text-amber-600">03</span>
-              <div>
-                 <strong className="text-slate-800 block">Throughput Ceiling</strong>
-                 <p className="text-slate-600 text-sm">While 15k pps is sufficient for IoT gateways, it cannot handle core network speeds (10Gbps+) on Raspberry Pi hardware.</p>
-              </div>
-           </li>
-        </ul>
-     </div>
-  </div>
-);
+                        <div class="card animate-in delay-200"
+                            style="width: 100%; max-width: 800px; text-align: left; padding: 0; overflow: hidden;">
+                            <div class="grid-2" style="height: auto; gap: 0;">
+                                <div style="padding: 32px; border-right: 1px solid var(--slate-100);">
+                                    <p
+                                        style="font-size: 10px; color: var(--slate-400); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">
+                                        Authors</p>
 
-const ApplicationsSlide = () => (
-  <div className="h-full flex flex-col justify-center">
-    <div className="grid grid-cols-3 gap-6">
-       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center hover:border-blue-400 transition-colors">
-          <div className="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-4">
-             <Globe size={32}/>
-          </div>
-          <h4 className="font-bold text-slate-800 mb-2">Smart Cities</h4>
-          <p className="text-sm text-slate-600">Securing distributed traffic lights and sensor networks where power is limited and cabling is difficult.</p>
-       </div>
-       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center hover:border-blue-400 transition-colors">
-          <div className="w-16 h-16 mx-auto bg-green-50 rounded-full flex items-center justify-center text-green-600 mb-4">
-             <Activity size={32}/>
-          </div>
-          <h4 className="font-bold text-slate-800 mb-2">Industrial IoT (IIoT)</h4>
-          <p className="text-sm text-slate-600">Protecting legacy SCADA controllers and PLCs from modern ransomware without replacing hardware.</p>
-       </div>
-       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center hover:border-blue-400 transition-colors">
-          <div className="w-16 h-16 mx-auto bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mb-4">
-             <Code size={32}/>
-          </div>
-          <h4 className="font-bold text-slate-800 mb-2">Tactical Edge</h4>
-          <p className="text-sm text-slate-600">Rapid deployment in ad-hoc drone networks or emergency response units requiring battery-operated security.</p>
-       </div>
-    </div>
-  </div>
-);
+                                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+                                        <div
+                                            style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary-light);">
+                                            <img src="https://www.charusat.ac.in/cmpica/images/faculty_photo/ARPANKUMAR%20RAVAL.png"
+                                                alt="Arpan Raval"
+                                                style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 700; color: var(--slate-900); font-size: 18px;">
+                                                Arpan Raval</div>
+                                            <span
+                                                style="font-size: 10px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">Presenter</span>
+                                        </div>
+                                    </div>
 
-const ConclusionSlide = () => (
-  <div className="h-full flex flex-col justify-between">
-    <div className="bg-slate-900 text-white p-10 rounded-2xl shadow-xl flex-1 flex flex-col justify-center text-center relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-10 opacity-10">
-         <Shield size={200}/>
-      </div>
-      <Lightbulb className="mx-auto mb-6 text-yellow-400" size={48} />
-      <h3 className="text-3xl font-bold mb-6">Conclusion</h3>
-      <p className="text-xl text-slate-300 leading-relaxed max-w-4xl mx-auto font-light">
-        HERMES proves that <span className="text-white font-bold">high-security</span> does not require <span className="text-white font-bold">high-power</span>. 
-        <br/><br/>
-        By tailoring hybrid AI/ML specifically for ARM architecture, we have enabled robust, scalable protection for the next generation of Edge IoT networks.
-      </p>
-    </div>
+                                    <div style="display: flex; align-items: center; gap: 16px;">
+                                        <div
+                                            style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 2px solid var(--slate-100);">
+                                            <img src="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/Gemini_Generated_Image_1bwcfd1bwcfd1bwc.png?raw=true"
+                                                alt="Devgna Vyas"
+                                                style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 700; color: var(--slate-900); font-size: 18px;">
+                                                Devgna Vyas</div>
+                                            <span
+                                                style="font-size: 10px; font-weight: 700; color: var(--slate-500); background: var(--slate-100); padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">Co-Author</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-    <div className="mt-8">
-      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">Future Work</h4>
-      <div className="grid grid-cols-2 gap-8">
-         <div className="flex items-center gap-3 text-slate-700 font-medium">
-            <ArrowRight size={18} className="text-blue-500"/> 
-            <span>Federated Learning for privacy-preserving updates</span>
-         </div>
-         <div className="flex items-center gap-3 text-slate-700 font-medium">
-            <ArrowRight size={18} className="text-blue-500"/> 
-            <span>TLS 1.3 Analysis without decryption (Fingerprinting)</span>
-         </div>
-      </div>
-    </div>
-  </div>
-);
+                                <div style="padding: 32px; background: var(--slate-50);">
+                                    <p
+                                        style="font-size: 10px; color: var(--slate-400); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">
+                                        Support</p>
+                                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeSyxavDfHVrlJqN3bArfNlscYKhKpk80-hg&s"
+                                                alt="CSIC CHARUSAT Logo" style="width: 32px;">
+                                            <div>
+                                                <div style="font-weight: 700; font-size: 14px;">CSIC CHARUSAT</div>
+                                                <div style="font-size: 11px; color: var(--slate-500);">Charusat Student
+                                                    Innovation Cell</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <img src="https://ihubgujarat.in/assets/img/SSIP_Logo.png" alt="SSIP Logo"
+                                                style="width: 32px;">
+                                            <div>
+                                                <div style="font-weight: 700; font-size: 14px;">Supported by SSIP</div>
+                                                <div style="font-size: 11px; color: var(--slate-500);">Gujarat
+                                                    Government</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-const AckSlide = () => (
-  <div className="h-full flex flex-col justify-center items-center text-center">
-     <div className="mb-8 p-4 bg-blue-50 rounded-full">
-        <CheckCircle size={48} className="text-blue-600" />
-     </div>
-     <h2 className="text-5xl font-extrabold text-slate-900 mb-16">Thank You</h2>
-     
-     <div className="grid grid-cols-2 gap-16 text-left max-w-3xl w-full">
-       <div className="p-6 rounded-xl border-l-4 border-blue-500 bg-white shadow-sm flex items-center gap-6">
-         <img 
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeSyxavDfHVrlJqN3bArfNlscYKhKpk80-hg&s" 
-            alt="CSIC Logo" 
-            className="w-16 h-16 object-contain"
-         />
-         <div>
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Research Lab</h4>
-            <p className="text-xl font-bold text-slate-800">CSIC CHARUSAT</p>
-            <p className="text-sm text-slate-500">Cloud & Security Research Lab</p>
-         </div>
-       </div>
-       
-       <div className="p-6 rounded-xl border-l-4 border-yellow-500 bg-white shadow-sm flex items-center gap-6">
-         <img 
-            src="https://ihubgujarat.in/assets/img/SSIP_Logo.png" 
-            alt="SSIP Logo" 
-            className="w-16 h-16 object-contain"
-         />
-         <div>
-            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Grant Support</h4>
-            <p className="text-xl font-bold text-slate-800">SSIP</p>
-            <p className="text-sm text-slate-500">Student Startup & Innovation Policy</p>
-         </div>
-       </div>
-     </div>
+                <!-- SLIDE 2: MOTIVATION -->
+                <div class="slide" id="slide-1">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Motivation
+                    </h2>
+                    <div class="grid-2" style="align-items: center;">
+                        <div class="card animate-in delay-100" style="border-top: 4px solid var(--primary);">
+                            <div style="margin-bottom: 20px; color: var(--primary);">
+                                <i class="fas fa-network-wired fa-2x"></i>
+                            </div>
+                            <h3
+                                style="font-size: 24px; font-weight: 700; color: var(--slate-800); margin-bottom: 12px;">
+                                The Edge Explosion</h3>
+                            <p>IoT/Edge devices are critical infrastructure (Smart Cities, Industry 4.0).</p>
+                            <p><strong>Problem:</strong> Massive attack surface, but devices have limited CPU/Power.</p>
+                        </div>
 
-     <div className="mt-16 text-slate-500 border-t border-slate-200 pt-8 w-full max-w-xl">
-       <p className="font-bold text-slate-800 text-lg mb-1">Arpan Raval</p>
-       <p className="font-mono text-sm text-blue-600">arpanraval.mca@charusat.ac.in</p>
-       <div className="mt-4 text-xs bg-slate-100 inline-block px-3 py-1 rounded-full">Open for Questions</div>
-     </div>
-  </div>
-);
+                        <div class="card animate-in delay-200" style="border-top: 4px solid var(--warning);">
+                            <div style="margin-bottom: 20px; color: var(--warning);">
+                                <i class="fas fa-lock fa-2x"></i>
+                            </div>
+                            <h3
+                                style="font-size: 24px; font-weight: 700; color: var(--slate-800); margin-bottom: 12px;">
+                                The Security Gap</h3>
+                            <p>Traditional NIDS (Snort) are too heavy (require big CPUs).</p>
+                            <p>Cloud analysis adds <strong>>100ms latency</strong>, unacceptable for real-time control.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="animate-in delay-300"
+                        style="margin-top: 40px; background: var(--slate-800); color: white; padding: 24px; border-radius: 12px; text-align: center;">
+                        <p style="font-size: 20px; font-weight: 500; color: white;">
+                            <span
+                                style="color: var(--primary); font-weight: 800; text-transform: uppercase; margin-right: 12px;">Core
+                                Question:</span>
+                            "How do we secure low-power ARM devices against Zero-Day attacks without draining their
+                            battery?"
+                        </p>
+                    </div>
+                </div>
 
-// --- Slide Array Config ---
+                <!-- SLIDE 3: PROBLEM STATEMENT -->
+                <div class="slide" id="slide-2">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Problem Statement
+                    </h2>
+                    <div class="grid-3">
+                        <div class="card animate-in delay-100 flex-col flex-center" style="text-align: center;">
+                            <div
+                                style="width: 80px; height: 80px; background: var(--highlight); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: white;">
+                                <i class="fas fa-bolt fa-3x"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Resource Constraints
+                            </h3>
+                            <p style="font-size: 16px;">Edge nodes (Raspberry Pi 5) have limited thermal envelopes (5W)
+                                and shared RAM.</p>
+                        </div>
+                        <div class="card animate-in delay-200 flex-col flex-center" style="text-align: center;">
+                            <div
+                                style="width: 80px; height: 80px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: white;">
+                                <i class="fas fa-fingerprint fa-3x"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Static Signatures Fail
+                            </h3>
+                            <p style="font-size: 16px;">Rule-based systems cannot detect polymorphic or
+                                <strong>Zero-Day</strong> attacks common in IoT botnets.
+                            </p>
+                        </div>
+                        <div class="card animate-in delay-300 flex-col flex-center" style="text-align: center;">
+                            <div
+                                style="width: 80px; height: 80px; background: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: white;">
+                                <i class="fas fa-microchip fa-3x"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">AI Overhead</h3>
+                            <p style="font-size: 16px;">Standard Deep Learning models (ResNet/VGG) are too heavy for ARM
+                                inference (>30% packet loss).</p>
+                        </div>
+                    </div>
+                </div>
 
-const slides = [
-  { component: TitleSlide, title: null },
-  { component: MotivationSlide, title: "Motivation" },
-  { component: ProblemSlide, title: "Problem Statement" },
-  { component: ObjectivesSlide, title: "Research Objectives" },
-  { component: ArchitectureSlide, title: "Proposed System: HERMES" },
-  { component: MethodologySlide, title: "Methodology" },
-  { component: SetupSlide, title: "Experimental Setup" },
-  { component: ResultsSlide, title: "Results & Analysis" },
-  { component: ContributionsSlide, title: "Key Contributions" },
-  { component: LimitationsSlide, title: "Limitations" },
-  { component: ApplicationsSlide, title: "Real-world Applications" },
-  { component: ConclusionSlide, title: null },
-  { component: AckSlide, title: null },
-];
+                <!-- SLIDE 4: THEORETICAL FOUNDATION -->
+                <div class="slide" id="slide-3">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Why Our Method Works (Theoretical)
+                    </h2>
+                    <div class="grid-2">
+                        <div class="card animate-in delay-100">
+                            <h3 style="color: var(--primary); margin-bottom: 20px;">1. The 80/20 Rule of Traffic</h3>
+                            <p>Network traffic follows a Pareto distribution. <strong>80% of packets</strong> are benign
+                                or known attacks.</p>
+                            <div
+                                style="margin-top: 20px; padding: 16px; background: var(--primary-light); border-left: 4px solid var(--primary); border-radius: 4px;">
+                                <strong>Strategy:</strong> Use a cheap Rule Filter (O(1) complexity) for the 80%,
+                                reserving the expensive ML (O(n)) only for the ambiguous 20%.
+                            </div>
+                        </div>
+                        <div class="flex-col" style="gap: 20px;">
+                            <div class="card animate-in delay-200">
+                                <h3 style="color: var(--info); margin-bottom: 10px;">2. Quantization Efficiency</h3>
+                                <p>We convert 32-bit floats to <strong>8-bit integers</strong> (INT8).</p>
+                                <ul style="margin-left: 20px; margin-top: 10px;">
+                                    <li>Reduces model size by <strong>75%</strong>.</li>
+                                    <li>Uses ARM NEON SIMD instructions for faster math.</li>
+                                </ul>
+                            </div>
+                            <div class="card animate-in delay-300">
+                                <h3 style="color: var(--success); margin-bottom: 10px;">3. Robustness</h3>
+                                <p>Rules act as a "sanitizer," blocking obvious adversarial perturbations before they
+                                    fool the AI.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-export default function App() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  const slideContainerRef = useRef(null);
+                <!-- SLIDE 5: ARCHITECTURE -->
+                <div class="slide" id="slide-4">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Proposed System: HERMES
+                    </h2>
+                    <div class="card flex-center flex-col animate-in delay-100"
+                        style="background: var(--slate-50); border-style: dashed;">
+                        <div class="flex-center" style="gap: 20px; width: 100%; margin-bottom: 40px;">
+                            <!-- Pipeline Visual -->
+                            <div class="flex-col flex-center">
+                                <div
+                                    style="background: white; border: 2px solid var(--slate-600); padding: 20px; border-radius: 12px; width: 180px; text-align: center; position: relative;">
+                                    <span
+                                        style="position: absolute; top: -10px; right: 10px; background: var(--slate-600); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">INPUT</span>
+                                    <i class="fas fa-network-wired fa-2x" style="color: var(--slate-600);"></i>
+                                    <div style="font-weight: 700; margin-top: 10px;">Ingest</div>
+                                    <div style="font-size: 12px;">Libpcap Zero-Copy</div>
+                                </div>
+                            </div>
 
-  const nextSlide = () => {
-    if (currentSlide < slides.length - 1) setCurrentSlide(curr => curr + 1);
-  };
+                            <i class="fas fa-arrow-right fa-lg" style="color: var(--slate-400);"></i>
 
-  const prevSlide = () => {
-    if (currentSlide > 0) setCurrentSlide(curr => curr - 1);
-  };
+                            <div class="flex-col flex-center">
+                                <div
+                                    style="background: white; border: 2px solid var(--success); padding: 20px; border-radius: 12px; width: 180px; text-align: center; position: relative;">
+                                    <span
+                                        style="position: absolute; top: -10px; right: 10px; background: var(--success); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">FAST</span>
+                                    <i class="fas fa-filter fa-2x" style="color: var(--success);"></i>
+                                    <div style="font-weight: 700; margin-top: 10px;">Stage 1</div>
+                                    <div style="font-size: 12px;">Hyperscan Rules</div>
+                                </div>
+                            </div>
 
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-        if (slideContainerRef.current) {
-            slideContainerRef.current.requestFullscreen().catch(err => {
-                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-            });
-        }
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        }
-    }
-  };
+                            <i class="fas fa-arrow-right fa-lg" style="color: var(--slate-400);"></i>
 
-  useEffect(() => {
-    const handleFullScreenChange = () => {
-        setIsFullScreen(!!document.fullscreenElement);
-    };
+                            <div class="flex-col flex-center">
+                                <div
+                                    style="background: white; border: 2px solid var(--info); padding: 20px; border-radius: 12px; width: 180px; text-align: center; position: relative;">
+                                    <span
+                                        style="position: absolute; top: -10px; right: 10px; background: var(--info); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px;">DEEP</span>
+                                    <i class="fas fa-brain fa-2x" style="color: var(--info);"></i>
+                                    <div style="font-weight: 700; margin-top: 10px;">Stage 2</div>
+                                    <div style="font-size: 12px;">Quantized DNN</div>
+                                </div>
+                            </div>
 
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowRight') nextSlide();
-      if (e.key === 'ArrowLeft') prevSlide();
-    };
+                            <i class="fas fa-arrow-right fa-lg" style="color: var(--slate-400);"></i>
 
-    document.addEventListener('fullscreenchange', handleFullScreenChange);
-    window.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-        document.removeEventListener('fullscreenchange', handleFullScreenChange);
-        window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [currentSlide]);
+                            <div class="flex-col flex-center">
+                                <div
+                                    style="background: white; border: 2px solid var(--danger); padding: 20px; border-radius: 12px; width: 180px; text-align: center;">
+                                    <i class="fas fa-bell fa-2x" style="color: var(--danger);"></i>
+                                    <div style="font-weight: 700; margin-top: 10px;">Action</div>
+                                    <div style="font-size: 12px;">Redis + Log</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-center"
+                            style="font-size: 14px; background: var(--slate-200); padding: 8px 16px; border-radius: 20px;">
+                            Orchestrated by <strong>K3s</strong> on Raspberry Pi 5 Cluster
+                        </p>
+                    </div>
+                </div>
 
-  const CurrentSlideComponent = slides[currentSlide].component;
+                <!-- SLIDE 6: LIVE ATTACK EXAMPLE -->
+                <div class="slide" id="slide-5">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Live Attack Flow Example
+                    </h2>
+                    <div class="grid-2">
+                        <!-- Scenario 1 -->
+                        <div class="card animate-in delay-100" style="border-top: 4px solid var(--success);">
+                            <h3 style="margin-bottom: 20px;">Scenario A: ARP Spoofing</h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                                <div style="padding: 10px; background: var(--slate-100); border-radius: 8px;">Attacker
+                                </div>
+                                <i class="fas fa-arrow-right"></i>
+                                <div style="padding: 10px; border: 2px solid var(--success); border-radius: 8px;">
+                                    <strong>Stage 1 (Rules)</strong>
+                                    <div style="font-size: 12px; color: var(--success);">Match: "Gratuitous ARP"</div>
+                                </div>
+                                <i class="fas fa-ban" style="color: var(--danger);"></i>
+                                <div>Blocked</div>
+                            </div>
+                            <p style="font-size: 14px;"><strong>Result:</strong> Blocked in < 0.1ms. Never reaches ML
+                                    engine.</p>
+                        </div>
 
-  return (
-    <div className={`w-full h-screen bg-slate-900 flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-4'}`}>
-      <div 
-        ref={slideContainerRef}
-        className={`w-full max-w-[1400px] aspect-video bg-white shadow-2xl overflow-hidden relative ${isFullScreen ? '' : 'rounded-2xl ring-4 ring-slate-800'}`}
-      >
-        <SlideLayout slideNumber={currentSlide + 1} title={slides[currentSlide].title}>
-          <CurrentSlideComponent />
-        </SlideLayout>
-        
-        {/* Navigation Buttons - Hidden in Slideshow Mode */}
-        {!isFullScreen && (
-          <div className="absolute bottom-6 right-6 flex gap-3 z-50">
-             <button onClick={prevSlide} className="p-3 bg-white text-slate-700 rounded-full shadow-lg hover:bg-slate-50 disabled:opacity-50 border border-slate-200 transition-all active:scale-95">
-               <ChevronLeft size={24} />
-             </button>
-             <button onClick={nextSlide} className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95">
-               <ChevronRight size={24} />
-             </button>
-          </div>
-        )}
+                        <!-- Scenario 2 -->
+                        <div class="card animate-in delay-200" style="border-top: 4px solid var(--info);">
+                            <h3 style="margin-bottom: 20px;">Scenario B: DNS Tunneling</h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                                <div style="padding: 10px; background: var(--slate-100); border-radius: 8px;">Attacker
+                                </div>
+                                <i class="fas fa-arrow-right"></i>
+                                <div
+                                    style="padding: 10px; border: 1px dashed var(--slate-300); border-radius: 8px; opacity: 0.5;">
+                                    Stage 1</div>
+                                <i class="fas fa-arrow-right"></i>
+                                <div style="padding: 10px; border: 2px solid var(--info); border-radius: 8px;">
+                                    <strong>Stage 2 (ML)</strong>
+                                    <div style="font-size: 12px; color: var(--info);">Anomaly: High Entropy</div>
+                                </div>
+                            </div>
+                            <p style="font-size: 14px;"><strong>Result:</strong> Detected as anomaly (99% confidence).
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-        {/* Start Slideshow Button - Only visible when NOT full screen */}
-        {!isFullScreen && (
-            <div className="absolute bottom-6 left-12 z-50">
-                <button 
-                    onClick={toggleFullScreen}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg shadow-lg hover:bg-slate-700 transition-all text-sm font-bold border border-slate-700"
-                >
-                    <Play size={16} fill="currentColor" /> Start Slideshow
+                <!-- SLIDE 7: EXPERIMENTAL SETUP -->
+                <div class="slide" id="slide-6">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Experimental Setup
+                    </h2>
+                    <div class="grid-2">
+                        <div class="flex-col" style="gap: 20px;">
+                            <div class="card animate-in delay-100">
+                                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 12px;"><i
+                                        class="fas fa-database" style="color: var(--primary); margin-right: 10px;"></i>
+                                    Data & Training</h3>
+                                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                                    <li><strong>Merged Dataset:</strong> CIC-IDS2017 & UNSW-NB15 (2.8M+ Flows)</li>
+                                    <li><strong>Zero-Day Sim:</strong> Temporal Split (Last 20% held out)</li>
+                                    <li><strong>Model:</strong> 3-Layer DNN (64-32-16) → INT8 Quantization</li>
+                                </ul>
+                            </div>
+                            <div class="card animate-in delay-200">
+                                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 12px;"><i
+                                        class="fas fa-vial" style="color: var(--danger); margin-right: 10px;"></i>
+                                    Attack Injection</h3>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <span
+                                        style="background: var(--danger-light); color: var(--danger); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">ARP
+                                        Spoofing</span>
+                                    <span
+                                        style="background: var(--danger-light); color: var(--danger); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">SSH
+                                        Brute-force</span>
+                                    <span
+                                        style="background: var(--danger-light); color: var(--danger); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">DNS
+                                        Tunneling</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card animate-in delay-300" style="background: var(--slate-800); color: white;">
+                            <h3 style="color: white; margin-bottom: 16px; text-align: center;">Testbed Hardware</h3>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                                <img src="https://emteria.com/hs-fs/hubfs/emteria_images/supported-hardware/RPi%205.png"
+                                    alt="Raspberry Pi 5"
+                                    style="width: 360px; height: auto; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));">
+                                <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <i class="fas fa-microchip" style="color: var(--success); width: 20px;"></i>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 14px;">Raspberry Pi 5 (x2)</div>
+                                            <div style="font-size: 11px; opacity: 0.7;">Cortex-A76 @ 2.4GHz</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <i class="fas fa-memory" style="color: var(--primary); width: 20px;"></i>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 14px;">8GB LPDDR4X</div>
+                                            <div style="font-size: 11px; opacity: 0.7;">Shared K3s Memory</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 8: BENCHMARK SUMMARY (Fusion) -->
+                <div class="slide" id="slide-7">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Benchmark Summary
+                    </h2>
+                    <div class="card animate-in delay-100" style="padding: 0; overflow: hidden;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--slate-50); border-bottom: 1px solid var(--slate-200);">
+                                    <th style="padding: 20px; text-align: left; color: var(--slate-500);">Metric</th>
+                                    <th style="padding: 20px; text-align: center; color: var(--slate-500);">Snort</th>
+                                    <th style="padding: 20px; text-align: center; color: var(--slate-500);">Suricata
+                                    </th>
+                                    <th style="padding: 20px; text-align: center; color: var(--slate-500);">ML-Only</th>
+                                    <th
+                                        style="padding: 20px; text-align: center; color: var(--primary); font-weight: 800; background: var(--primary-light);">
+                                        HERMES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 20px; font-weight: 600;">Accuracy</td>
+                                    <td style="text-align: center;">84.7%</td>
+                                    <td style="text-align: center;">85.9%</td>
+                                    <td style="text-align: center;">91.3%</td>
+                                    <td style="text-align: center; font-weight: 800; color: var(--success);">94.7%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px; font-weight: 600;">Zero-Day Detection</td>
+                                    <td style="text-align: center; color: var(--danger);">23.1%</td>
+                                    <td style="text-align: center; color: var(--danger);">31.4%</td>
+                                    <td style="text-align: center;">89.0%</td>
+                                    <td style="text-align: center; font-weight: 800; color: var(--success);">94.7%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px; font-weight: 600;">Throughput</td>
+                                    <td style="text-align: center;">9.5k pps</td>
+                                    <td style="text-align: center;">11.2k pps</td>
+                                    <td style="text-align: center;">12.8k pps</td>
+                                    <td style="text-align: center; font-weight: 800; color: var(--primary);">15.0k pps
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px; font-weight: 600;">Power (Watts)</td>
+                                    <td style="text-align: center;">3.8 W</td>
+                                    <td style="text-align: center;">4.6 W</td>
+                                    <td style="text-align: center; color: var(--warning);">5.4 W</td>
+                                    <td style="text-align: center; font-weight: 800; color: var(--success);">4.2 W</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="margin-top: 20px; text-align: center; font-size: 16px;">
+                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                        HERMES achieves <strong>8.8% higher accuracy</strong> than Suricata with <strong>22% less
+                            power</strong> than ML-only.
+                    </p>
+                </div>
+
+                <!-- SLIDE 9: REWRITTEN - Performance Analysis: Latency & CPU Efficiency -->
+                <div class="slide" id="slide-8">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Performance Analysis: Latency & CPU Efficiency
+                    </h2>
+                    <div class="grid-2">
+                        <!-- Left: Latency Chart -->
+                        <div class="card animate-in delay-100 flex-col">
+                            <h4
+                                style="text-align: center; margin-bottom: 16px; color: var(--slate-700); font-size: 16px; font-weight: 600;">
+                                Latency vs. Throughput</h4>
+                            <div style="flex: 1; position: relative; padding: 10px;">
+                                <!-- SVG Chart -->
+                                <svg viewBox="0 0 200 120" style="width: 100%; height: 100%;">
+                                    <!-- Background -->
+                                    <rect x="40" y="10" width="140" height="80" fill="#f8fafc" rx="4" />
+
+                                    <!-- Grid lines -->
+                                    <line x1="40" y1="30" x2="180" y2="30" stroke="#e2e8f0" stroke-width="0.5" />
+                                    <line x1="40" y1="50" x2="180" y2="50" stroke="#e2e8f0" stroke-width="0.5" />
+                                    <line x1="40" y1="70" x2="180" y2="70" stroke="#e2e8f0" stroke-width="0.5" />
+
+                                    <!-- Axes -->
+                                    <line x1="40" y1="90" x2="180" y2="90" stroke="#94a3b8" stroke-width="1.5" />
+                                    <line x1="40" y1="10" x2="40" y2="90" stroke="#94a3b8" stroke-width="1.5" />
+
+                                    <!-- Y-axis labels -->
+                                    <text x="35" y="32" font-size="7" text-anchor="end" fill="#64748b">6ms</text>
+                                    <text x="35" y="52" font-size="7" text-anchor="end" fill="#64748b">4ms</text>
+                                    <text x="35" y="72" font-size="7" text-anchor="end" fill="#64748b">2ms</text>
+                                    <text x="35" y="92" font-size="7" text-anchor="end" fill="#64748b">0</text>
+
+                                    <!-- X-axis labels -->
+                                    <text x="60" y="100" font-size="7" text-anchor="middle" fill="#64748b">5k</text>
+                                    <text x="110" y="100" font-size="7" text-anchor="middle" fill="#64748b">10k</text>
+                                    <text x="160" y="100" font-size="7" text-anchor="middle" fill="#64748b">15k</text>
+                                    <text x="110" y="112" font-size="8" text-anchor="middle" fill="#475569"
+                                        font-weight="500">Throughput (pps)</text>
+
+                                    <!-- ML-Only line (Orange - worst) -->
+                                    <polyline points="50,75 80,60 110,40 140,25 170,15" fill="none" stroke="#f97316"
+                                        stroke-width="2.5" />
+                                    <circle cx="50" cy="75" r="3" fill="#f97316" />
+                                    <circle cx="110" cy="40" r="3" fill="#f97316" />
+                                    <circle cx="170" cy="15" r="3" fill="#f97316" />
+
+                                    <!-- Suricata line (Gray - mid) -->
+                                    <polyline points="50,80 80,70 110,55 140,45 170,35" fill="none" stroke="#94a3b8"
+                                        stroke-width="2" stroke-dasharray="4,2" />
+                                    <circle cx="50" cy="80" r="2.5" fill="#94a3b8" />
+                                    <circle cx="110" cy="55" r="2.5" fill="#94a3b8" />
+                                    <circle cx="170" cy="35" r="2.5" fill="#94a3b8" />
+
+                                    <!-- HERMES line (Blue - best, stays low) -->
+                                    <polyline points="50,82 80,80 110,78 140,76 170,72" fill="none" stroke="#2563eb"
+                                        stroke-width="3" />
+                                    <circle cx="50" cy="82" r="3.5" fill="#2563eb" />
+                                    <circle cx="110" cy="78" r="3.5" fill="#2563eb" />
+                                    <circle cx="170" cy="72" r="3.5" fill="#2563eb" />
+                                </svg>
+                            </div>
+                            <!-- Legend -->
+                            <div
+                                style="display: flex; justify-content: center; gap: 20px; margin-top: 8px; font-size: 11px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 16px; height: 3px; background: #2563eb; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #2563eb; font-weight: 600;">HERMES</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 16px; height: 2px; background: #94a3b8; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #64748b;">Suricata</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 16px; height: 2px; background: #f97316; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #f97316;">ML-Only</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: CPU Load Chart -->
+                        <div class="card animate-in delay-200 flex-col">
+                            <h4
+                                style="text-align: center; margin-bottom: 16px; color: var(--slate-700); font-size: 16px; font-weight: 600;">
+                                CPU Load During Attack</h4>
+                            <div style="flex: 1; position: relative; padding: 10px;">
+                                <!-- SVG Chart -->
+                                <svg viewBox="0 0 200 120" style="width: 100%; height: 100%;">
+                                    <!-- Background -->
+                                    <rect x="40" y="10" width="140" height="80" fill="#f8fafc" rx="4" />
+
+                                    <!-- Attack burst zone -->
+                                    <rect x="85" y="10" width="50" height="80" fill="#fef2f2" opacity="0.8" />
+                                    <text x="110" y="20" font-size="6" text-anchor="middle" fill="#ef4444"
+                                        font-weight="500">Attack Burst</text>
+
+                                    <!-- Grid lines -->
+                                    <line x1="40" y1="30" x2="180" y2="30" stroke="#e2e8f0" stroke-width="0.5" />
+                                    <line x1="40" y1="50" x2="180" y2="50" stroke="#e2e8f0" stroke-width="0.5" />
+                                    <line x1="40" y1="70" x2="180" y2="70" stroke="#e2e8f0" stroke-width="0.5" />
+
+                                    <!-- Axes -->
+                                    <line x1="40" y1="90" x2="180" y2="90" stroke="#94a3b8" stroke-width="1.5" />
+                                    <line x1="40" y1="10" x2="40" y2="90" stroke="#94a3b8" stroke-width="1.5" />
+
+                                    <!-- Y-axis labels -->
+                                    <text x="35" y="17" font-size="7" text-anchor="end" fill="#64748b">80%</text>
+                                    <text x="35" y="37" font-size="7" text-anchor="end" fill="#64748b">60%</text>
+                                    <text x="35" y="57" font-size="7" text-anchor="end" fill="#64748b">40%</text>
+                                    <text x="35" y="77" font-size="7" text-anchor="end" fill="#64748b">20%</text>
+                                    <text x="35" y="92" font-size="7" text-anchor="end" fill="#64748b">0</text>
+
+                                    <!-- X-axis labels -->
+                                    <text x="60" y="100" font-size="7" text-anchor="middle" fill="#64748b">0</text>
+                                    <text x="110" y="100" font-size="7" text-anchor="middle" fill="#64748b">5</text>
+                                    <text x="160" y="100" font-size="7" text-anchor="middle" fill="#64748b">10</text>
+                                    <text x="110" y="112" font-size="8" text-anchor="middle" fill="#475569"
+                                        font-weight="500">Time (min)</text>
+
+                                    <!-- ML-Only line (spikes high during attack) -->
+                                    <polyline points="50,65 75,60 100,25 125,35 150,50 170,55" fill="none"
+                                        stroke="#f97316" stroke-width="2.5" />
+                                    <circle cx="50" cy="65" r="3" fill="#f97316" />
+                                    <circle cx="100" cy="25" r="4" fill="#f97316" />
+                                    <circle cx="170" cy="55" r="3" fill="#f97316" />
+
+                                    <!-- HERMES line (stays stable) -->
+                                    <polyline points="50,70 75,68 100,55 125,60 150,65 170,68" fill="none"
+                                        stroke="#2563eb" stroke-width="3" />
+                                    <circle cx="50" cy="70" r="3.5" fill="#2563eb" />
+                                    <circle cx="100" cy="55" r="4" fill="#2563eb" />
+                                    <circle cx="170" cy="68" r="3.5" fill="#2563eb" />
+                                </svg>
+                            </div>
+                            <!-- Legend -->
+                            <div
+                                style="display: flex; justify-content: center; gap: 24px; margin-top: 8px; font-size: 11px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 16px; height: 3px; background: #2563eb; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #2563eb; font-weight: 600;">HERMES (41%)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <div style="width: 16px; height: 2px; background: #f97316; border-radius: 2px;">
+                                    </div>
+                                    <span style="color: #f97316;">ML-Only (60%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 10: KEY CONTRIBUTIONS -->
+                <div class="slide" id="slide-9">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Key Contributions
+                    </h2>
+                    <div class="grid-2">
+                        <div class="card animate-in delay-100" style="border-left: 6px solid var(--primary);">
+                            <h3 style="font-size: 20px; margin-bottom: 8px;">1. Hybrid Architecture</h3>
+                            <p>Dual-stage design tailoring NIDS for Edge constraints.</p>
+                        </div>
+                        <div class="card animate-in delay-200" style="border-left: 6px solid var(--info);">
+                            <h3 style="font-size: 20px; margin-bottom: 8px;">2. ARM Optimization</h3>
+                            <p>Demonstrated INT8 quantized ONNX inference on Raspberry Pi.</p>
+                        </div>
+                        <div class="card animate-in delay-300" style="border-left: 6px solid var(--success);">
+                            <h3 style="font-size: 20px; margin-bottom: 8px;">3. Energy Efficiency</h3>
+                            <p>Achieved <strong>67%</strong> energy reduction vs x86 solutions.</p>
+                        </div>
+                        <div class="card animate-in delay-400" style="border-left: 6px solid var(--warning);">
+                            <h3 style="font-size: 20px; margin-bottom: 8px;">4. Zero-Day Resilience</h3>
+                            <p>Validated 94.7% detection of unseen attacks.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 11: REWRITTEN - Conclusion & Future Scope -->
+                <div class="slide" id="slide-10">
+                    <h2 class="slide-title">
+                        <div class="title-accent"></div> Conclusion & Future Scope
+                    </h2>
+                    <div class="grid-2">
+                        <!-- Left: Conclusion -->
+                        <div class="card animate-in delay-100 flex-col"
+                            style="background: var(--slate-50); border: 1px solid var(--slate-200);">
+                            <div style="margin-bottom: 20px; color: var(--primary);">
+                                <i class="fas fa-flag-checkered fa-3x"></i>
+                            </div>
+                            <h3
+                                style="font-size: 24px; font-weight: 700; color: var(--slate-800); margin-bottom: 16px;">
+                                Conclusion</h3>
+                            <p style="font-size: 18px; line-height: 1.6; color: var(--slate-600);">
+                                HERMES proves that <strong>high-security</strong> does not require
+                                <strong>high-power</strong> hardware.
+                                By tailoring hybrid AI/ML specifically for ARM architecture, we have enabled robust,
+                                scalable protection for the next generation of Edge IoT networks.
+                            </p>
+                        </div>
+
+                        <!-- Right: Future Work -->
+                        <div class="card animate-in delay-200 flex-col" style="background: white;">
+                            <div style="margin-bottom: 20px; color: var(--info);">
+                                <i class="fas fa-rocket fa-3x"></i>
+                            </div>
+                            <h3
+                                style="font-size: 24px; font-weight: 700; color: var(--slate-800); margin-bottom: 16px;">
+                                Future Directions</h3>
+                            <ul style="list-style: none; display: flex; flex-direction: column; gap: 16px;">
+                                <li style="display: flex; align-items: start; gap: 12px;">
+                                    <i class="fas fa-arrow-right" style="color: var(--primary); margin-top: 6px;"></i>
+                                    <span><strong>Federated Learning:</strong> Collaborative model updates across edge
+                                        clusters for privacy.</span>
+                                </li>
+                                <li style="display: flex; align-items: start; gap: 12px;">
+                                    <i class="fas fa-arrow-right" style="color: var(--primary); margin-top: 6px;"></i>
+                                    <span><strong>Encrypted Traffic Analysis:</strong> Inspecting TLS 1.3 flows without
+                                        decryption (Fingerprinting).</span>
+                                </li>
+                                <li style="display: flex; align-items: start; gap: 12px;">
+                                    <i class="fas fa-arrow-right" style="color: var(--primary); margin-top: 6px;"></i>
+                                    <span><strong>Dynamic Load Shedding:</strong> Adaptive sampling during extreme DDoS
+                                        events.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLIDE 12: ACKNOWLEDGEMENTS -->
+                <div class="slide" id="slide-11">
+                    <div class="flex-col flex-center" style="height: 100%; text-align: center;">
+                        <div class="animate-in delay-100"
+                            style="margin-bottom: 32px; background: var(--primary-light); padding: 24px; border-radius: 50%; color: var(--primary);">
+                            <i class="fas fa-check-circle fa-4x"></i>
+                        </div>
+                        <h2 class="animate-in delay-200"
+                            style="font-size: 56px; color: var(--slate-900); margin-bottom: 60px; border: none;">Thank
+                            You</h2>
+
+                        <div class="animate-in delay-300"
+                            style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 900px; width: 100%; text-align: left; margin-bottom: 40px;">
+                            <div class="card"
+                                style="border-left: 4px solid var(--primary); display: flex; align-items: center; gap: 12px; padding: 16px;">
+                                <img src="https://github.com/devgna/devgna.github.io/blob/b3b8c8e76bb895f87e794b6002c1906e2edcd4c8/HERMES/Images/f8ca047c-3661-459c-a8f3-cfd67ae1d3b1.jpg?raw=true"
+                                    alt="Springer Logo" style="width: 40px; height: 40px; object-fit: contain;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13px;">Springer</div>
+                                    <div style="font-size: 10px; color: var(--slate-500);">Publisher</div>
+                                </div>
+                            </div>
+                            <div class="card"
+                                style="border-left: 4px solid var(--info); display: flex; align-items: center; gap: 12px; padding: 16px;">
+                                <img src="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/b39a94b3-a960-420e-951e-7294eaa0537a.jpg?raw=true"
+                                    alt="icSoftComp Logo" style="width: 40px; height: 40px; object-fit: contain;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13px;">icSoftComp</div>
+                                    <div style="font-size: 10px; color: var(--slate-500);">Conference 2025</div>
+                                </div>
+                            </div>
+                            <div class="card"
+                                style="border-left: 4px solid var(--success); display: flex; align-items: center; gap: 12px; padding: 16px;">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeSyxavDfHVrlJqN3bArfNlscYKhKpk80-hg&s"
+                                    alt="CSIC CHARUSAT Logo" style="width: 40px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13px;">CSIC CHARUSAT</div>
+                                    <div style="font-size: 10px; color: var(--slate-500);">Innovation Cell</div>
+                                </div>
+                            </div>
+                            <div class="card"
+                                style="border-left: 4px solid var(--highlight); display: flex; align-items: center; gap: 12px; padding: 16px;">
+                                <img src="https://ihubgujarat.in/assets/img/SSIP_Logo.png" alt="SSIP Logo"
+                                    style="width: 40px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13px;">SSIP Funding</div>
+                                    <div style="font-size: 10px; color: var(--slate-500);">Gujarat Govt</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="animate-in delay-400"
+                            style="border-top: 1px solid var(--slate-200); padding-top: 32px; width: 60%;">
+                            <p style="font-weight: 700; font-size: 20px;">Dr.Arpan Raval</p>
+                            <p
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--primary);">
+                                arpanraval.mca@charusat.ac.in</p>
+                            <p style="font-weight: 700; font-size: 20px;">Vyas Devgna</p>
+                            <p
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--primary);">
+                                vyasdevgna@gmail.com</p>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+
+            <!-- FOOTER -->
+            <footer class="slide-footer">
+                <div>
+                    <i class="fas fa-server" style="color: var(--primary); margin-right: 8px;"></i>
+                    CSIC CHARUSAT
+                </div>
+                <div style="letter-spacing: 1px; text-transform: uppercase;">HERMES</div>
+                <div class="slide-number" id="slide-number">1</div>
+            </footer>
+
+            <!-- CONTROLS -->
+            <div class="controls-layer">
+                <button class="btn btn-primary" onclick="toggleFullScreen()" title="Start Presentation (F5)"
+                    style="pointer-events: auto;">
+                    <i class="fas fa-play"></i> Slideshow (F5)
                 </button>
+                <div class="btn-group">
+                    <button class="btn" onclick="prevSlide()" title="Previous (Left Arrow)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="btn" onclick="nextSlide()" title="Next (Right Arrow)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
-        )}
-      </div>
-      
-      {!isFullScreen && (
-        <div className="fixed bottom-4 text-slate-500 text-xs font-mono tracking-wider">
-            [ PREVIEW MODE ] • ARROW KEYS TO NAVIGATE • SLIDE {currentSlide + 1} / {slides.length}
+
         </div>
-      )}
     </div>
-  );
-}
+
+    <script>
+        // --- CONFIG ---
+        let currentSlideIndex = 0;
+        const totalSlides = 12;
+        let idleTimer;
+        let isTransitioning = false; // Prevent race conditions
+
+        // --- CORE FUNCTIONS ---
+
+        function updateProgress() {
+            const progress = ((currentSlideIndex + 1) / totalSlides) * 100;
+            document.getElementById('progress-bar').style.height = `${progress}%`;
+            document.getElementById('slide-number').textContent = currentSlideIndex + 1;
+        }
+
+        function showSlide(index) {
+            // Bounds check
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            // Prevent same slide re-render or rapid clicks during transition
+            if (index === currentSlideIndex) return;
+            if (isTransitioning) return;
+
+            isTransitioning = true; // Lock
+
+            const slides = document.querySelectorAll('.slide');
+            const currentActive = document.querySelector('.slide.active');
+            const nextSlide = document.getElementById(`slide-${index}`);
+
+            // If there's an active slide, animate it out
+            if (currentActive) {
+                currentActive.classList.add('leaving');
+                currentActive.classList.remove('active');
+
+                // Wait for CSS transition (0.4s) before cleaning up
+                setTimeout(() => {
+                    currentActive.classList.remove('leaving');
+                    isTransitioning = false; // Unlock after transition
+                }, 400);
+            } else {
+                isTransitioning = false;
+            }
+
+            // Animate next slide in
+            nextSlide.classList.add('active');
+
+            currentSlideIndex = index;
+            updateProgress();
+        }
+
+        function nextSlide() {
+            showSlide(currentSlideIndex + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlideIndex - 1);
+        }
+
+        function toggleFullScreen() {
+            const elem = document.documentElement;
+
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE11 */
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+
+        // --- SCALING ENGINE ---
+        function scaleToFit() {
+            const scaler = document.getElementById('scaler');
+            const baseWidth = 1280;
+            const baseHeight = 720;
+
+            const scaleX = window.innerWidth / baseWidth;
+            const scaleY = window.innerHeight / baseHeight;
+
+            let scale = Math.min(scaleX, scaleY);
+
+            // Add slight margin if NOT in fullscreen to show borders
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                scale *= 0.95;
+            }
+
+            scaler.style.transform = `scale(${scale})`;
+        }
+
+        // --- EVENT LISTENERS ---
+        window.addEventListener('resize', scaleToFit);
+        window.addEventListener('load', () => {
+            scaleToFit();
+            // Ensure first slide is active on load without transition lock
+            document.getElementById('slide-0').classList.add('active');
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            document.body.classList.toggle('is-fullscreen', !!document.fullscreenElement);
+            scaleToFit();
+        });
+
+        // Vendor prefix support for fullscreen events
+        document.addEventListener('webkitfullscreenchange', () => {
+            document.body.classList.toggle('is-fullscreen', !!document.webkitFullscreenElement);
+            scaleToFit();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'F5') {
+                e.preventDefault();
+                toggleFullScreen();
+            }
+        });
+
+        // Idle Timer with proper cleanup
+        function resetIdleTimer() {
+            document.body.style.cursor = 'default';
+            document.querySelector('.controls-layer').style.opacity = '1';
+            clearTimeout(idleTimer);
+
+            // Only hide cursor if in fullscreen
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                idleTimer = setTimeout(() => {
+                    document.body.style.cursor = 'none';
+                    document.querySelector('.controls-layer').style.opacity = '0';
+                }, 3000);
+            }
+        }
+
+        document.addEventListener('mousemove', resetIdleTimer);
+        document.addEventListener('click', resetIdleTimer);
+
+        // Initial Setup
+        scaleToFit();
+
+    </script>
+</body>
+
+</html>
