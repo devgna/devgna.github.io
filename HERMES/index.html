@@ -1,0 +1,782 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  ChevronRight, ChevronLeft, Cpu, Shield, Activity, Zap, Server, Network, 
+  BarChart2, CheckCircle, Layers, ArrowRight, Target, Lightbulb, 
+  AlertTriangle, Globe, Lock, Code, Database, Terminal, Play, Maximize, Minimize
+} from 'lucide-react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, 
+  ResponsiveContainer, Cell, LineChart, Line, AreaChart, Area 
+} from 'recharts';
+
+// --- Configuration & Data (Sourced from HERMES Paper) ---
+
+const PRIMARY_COLOR = "#0f172a"; // Slate 900
+const ACCENT_COLOR = "#2563eb"; // Blue 600
+
+// Comparison Data (Table 1 & 2)
+const accuracyData = [
+  { name: 'Snort', value: 84.7, fill: '#cbd5e1' },
+  { name: 'Suricata', value: 85.9, fill: '#cbd5e1' },
+  { name: 'ML-Only', value: 91.3, fill: '#93c5fd' },
+  { name: 'HERMES', value: 94.7, fill: '#2563eb' },
+];
+
+// Latency vs Throughput Data (Fig. 3 Approximation)
+const latencyData = [
+  { pps: '2k', HERMES: 1.2, Suricata: 1.3, ML_Only: 2.1 },
+  { pps: '5k', HERMES: 1.5, Suricata: 1.6, ML_Only: 2.8 },
+  { pps: '8k', HERMES: 1.8, Suricata: 1.9, ML_Only: 3.2 },
+  { pps: '10k', HERMES: 2.2, Suricata: 2.4, ML_Only: 3.8 },
+  { pps: '12k', HERMES: 2.5, Suricata: 3.2, ML_Only: 4.5 },
+  { pps: '15k', HERMES: 2.8, Suricata: 4.2, ML_Only: 5.3 }, // HERMES holds well
+  { pps: '18k', HERMES: 4.1, Suricata: 5.8, ML_Only: 6.5 },
+  { pps: '20k', HERMES: 6.2, Suricata: 7.5, ML_Only: 7.8 },
+];
+
+const powerData = [
+  { name: 'x86 NIDS', watts: 12.8, fill: '#ef4444' }, // Proxy for standard server/desktop NIDS
+  { name: 'ML-Only (Pi)', watts: 5.4, fill: '#f97316' },
+  { name: 'HERMES (Pi)', watts: 4.2, fill: '#22c55e' },
+];
+
+// --- Components ---
+
+const SlideLayout = ({ children, slideNumber, title }) => (
+  <div className="h-full w-full flex flex-col bg-white text-slate-900 relative overflow-hidden font-sans selection:bg-blue-100">
+    {/* Header - Logos & Conf Info */}
+    <div className="h-20 border-b border-slate-200 flex justify-between items-center px-8 bg-slate-50/80 backdrop-blur-sm">
+      <div className="flex items-center gap-6 h-full py-2">
+         {/* Springer Logo Placeholder */}
+         <div className="flex flex-col items-center justify-center">
+            <img 
+            src="https://github.com/devgna/devgna.github.io/blob/b3b8c8e76bb895f87e794b6002c1906e2edcd4c8/HERMES/Images/f8ca047c-3661-459c-a8f3-cfd67ae1d3b1.jpg?raw=true" 
+            alt="Springer" 
+            className="h-10 object-contain" 
+            onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} 
+            />
+            <span className="hidden text-[10px] text-slate-400 border border-dashed border-slate-300 px-2 py-1">Springer Logo</span>
+         </div>
+         
+         {/* Divider */}
+         <div className="h-8 w-px bg-slate-300"></div>
+
+         {/* icSoftComp Logo Placeholder */}
+         <div className="flex flex-col items-center justify-center">
+            <img 
+            src="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/b39a94b3-a960-420e-951e-7294eaa0537a.jpg?raw=true" 
+            alt="icSoftComp" 
+            className="h-12 object-contain" 
+            onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} 
+            />
+            <span className="hidden text-[10px] text-slate-400 border border-dashed border-slate-300 px-2 py-1">icSoftComp Logo</span>
+         </div>
+      </div>
+      <div className="text-right">
+        <div className="flex items-center justify-end gap-2 mb-1">
+             <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">Paper ID: 679</span>
+             <span className="text-xs font-bold text-slate-700">icSoftComp 2025</span>
+        </div>
+        <p className="text-[10px] text-slate-500 font-medium">Dec 11 (Thu) • Slot S11 • 9:00–10:30 IST</p>
+      </div>
+    </div>
+
+    {/* Main Content Area */}
+    <div className="flex-1 px-12 py-8 flex flex-col relative z-10 overflow-hidden">
+      {title && (
+        <div className="mb-6 border-b border-slate-100 pb-2">
+            <h2 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+            <div className="w-1.5 h-8 bg-blue-600 rounded-full"></div>
+            {title}
+            </h2>
+        </div>
+      )}
+      <div className="flex-1 h-full w-full">
+        {children}
+      </div>
+    </div>
+
+    {/* Footer */}
+    <div className="h-10 bg-slate-50 border-t border-slate-200 flex justify-between items-center px-12 text-[11px] text-slate-500 font-medium">
+      <span className="flex items-center gap-2">
+        <Server size={12} className="text-blue-500"/> 
+        CSIC CHARUSAT
+      </span>
+      <span className="uppercase tracking-widest text-slate-400 font-semibold">HERMES: Hybrid AI/ML Edge Security</span>
+      <span className="bg-slate-200 text-slate-700 w-6 h-6 flex items-center justify-center rounded-full font-bold text-[10px]">{slideNumber}</span>
+    </div>
+  </div>
+);
+
+// --- Content Slides ---
+
+const TitleSlide = () => (
+  <div className="h-full flex flex-col justify-center items-center text-center space-y-12 animate-in fade-in duration-700">
+    <div className="space-y-6 max-w-5xl">
+      <div className="inline-block px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-bold tracking-wide border border-blue-100 mb-4">
+        Paper ID: 679 • Network Security Track
+      </div>
+      <h1 className="text-6xl font-extrabold text-slate-900 leading-tight tracking-tight">
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-500">HERMES</span>
+      </h1>
+      <h2 className="text-3xl font-bold text-slate-800 leading-snug">
+        Design and Deployment of a Hybrid AI/ML Network Security System
+        <span className="block text-2xl font-medium text-slate-500 mt-2">on ARM Clusters for Edge Environments</span>
+      </h2>
+    </div>
+    
+    <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl w-full max-w-3xl transform hover:scale-[1.01] transition-transform duration-500">
+      <div className="grid grid-cols-2 gap-12 text-left relative">
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-100"></div>
+        <div>
+          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-3">Authors</p>
+          <ul className="space-y-4">
+            {/* Arpan Raval */}
+            <li className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100 shadow-sm relative group">
+                    <img 
+                        src="https://www.charusat.ac.in/cmpica/images/faculty_photo/ARPANKUMAR%20RAVAL.png" 
+                        alt="Arpan Raval" 
+                        className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="w-full h-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">AR</div>'}}
+                    />
+                </div>
+                <div>
+                    <span className="block font-bold text-slate-900 text-lg">Arpan Raval</span>
+                    <span className="text-xs text-blue-600 font-bold uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-full">Presenter</span>
+                </div>
+            </li>
+            
+            {/* Devgna Vyas - Updated Image and Matching Style */}
+            <li className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-100 shadow-sm relative group">
+                   <img 
+                        src="https://github.com/devgna/devgna.github.io/blob/main/HERMES/Images/Gemini_Generated_Image_1bwcfd1bwcfd1bwc.png?raw=true" 
+                        alt="Devgna Vyas" 
+                        className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {e.target.style.display='none'; e.target.parentElement.innerHTML='<div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">DV</div>'}}
+                    />
+                </div>
+                <div>
+                    <span className="block font-bold text-slate-900 text-lg">Devgna Vyas</span>
+                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full">Co-Author</span>
+                </div>
+            </li>
+          </ul>
+        </div>
+        <div className="pl-4">
+          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-3">Affiliation & Support</p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+                <img 
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeSyxavDfHVrlJqN3bArfNlscYKhKpk80-hg&s" 
+                    alt="CSIC Logo" 
+                    className="w-10 h-10 object-contain"
+                />
+                <div>
+                    <div className="font-bold text-slate-800 text-sm">CSIC CHARUSAT</div>
+                    <div className="text-[10px] text-slate-500">Cloud & Security Research Lab</div>
+                </div>
+            </div>
+            <div className="flex items-center gap-3">
+                <img 
+                    src="https://ihubgujarat.in/assets/img/SSIP_Logo.png" 
+                    alt="SSIP Logo" 
+                    className="w-10 h-10 object-contain"
+                />
+                <div>
+                    <div className="font-bold text-slate-800 text-sm">Supported by SSIP</div>
+                    <div className="text-[10px] text-slate-500">Student Startup & Innovation Policy</div>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const MotivationSlide = () => (
+  <div className="flex flex-col h-full justify-center gap-10">
+    <div className="grid grid-cols-2 gap-10">
+      <div className="bg-gradient-to-br from-blue-50 to-white p-8 rounded-2xl border border-blue-100 shadow-sm">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="p-3 bg-blue-100 rounded-lg text-blue-700"><Activity size={32} /></div>
+          <h3 className="text-2xl font-bold text-slate-800">The Edge Explosion</h3>
+        </div>
+        <p className="text-slate-600 text-lg leading-relaxed">
+          IoT and Edge devices are now critical infrastructure. Computation is shifting from cloud to device (Fog/Edge), drastically expanding the attack surface for SMBs and smart cities.
+        </p>
+      </div>
+      <div className="bg-gradient-to-br from-orange-50 to-white p-8 rounded-2xl border border-orange-100 shadow-sm">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="p-3 bg-orange-100 rounded-lg text-orange-700"><Lock size={32} /></div>
+          <h3 className="text-2xl font-bold text-slate-800">The Security Gap</h3>
+        </div>
+        <p className="text-slate-600 text-lg leading-relaxed">
+          Traditional NIDS (Snort/Suricata) are too resource-heavy for Raspberry Pi-class devices. Conversely, cloud-based inspection introduces unacceptable latency ({'>'}100ms) for real-time control.
+        </p>
+      </div>
+    </div>
+    <div className="w-full bg-slate-800 text-white p-6 rounded-xl flex items-center justify-center shadow-lg transform hover:-translate-y-1 transition-transform">
+      <p className="text-xl font-medium">
+        <span className="text-blue-400 font-bold uppercase tracking-wider mr-3">Core Question:</span> 
+        "How do we secure low-power ARM devices against Zero-Day attacks without draining their limited battery & CPU?"
+      </p>
+    </div>
+  </div>
+);
+
+const ProblemSlide = () => (
+  <div className="h-full flex flex-col justify-center">
+    <div className="grid grid-cols-3 gap-8">
+      {[
+        { 
+            icon: Zap, color: "text-yellow-600", bg: "bg-yellow-50", 
+            title: "Resource Constraints", 
+            desc: "Edge nodes (e.g., Raspberry Pi 5) have limited thermal envelopes (5W) and shared RAM for apps + security." 
+        },
+        { 
+            icon: Layers, color: "text-blue-600", bg: "bg-blue-50", 
+            title: "Static Signatures Fail", 
+            desc: "Rule-based systems (Snort) cannot detect polymorphic or zero-day attacks, which are increasingly common in IoT botnets." 
+        },
+        { 
+            icon: Cpu, color: "text-red-600", bg: "bg-red-50", 
+            title: "AI Overhead", 
+            desc: "Standard Deep Learning models (ResNet/VGG) are too heavy for ARMv8-A inference, causing packet drops > 30%." 
+        }
+      ].map((item, i) => (
+        <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center text-center group hover:border-blue-200 transition-colors">
+          <div className={`w-20 h-20 ${item.bg} rounded-full flex items-center justify-center mb-6 ${item.color} group-hover:scale-110 transition-transform duration-300`}>
+            <item.icon size={40} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 mb-4">{item.title}</h3>
+          <p className="text-slate-600 leading-relaxed">
+            {item.title === "AI Overhead" ? (
+                <>Standard Deep Learning models (ResNet/VGG) are too heavy for ARMv8-A inference, causing packet drops {'>'} 30%.</>
+            ) : item.desc}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const ObjectivesSlide = () => (
+  <div className="h-full flex items-center justify-center">
+    <div className="bg-white rounded-2xl p-10 border border-slate-200 w-full shadow-lg relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
+      <ul className="space-y-8">
+        {[
+          { text: "Develop a Hybrid NIDS architecture combining lightweight rule filtering with Deep Learning.", icon: Layers },
+          { text: "Optimize DNN models for ARMv8-A using 8-bit Quantization (TFLite/ONNX).", icon: Cpu },
+          { text: "Ensure real-time throughput (>10k pps) with low power consumption (<5W).", icon: Activity },
+          { text: "Validate scalability using K3s (Lightweight Kubernetes) on Raspberry Pi clusters.", icon: Server }
+        ].map((obj, i) => (
+          <li key={i} className="flex items-center gap-6 text-xl text-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 text-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+              <obj.icon size={24} />
+            </div>
+            <span className="font-medium">
+                {obj.text.includes(">10k") ? (
+                    <>Ensure real-time throughput ({'>'}10k pps) with low power consumption ({'<'}5W).</>
+                ) : obj.text}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+);
+
+const ArchitectureSlide = () => (
+  <div className="h-full flex flex-col justify-center gap-8">
+    <div className="bg-slate-50 p-6 rounded-xl border border-dashed border-slate-300 mb-2">
+       <div className="flex justify-center items-center gap-12">
+          {/* Node Representation */}
+          <div className="flex flex-col items-center">
+             <div className="w-32 h-20 bg-slate-800 rounded-lg flex items-center justify-center text-white shadow-lg mb-2 relative">
+                <span className="absolute -top-2 -right-2 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></span>
+                <Cpu size={32} />
+             </div>
+             <p className="text-xs font-bold text-slate-600 uppercase">Raspberry Pi Node 1</p>
+          </div>
+          <div className="h-px w-20 bg-slate-400 border-t border-dashed"></div>
+          <div className="flex flex-col items-center">
+             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 border-4 border-blue-200 shadow-inner">
+                <Server size={32} />
+             </div>
+             <p className="text-xs font-bold text-blue-600 mt-2 uppercase">K3s Orchestrator</p>
+          </div>
+          <div className="h-px w-20 bg-slate-400 border-t border-dashed"></div>
+          <div className="flex flex-col items-center">
+             <div className="w-32 h-20 bg-slate-800 rounded-lg flex items-center justify-center text-white shadow-lg mb-2 relative">
+                <span className="absolute -top-2 -right-2 bg-green-500 w-4 h-4 rounded-full border-2 border-white"></span>
+                <Cpu size={32} />
+             </div>
+             <p className="text-xs font-bold text-slate-600 uppercase">Raspberry Pi Node 2</p>
+          </div>
+       </div>
+    </div>
+
+    <div className="relative">
+       <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -z-10 transform -translate-y-1/2"></div>
+       <div className="grid grid-cols-4 gap-4">
+          <div className="bg-white border-2 border-slate-200 p-4 rounded-xl text-center shadow-sm z-10">
+             <div className="text-slate-500 text-xs uppercase font-bold mb-2">Ingest</div>
+             <div className="font-bold text-slate-800 text-lg">Libpcap</div>
+             <div className="text-xs text-slate-400">Zero-Copy Capture</div>
+          </div>
+          <div className="bg-white border-2 border-green-500 p-4 rounded-xl text-center shadow-md z-10 relative overflow-hidden">
+             <div className="bg-green-500 text-white text-[10px] font-bold py-1 absolute top-0 left-0 right-0">STAGE 1</div>
+             <div className="mt-4 font-bold text-green-700 text-lg">Hyperscan</div>
+             <div className="text-xs text-slate-500">Signature Filter</div>
+             <div className="text-[10px] bg-green-50 text-green-800 rounded px-2 py-0.5 mt-1 inline-block">Drops 80% Traffic</div>
+          </div>
+          <div className="bg-white border-2 border-purple-500 p-4 rounded-xl text-center shadow-md z-10 relative overflow-hidden">
+             <div className="bg-purple-500 text-white text-[10px] font-bold py-1 absolute top-0 left-0 right-0">STAGE 2</div>
+             <div className="mt-4 font-bold text-purple-700 text-lg">ONNX Runtime</div>
+             <div className="text-xs text-slate-500">Quantized DNN</div>
+             <div className="text-[10px] bg-purple-50 text-purple-800 rounded px-2 py-0.5 mt-1 inline-block">Detects Zero-Day</div>
+          </div>
+          <div className="bg-white border-2 border-red-500 p-4 rounded-xl text-center shadow-sm z-10">
+             <div className="text-red-500 text-xs uppercase font-bold mb-2">Action</div>
+             <div className="font-bold text-slate-800 text-lg">Redis + Log</div>
+             <div className="text-xs text-slate-400">Distributed Alerting</div>
+          </div>
+       </div>
+    </div>
+  </div>
+);
+
+const MethodologySlide = () => (
+  <div className="grid grid-cols-2 gap-8 h-full">
+    <div className="bg-slate-50 p-8 rounded-2xl border border-slate-200 flex flex-col justify-center">
+      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+        <Database size={24} className="text-blue-600"/> Data & Training
+      </h3>
+      <div className="space-y-6 relative pl-4 border-l-2 border-slate-200">
+        <div className="relative">
+            <div className="absolute -left-[25px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white"></div>
+            <h4 className="font-bold text-slate-800">Dataset Merging</h4>
+            <p className="text-sm text-slate-600">Merged CIC-IDS2017 & UNSW-NB15 to create a diverse attack surface (2.8M+ flows).</p>
+        </div>
+        <div className="relative">
+            <div className="absolute -left-[25px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white"></div>
+            <h4 className="font-bold text-slate-800">DNN Architecture</h4>
+            <p className="text-sm text-slate-600">3-Layer Fully Connected Network (64-32-16 Neurons). Trained offline with Temporal Split.</p>
+        </div>
+        <div className="relative">
+            <div className="absolute -left-[25px] top-1 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white"></div>
+            <h4 className="font-bold text-purple-700">ARM Optimization</h4>
+            <p className="text-sm text-slate-600">Converted to <span className="font-bold">INT8 Quantized TFLite</span> format, then exported to ONNX for 4x faster inference on Cortex-A76.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div className="flex flex-col gap-6">
+       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex-1">
+          <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <Terminal size={20} className="text-slate-500"/> Deployment Stack
+          </h3>
+          <ul className="space-y-2 text-sm text-slate-600">
+            <li className="flex justify-between border-b border-slate-100 pb-1">
+                <span>OS</span> <span className="font-mono font-bold text-slate-800">Ubuntu Server 22.04</span>
+            </li>
+            <li className="flex justify-between border-b border-slate-100 pb-1">
+                <span>Orchestrator</span> <span className="font-mono font-bold text-slate-800">K3s (Kubernetes)</span>
+            </li>
+            <li className="flex justify-between border-b border-slate-100 pb-1">
+                <span>Runtime</span> <span className="font-mono font-bold text-slate-800">Docker + ONNX</span>
+            </li>
+            <li className="flex justify-between border-b border-slate-100 pb-1">
+                <span>Packet I/O</span> <span className="font-mono font-bold text-slate-800">AF_PACKET (Zero Copy)</span>
+            </li>
+          </ul>
+       </div>
+       <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex-1 flex flex-col justify-center text-center">
+            <p className="text-blue-800 font-medium mb-2">Model Size Reduction</p>
+            <div className="text-4xl font-extrabold text-blue-600">75%</div>
+            <p className="text-xs text-blue-400 mt-1">Via Post-Training Quantization</p>
+       </div>
+    </div>
+  </div>
+);
+
+const SetupSlide = () => (
+  <div className="h-full flex flex-col justify-center space-y-8">
+    <div className="flex items-center gap-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <div className="w-16 h-16 bg-white rounded-lg border border-slate-300 flex items-center justify-center shadow-sm">
+            <img src="https://assets.raspberrypi.com/static/raspberry-pi-5-hero-3d5f83ae3a7042a420b22a07c1228222.png" alt="RPi5" className="w-12 h-12 object-contain" onError={(e) => e.target.style.display='none'} />
+            <Cpu className="text-slate-400 w-8 h-8" />
+        </div>
+        <div>
+            <h3 className="text-xl font-bold text-slate-800">Raspberry Pi 5 Cluster</h3>
+            <p className="text-slate-500">2 Nodes • Quad-core Cortex-A76 @ 2.4GHz • 8GB LPDDR4X</p>
+        </div>
+    </div>
+
+    <div className="grid grid-cols-2 gap-8">
+      <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm relative">
+         <div className="absolute top-0 right-0 bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-bl-lg">TRAFFIC GEN</div>
+         <h4 className="font-bold text-blue-600 mb-4 flex items-center gap-2"><Activity size={18}/> Attack Injection</h4>
+         <div className="space-y-3">
+            {[
+                { name: "ARP Spoofing", tool: "Scapy" },
+                { name: "SSH Brute-force", tool: "Hydra" },
+                { name: "DNS Tunneling", tool: "Iodine" },
+                { name: "Port Scanning", tool: "Nmap" }
+            ].map((a, i) => (
+                <div key={i} className="flex justify-between text-sm">
+                    <span className="text-slate-700">{a.name}</span>
+                    <span className="text-slate-400 font-mono text-xs">{a.tool}</span>
+                </div>
+            ))}
+         </div>
+      </div>
+      <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm relative">
+         <div className="absolute top-0 right-0 bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-bl-lg">BASELINES</div>
+         <h4 className="font-bold text-orange-600 mb-4 flex items-center gap-2"><BarChart2 size={18}/> Comparisons</h4>
+         <ul className="space-y-3 text-sm text-slate-600">
+            <li className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                <strong>Snort 2.9.19:</strong> Community Rules
+            </li>
+            <li className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                <strong>Suricata 6.0.8:</strong> Emerging Threats Set
+            </li>
+            <li className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                <strong>ML-Only:</strong> Full DNN without Rule Filter
+            </li>
+         </ul>
+      </div>
+    </div>
+  </div>
+);
+
+const ResultsSlide = () => (
+  <div className="grid grid-cols-2 gap-8 h-full">
+    {/* Detection Accuracy */}
+    <div className="flex flex-col gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex-1">
+            <h4 className="font-bold text-slate-700 mb-4 text-center">Detection Accuracy Comparison</h4>
+            <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={accuracyData} layout="vertical" margin={{top: 5, right: 30, left: 40, bottom: 5}}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0"/>
+                <XAxis type="number" domain={[80, 100]} hide />
+                <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 11, fontWeight: 600, fill: '#64748b'}} />
+                <RechartsTooltip cursor={{fill: 'transparent'}} />
+                <Bar dataKey="value" barSize={24} radius={[0, 4, 4, 0]}>
+                    {accuracyData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                </Bar>
+                </BarChart>
+            </ResponsiveContainer>
+        </div>
+        
+        {/* Key Stats Grid */}
+        <div className="grid grid-cols-2 gap-4">
+            <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-center">
+                <div className="text-2xl font-extrabold text-green-600">0.9%</div>
+                <div className="text-[10px] uppercase font-bold text-green-800">False Positive Rate</div>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
+                <div className="text-2xl font-extrabold text-blue-600">94.7%</div>
+                <div className="text-[10px] uppercase font-bold text-blue-800">Zero-Day Detection</div>
+            </div>
+        </div>
+    </div>
+
+    {/* Latency Chart */}
+    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+        <h4 className="font-bold text-slate-700 mb-2 text-center">Latency vs Throughput (pps)</h4>
+        <div className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={latencyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="pps" tick={{fontSize: 10}} />
+                    <YAxis label={{ value: 'Latency (ms)', angle: -90, position: 'insideLeft', fontSize: 10 }} tick={{fontSize: 10}}/>
+                    <RechartsTooltip />
+                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                    <Line type="monotone" dataKey="HERMES" stroke="#2563eb" strokeWidth={3} activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="Suricata" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" />
+                    <Line type="monotone" dataKey="ML_Only" stroke="#f97316" strokeWidth={2} />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+        <p className="text-xs text-center text-slate-400 mt-2 italic">HERMES maintains &lt;3ms latency up to 15k pps</p>
+    </div>
+  </div>
+);
+
+const ContributionsSlide = () => (
+  <div className="h-full flex items-center justify-center">
+    <div className="grid grid-cols-2 gap-8 w-full">
+        <div className="bg-white p-8 rounded-2xl border-l-8 border-blue-600 shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-xl font-bold text-slate-800 mb-2">1. Hybrid Architecture</h3>
+            <p className="text-slate-600">Novel dual-stage design tailored for Edge, filtering 80% of traffic via rules to protect the ML model.</p>
+        </div>
+        <div className="bg-white p-8 rounded-2xl border-l-8 border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-xl font-bold text-slate-800 mb-2">2. ARM Optimization</h3>
+            <p className="text-slate-600">First demonstration of INT8 quantized ONNX inference on K3s-managed Raspberry Pi 5 clusters.</p>
+        </div>
+        <div className="bg-white p-8 rounded-2xl border-l-8 border-green-600 shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-xl font-bold text-slate-800 mb-2">3. Energy Efficiency</h3>
+            <p className="text-slate-600">Achieved 4.2W power consumption, a 67% reduction compared to standard x86-based NIDS deployments.</p>
+        </div>
+        <div className="bg-white p-8 rounded-2xl border-l-8 border-orange-600 shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-xl font-bold text-slate-800 mb-2">4. Zero-Day Resilience</h3>
+            <p className="text-slate-600">Validated 94.7% detection rate against unseen attacks (Zero-Day) where static rules failed completely.</p>
+        </div>
+    </div>
+  </div>
+);
+
+const LimitationsSlide = () => (
+  <div className="h-full flex flex-col justify-center gap-8">
+     <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+           <AlertTriangle className="text-amber-600"/> Limitations
+        </h3>
+        <ul className="space-y-4">
+           <li className="flex gap-4">
+              <span className="font-bold text-amber-600">01</span>
+              <div>
+                 <strong className="text-slate-800 block">Encrypted Traffic Inspection</strong>
+                 <p className="text-slate-600 text-sm">Current Deep Packet Inspection (DPI) cannot inspect payload of TLS 1.3 traffic without decryption (MITM), which is resource-intensive.</p>
+              </div>
+           </li>
+           <li className="flex gap-4">
+              <span className="font-bold text-amber-600">02</span>
+              <div>
+                 <strong className="text-slate-800 block">Model Staleness</strong>
+                 <p className="text-slate-600 text-sm">The quantized model is static. It does not learn online. Periodic retraining and OTA updates are required to maintain accuracy.</p>
+              </div>
+           </li>
+           <li className="flex gap-4">
+              <span className="font-bold text-amber-600">03</span>
+              <div>
+                 <strong className="text-slate-800 block">Throughput Ceiling</strong>
+                 <p className="text-slate-600 text-sm">While 15k pps is sufficient for IoT gateways, it cannot handle core network speeds (10Gbps+) on Raspberry Pi hardware.</p>
+              </div>
+           </li>
+        </ul>
+     </div>
+  </div>
+);
+
+const ApplicationsSlide = () => (
+  <div className="h-full flex flex-col justify-center">
+    <div className="grid grid-cols-3 gap-6">
+       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center hover:border-blue-400 transition-colors">
+          <div className="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-4">
+             <Globe size={32}/>
+          </div>
+          <h4 className="font-bold text-slate-800 mb-2">Smart Cities</h4>
+          <p className="text-sm text-slate-600">Securing distributed traffic lights and sensor networks where power is limited and cabling is difficult.</p>
+       </div>
+       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center hover:border-blue-400 transition-colors">
+          <div className="w-16 h-16 mx-auto bg-green-50 rounded-full flex items-center justify-center text-green-600 mb-4">
+             <Activity size={32}/>
+          </div>
+          <h4 className="font-bold text-slate-800 mb-2">Industrial IoT (IIoT)</h4>
+          <p className="text-sm text-slate-600">Protecting legacy SCADA controllers and PLCs from modern ransomware without replacing hardware.</p>
+       </div>
+       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center hover:border-blue-400 transition-colors">
+          <div className="w-16 h-16 mx-auto bg-purple-50 rounded-full flex items-center justify-center text-purple-600 mb-4">
+             <Code size={32}/>
+          </div>
+          <h4 className="font-bold text-slate-800 mb-2">Tactical Edge</h4>
+          <p className="text-sm text-slate-600">Rapid deployment in ad-hoc drone networks or emergency response units requiring battery-operated security.</p>
+       </div>
+    </div>
+  </div>
+);
+
+const ConclusionSlide = () => (
+  <div className="h-full flex flex-col justify-between">
+    <div className="bg-slate-900 text-white p-10 rounded-2xl shadow-xl flex-1 flex flex-col justify-center text-center relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-10 opacity-10">
+         <Shield size={200}/>
+      </div>
+      <Lightbulb className="mx-auto mb-6 text-yellow-400" size={48} />
+      <h3 className="text-3xl font-bold mb-6">Conclusion</h3>
+      <p className="text-xl text-slate-300 leading-relaxed max-w-4xl mx-auto font-light">
+        HERMES proves that <span className="text-white font-bold">high-security</span> does not require <span className="text-white font-bold">high-power</span>. 
+        <br/><br/>
+        By tailoring hybrid AI/ML specifically for ARM architecture, we have enabled robust, scalable protection for the next generation of Edge IoT networks.
+      </p>
+    </div>
+
+    <div className="mt-8">
+      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">Future Work</h4>
+      <div className="grid grid-cols-2 gap-8">
+         <div className="flex items-center gap-3 text-slate-700 font-medium">
+            <ArrowRight size={18} className="text-blue-500"/> 
+            <span>Federated Learning for privacy-preserving updates</span>
+         </div>
+         <div className="flex items-center gap-3 text-slate-700 font-medium">
+            <ArrowRight size={18} className="text-blue-500"/> 
+            <span>TLS 1.3 Analysis without decryption (Fingerprinting)</span>
+         </div>
+      </div>
+    </div>
+  </div>
+);
+
+const AckSlide = () => (
+  <div className="h-full flex flex-col justify-center items-center text-center">
+     <div className="mb-8 p-4 bg-blue-50 rounded-full">
+        <CheckCircle size={48} className="text-blue-600" />
+     </div>
+     <h2 className="text-5xl font-extrabold text-slate-900 mb-16">Thank You</h2>
+     
+     <div className="grid grid-cols-2 gap-16 text-left max-w-3xl w-full">
+       <div className="p-6 rounded-xl border-l-4 border-blue-500 bg-white shadow-sm flex items-center gap-6">
+         <img 
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeSyxavDfHVrlJqN3bArfNlscYKhKpk80-hg&s" 
+            alt="CSIC Logo" 
+            className="w-16 h-16 object-contain"
+         />
+         <div>
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Research Lab</h4>
+            <p className="text-xl font-bold text-slate-800">CSIC CHARUSAT</p>
+            <p className="text-sm text-slate-500">Cloud & Security Research Lab</p>
+         </div>
+       </div>
+       
+       <div className="p-6 rounded-xl border-l-4 border-yellow-500 bg-white shadow-sm flex items-center gap-6">
+         <img 
+            src="https://ihubgujarat.in/assets/img/SSIP_Logo.png" 
+            alt="SSIP Logo" 
+            className="w-16 h-16 object-contain"
+         />
+         <div>
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Grant Support</h4>
+            <p className="text-xl font-bold text-slate-800">SSIP</p>
+            <p className="text-sm text-slate-500">Student Startup & Innovation Policy</p>
+         </div>
+       </div>
+     </div>
+
+     <div className="mt-16 text-slate-500 border-t border-slate-200 pt-8 w-full max-w-xl">
+       <p className="font-bold text-slate-800 text-lg mb-1">Arpan Raval</p>
+       <p className="font-mono text-sm text-blue-600">arpanraval.mca@charusat.ac.in</p>
+       <div className="mt-4 text-xs bg-slate-100 inline-block px-3 py-1 rounded-full">Open for Questions</div>
+     </div>
+  </div>
+);
+
+// --- Slide Array Config ---
+
+const slides = [
+  { component: TitleSlide, title: null },
+  { component: MotivationSlide, title: "Motivation" },
+  { component: ProblemSlide, title: "Problem Statement" },
+  { component: ObjectivesSlide, title: "Research Objectives" },
+  { component: ArchitectureSlide, title: "Proposed System: HERMES" },
+  { component: MethodologySlide, title: "Methodology" },
+  { component: SetupSlide, title: "Experimental Setup" },
+  { component: ResultsSlide, title: "Results & Analysis" },
+  { component: ContributionsSlide, title: "Key Contributions" },
+  { component: LimitationsSlide, title: "Limitations" },
+  { component: ApplicationsSlide, title: "Real-world Applications" },
+  { component: ConclusionSlide, title: null },
+  { component: AckSlide, title: null },
+];
+
+export default function App() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const slideContainerRef = useRef(null);
+
+  const nextSlide = () => {
+    if (currentSlide < slides.length - 1) setCurrentSlide(curr => curr + 1);
+  };
+
+  const prevSlide = () => {
+    if (currentSlide > 0) setCurrentSlide(curr => curr - 1);
+  };
+
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+        if (slideContainerRef.current) {
+            slideContainerRef.current.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+        setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    };
+
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+        document.removeEventListener('fullscreenchange', handleFullScreenChange);
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentSlide]);
+
+  const CurrentSlideComponent = slides[currentSlide].component;
+
+  return (
+    <div className={`w-full h-screen bg-slate-900 flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-4'}`}>
+      <div 
+        ref={slideContainerRef}
+        className={`w-full max-w-[1400px] aspect-video bg-white shadow-2xl overflow-hidden relative ${isFullScreen ? '' : 'rounded-2xl ring-4 ring-slate-800'}`}
+      >
+        <SlideLayout slideNumber={currentSlide + 1} title={slides[currentSlide].title}>
+          <CurrentSlideComponent />
+        </SlideLayout>
+        
+        {/* Navigation Buttons - Hidden in Slideshow Mode */}
+        {!isFullScreen && (
+          <div className="absolute bottom-6 right-6 flex gap-3 z-50">
+             <button onClick={prevSlide} className="p-3 bg-white text-slate-700 rounded-full shadow-lg hover:bg-slate-50 disabled:opacity-50 border border-slate-200 transition-all active:scale-95">
+               <ChevronLeft size={24} />
+             </button>
+             <button onClick={nextSlide} className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 transition-all active:scale-95">
+               <ChevronRight size={24} />
+             </button>
+          </div>
+        )}
+
+        {/* Start Slideshow Button - Only visible when NOT full screen */}
+        {!isFullScreen && (
+            <div className="absolute bottom-6 left-12 z-50">
+                <button 
+                    onClick={toggleFullScreen}
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg shadow-lg hover:bg-slate-700 transition-all text-sm font-bold border border-slate-700"
+                >
+                    <Play size={16} fill="currentColor" /> Start Slideshow
+                </button>
+            </div>
+        )}
+      </div>
+      
+      {!isFullScreen && (
+        <div className="fixed bottom-4 text-slate-500 text-xs font-mono tracking-wider">
+            [ PREVIEW MODE ] • ARROW KEYS TO NAVIGATE • SLIDE {currentSlide + 1} / {slides.length}
+        </div>
+      )}
+    </div>
+  );
+}
