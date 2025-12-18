@@ -1,1 +1,689 @@
-a
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GhostTalk</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- QRious (QR Generation) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- jsQR (QR Scanning) -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-color: #111;
+            --text-main: #e0e0e0;
+            --danger: #ff2a2a;
+            --success: #2aff2a;
+            --busy: #ffcc00;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-font-smoothing: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Views Utility */
+        .view-section {
+            display: none;
+            height: 100%;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .view-section.active {
+            display: flex;
+        }
+
+        /* Radio Screen */
+        .screen-panel {
+            background-color: #000;
+            border: 2px solid #333;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        .screen-text {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 2px rgba(255,255,255,0.2);
+        }
+
+        /* PTT Button */
+        #ptt-btn {
+            background: #1a1a1a;
+            border: 4px solid #444;
+            color: #666;
+            transition: transform 0.05s, border-color 0.1s, color 0.1s;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #ptt-btn:active, #ptt-btn.active {
+            background: #333;
+            border-color: var(--danger);
+            color: var(--danger);
+            transform: scale(0.98);
+        }
+
+        #ptt-btn.rx-active {
+            border-color: var(--success);
+            color: var(--success);
+            background: #0f1f0f;
+            cursor: not-allowed;
+        }
+
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: rgba(255,255,255,0.05);
+            position: absolute;
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+        /* Scanner Overlay */
+        #scanner-video {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+        }
+        .scanner-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 50px solid rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+
+        * { border-radius: 0 !important; }
+    </style>
+</head>
+<body class="h-screen w-screen relative">
+
+    <!-- GLOBAL HEADER -->
+    <header class="absolute top-0 left-0 w-full p-4 z-50 flex justify-between items-center pointer-events-none">
+        <h1 class="text-lg font-bold tracking-widest text-white leading-none drop-shadow-md">GHOST<span class="text-gray-500">TALK</span></h1>
+        <div id="connection-status" class="text-[10px] font-bold uppercase text-gray-500 bg-black px-2 py-1 border border-gray-800">DISCONNECTED</div>
+    </header>
+
+    <!-- VIEW 1: LOBBY (QR ENTRY) -->
+    <section id="view-lobby" class="view-section active bg-neutral-900">
+        <div class="flex flex-col items-center justify-center p-6 w-full max-w-md">
+            
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-bold text-white tracking-widest mb-2">FREQUENCY LOBBY</h2>
+                <p class="text-[10px] text-gray-500 uppercase">My ID: <span id="my-id-display" class="text-white">...</span></p>
+            </div>
+
+            <!-- MY QR -->
+            <div class="bg-white p-3 mb-6 shadow-xl relative group">
+                <canvas id="lobby-qr"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onclick="app.ui.copyLink()">
+                    <span class="text-white text-xs font-bold uppercase">Click to Copy Link</span>
+                </div>
+            </div>
+
+            <div class="text-[10px] text-gray-500 mb-8 uppercase tracking-widest">Scan this to join me</div>
+
+            <!-- ACTION: SCAN -->
+            <button onclick="app.scanner.start()" class="w-full bg-white text-black font-bold py-4 mb-4 uppercase tracking-widest hover:bg-gray-200 border-2 border-transparent active:border-gray-500 transition-all">
+                [ SCAN QR TO JOIN ]
+            </button>
+
+            <!-- MANUAL ENTRY TOGGLE -->
+            <button onclick="app.ui.toggleManualEntry()" class="text-[10px] text-gray-600 underline uppercase hover:text-white mt-4">
+                Enter Manual ID
+            </button>
+
+            <form id="manual-entry-form" onsubmit="app.handleManualConnect(event)" class="hidden w-full mt-4 flex border border-gray-700">
+                <input type="text" id="manual-peer-input" placeholder="GHOST-XXXX" class="flex-1 bg-black text-white text-xs p-3 focus:outline-none uppercase font-mono">
+                <button type="submit" class="bg-gray-800 text-white text-xs font-bold px-4 border-l border-gray-700">→</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- VIEW 2: SCANNER (CAMERA) -->
+    <section id="view-scanner" class="view-section bg-black absolute top-0 left-0 z-40">
+        <video id="scanner-video" playsinline muted></video>
+        <div class="scanner-overlay"></div>
+        <div class="absolute bottom-10 w-full text-center">
+            <div class="text-white text-xs bg-black px-3 py-1 inline-block mb-4 border border-gray-700">POINT CAMERA AT QR CODE</div>
+            <br>
+            <button onclick="app.scanner.stop()" class="bg-red-600 text-white font-bold px-8 py-3 text-xs uppercase hover:bg-red-700">
+                CANCEL
+            </button>
+        </div>
+        <!-- Hidden canvas for processing -->
+        <canvas id="scanner-canvas" hidden></canvas>
+    </section>
+
+    <!-- VIEW 3: RADIO (SESSION) -->
+    <section id="view-radio" class="view-section relative bg-neutral-900">
+        <!-- Disconnect Button -->
+        <button onclick="app.disconnect()" class="absolute top-4 right-4 z-50 text-[10px] text-red-500 border border-red-900 px-2 py-1 hover:bg-red-900 hover:text-white uppercase pointer-events-auto">
+            DISCONNECT
+        </button>
+
+        <div class="flex-1 flex flex-col items-center justify-center w-full max-w-md p-4">
+            <!-- Screen -->
+            <div class="screen-panel w-full p-4 mb-8 relative overflow-hidden">
+                <div class="scan-line"></div>
+                <div class="flex justify-between items-end mb-4 opacity-50">
+                    <span class="text-[10px] text-gray-400">CH-ACTIVE</span>
+                    <span id="session-timer" class="text-[10px] text-gray-400">00:00:00</span>
+                </div>
+                
+                <div id="radio-status-text" class="text-2xl font-bold text-center py-2 text-gray-700 screen-text truncate">
+                    CONNECTED
+                </div>
+
+                <div class="flex justify-between text-[10px] text-gray-600 mt-6 font-mono uppercase">
+                    <span id="tx-indicator">TX</span>
+                    <span id="remote-peer-label" class="text-white font-bold">--</span>
+                    <span id="rx-indicator">RX</span>
+                </div>
+                
+                <canvas id="visualizer" class="w-full h-16 bg-black mt-2 border-t border-gray-800"></canvas>
+            </div>
+
+            <!-- PTT -->
+            <button id="ptt-btn" class="w-64 h-64 rounded-full border-[6px] flex items-center justify-center mb-4 focus:outline-none">
+                <div class="text-center pointer-events-none">
+                    <div class="text-3xl font-bold tracking-widest mb-1">PTT</div>
+                    <div class="text-[10px] uppercase text-gray-500 font-bold tracking-widest">Hold to Talk</div>
+                </div>
+            </button>
+        </div>
+    </section>
+
+    <!-- HIDDEN AUDIO -->
+    <audio id="remote-audio" playsinline></audio>
+
+    <!-- TOASTS -->
+    <div id="toast-container" class="fixed top-20 left-0 w-full flex flex-col items-center gap-2 pointer-events-none z-50"></div>
+
+    <script>
+        /**
+         * GHOSTTALK - QR FIRST EDITION
+         * Strict UX: Lobby -> Scan/Wait -> Session
+         */
+
+        const CONFIG = {
+            BASE_URL: 'https://devgna.github.io/walkieT.html'
+        };
+
+        const Utils = {
+            generateId: () => 'ghost-' + Math.random().toString(36).substr(2, 4).toUpperCase(),
+            
+            parseHash: () => {
+                const hash = window.location.hash.replace('#', '').trim();
+                return hash.length > 0 ? hash : null;
+            },
+
+            toast: (msg, type = 'info') => {
+                const container = document.getElementById('toast-container');
+                const el = document.createElement('div');
+                const colors = {
+                    info: 'bg-neutral-800 border-gray-500',
+                    error: 'bg-red-900 border-red-500',
+                    success: 'bg-green-900 border-green-500',
+                    busy: 'bg-yellow-900 border-yellow-500'
+                };
+                el.className = `${colors[type]} border px-4 py-2 text-xs font-bold text-white shadow-lg tracking-wider uppercase`;
+                el.innerText = msg;
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            },
+
+            vibrate: (pattern) => {
+                if (navigator.vibrate) try { navigator.vibrate(pattern); } catch(e){}
+            }
+        };
+
+        // --- COMPONENTS ---
+
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.micStream = null;
+                this.micNode = null;
+                this.gainNode = null;
+                this.analyser = null;
+            }
+
+            async init() {
+                if (this.ctx) return true;
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext({ latencyHint: 'interactive' });
+                    this.analyser = this.ctx.createAnalyser();
+                    this.analyser.fftSize = 64;
+                    this.micStream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                    });
+                    this.micNode = this.ctx.createMediaStreamSource(this.micStream);
+                    this.gainNode = this.ctx.createGain();
+                    this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.micStream.getAudioTracks().forEach(t => t.enabled = false);
+                    this.micNode.connect(this.gainNode);
+                    this.gainNode.connect(this.analyser);
+                    return true;
+                } catch (e) {
+                    Utils.toast("MIC ERROR", "error");
+                    return false;
+                }
+            }
+
+            transmit() {
+                if (!this.micStream) return;
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                this.micStream.getAudioTracks().forEach(t => t.enabled = true);
+                this.gainNode.gain.setTargetAtTime(1, this.ctx.currentTime, 0.01);
+            }
+
+            silence() {
+                if (!this.gainNode) return;
+                this.gainNode.gain.setTargetAtTime(0, this.ctx.currentTime, 0.01);
+                setTimeout(() => {
+                    if (this.micStream) this.micStream.getAudioTracks().forEach(t => t.enabled = false);
+                }, 100);
+            }
+
+            getLevels() {
+                if (!this.analyser) return new Uint8Array(0);
+                const data = new Uint8Array(this.analyser.frequencyBinCount);
+                this.analyser.getByteFrequencyData(data);
+                return data;
+            }
+        }
+
+        class QRScanner {
+            constructor(onScan) {
+                this.video = document.getElementById('scanner-video');
+                this.canvas = document.getElementById('scanner-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.onScan = onScan;
+                this.animationFrame = null;
+                this.stream = null;
+            }
+
+            async start() {
+                app.ui.switchView('scanner');
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    this.video.srcObject = this.stream;
+                    this.video.setAttribute("playsinline", true);
+                    this.video.play();
+                    requestAnimationFrame(this.tick.bind(this));
+                } catch (e) {
+                    Utils.toast("CAMERA ACCESS DENIED", "error");
+                    this.stop();
+                }
+            }
+
+            stop() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(t => t.stop());
+                    this.stream = null;
+                }
+                if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+                app.ui.switchView('lobby');
+            }
+
+            tick() {
+                if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+                    this.canvas.height = this.video.videoHeight;
+                    this.canvas.width = this.video.videoWidth;
+                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                    
+                    const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
+
+                    if (code) {
+                        // Validate URL
+                        if (code.data.startsWith(CONFIG.BASE_URL)) {
+                            const id = code.data.split('#')[1];
+                            if (id) {
+                                this.onScan(id);
+                                return; // Stop tick
+                            }
+                        }
+                    }
+                }
+                this.animationFrame = requestAnimationFrame(this.tick.bind(this));
+            }
+        }
+
+        // --- MAIN APP LOGIC ---
+
+        class GhostTalkApp {
+            constructor() {
+                this.myId = localStorage.getItem('gt_id') || Utils.generateId();
+                localStorage.setItem('gt_id', this.myId);
+                
+                this.state = 'LOBBY';
+                this.audio = new AudioEngine();
+                this.scanner = new QRScanner((id) => this.handleScanSuccess(id));
+                this.ui = new UIController(this);
+                this.peer = null;
+                this.conn = null;
+                this.call = null;
+                this.remoteAudioEl = document.getElementById('remote-audio');
+                this.wakeLock = null;
+            }
+
+            init() {
+                this.ui.init();
+                this.initNetwork();
+            }
+
+            initNetwork() {
+                if (this.peer) this.peer.destroy();
+                this.peer = new Peer(this.myId);
+
+                this.peer.on('open', (id) => {
+                    this.ui.updateIdentity(id);
+                    this.ui.updateStatus('ONLINE', 'text-green-500');
+                    // Check URL for auto-join
+                    const target = Utils.parseHash();
+                    if (target && target !== this.myId) {
+                        this.connectToPeer(target);
+                    }
+                });
+
+                this.peer.on('connection', (conn) => {
+                    if (this.conn) { conn.close(); return; } // Busy
+                    this.handleConnection(conn);
+                });
+
+                this.peer.on('call', (call) => {
+                    this.call = call;
+                    call.answer(this.audio.micStream); // Will be null initially, handled later
+                    call.on('stream', (stream) => this.remoteAudioEl.srcObject = stream);
+                    call.on('close', () => this.disconnect());
+                });
+
+                this.peer.on('error', (err) => {
+                    console.error(err);
+                    if (err.type === 'peer-unavailable') {
+                        Utils.toast("PEER OFFLINE", "error");
+                        this.disconnect();
+                    }
+                });
+            }
+
+            async connectToPeer(id) {
+                // User gesture required for audio context usually, but we try anyway
+                await this.audio.init(); 
+                
+                this.ui.switchView('radio'); // Optimistic UI
+                this.ui.setRadioText('DIALING...');
+                
+                const conn = this.peer.connect(id);
+                this.handleConnection(conn);
+            }
+
+            handleConnection(conn) {
+                this.conn = conn;
+                
+                conn.on('open', async () => {
+                    await this.audio.init();
+                    
+                    // If we initiated, call media
+                    if (this.myId === conn.peer) { /* Should be caught by logic below */ }
+                    
+                    // PeerJS quirk: connect() doesn't mean call() is ready immediately
+                    // Initiate call if we are the "dialer"
+                    const isDialer = this.conn.peer; 
+                    if (conn.metadata?.initiator || true) { // Simplify: Both try to call or just initiator
+                         const call = this.peer.call(conn.peer, this.audio.micStream);
+                         this.call = call;
+                         call.on('stream', (s) => this.remoteAudioEl.srcObject = s);
+                         call.on('close', () => this.disconnect());
+                    }
+
+                    this.state = 'SESSION';
+                    this.ui.switchView('radio');
+                    this.ui.setRadioText('CONNECTED');
+                    this.ui.setPeerName(conn.peer);
+                    Utils.toast("CHANNEL OPEN", "success");
+                    this.requestWakeLock();
+                });
+
+                conn.on('data', (data) => this.handleData(data));
+                conn.on('close', () => this.disconnect());
+                conn.on('error', () => this.disconnect());
+            }
+
+            handleData(data) {
+                if (data === 'TX_START') {
+                    this.ui.setRxState(true);
+                    this.remoteAudioEl.play().catch(e => {});
+                } else if (data === 'TX_STOP') {
+                    this.ui.setRxState(false);
+                }
+            }
+
+            handleScanSuccess(id) {
+                this.scanner.stop();
+                if (id === this.myId) {
+                    Utils.toast("CANNOT JOIN SELF", "error");
+                    return;
+                }
+                this.connectToPeer(id);
+            }
+
+            handleManualConnect(e) {
+                e.preventDefault();
+                const input = document.getElementById('manual-peer-input');
+                const id = input.value.trim().toUpperCase();
+                if (id) {
+                    this.connectToPeer(id);
+                    input.value = '';
+                }
+            }
+
+            // PTT Logic
+            startTx() {
+                if (this.state !== 'SESSION') return;
+                this.audio.transmit();
+                if (this.conn) this.conn.send('TX_START');
+                this.ui.setTxState(true);
+            }
+
+            stopTx() {
+                if (this.state !== 'SESSION') return;
+                this.audio.silence();
+                if (this.conn) this.conn.send('TX_STOP');
+                this.ui.setTxState(false);
+            }
+
+            disconnect() {
+                if (this.conn) { this.conn.close(); this.conn = null; }
+                if (this.call) { this.call.close(); this.call = null; }
+                
+                this.state = 'LOBBY';
+                this.ui.switchView('lobby');
+                this.ui.resetRadio();
+                Utils.toast("DISCONNECTED", "info");
+                
+                if (this.wakeLock) this.wakeLock.release();
+                
+                // Clear hash
+                history.replaceState(null, null, ' ');
+            }
+
+            async requestWakeLock() {
+                try { this.wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+            }
+        }
+
+        class UIController {
+            constructor(app) {
+                this.app = app;
+                this.views = ['lobby', 'scanner', 'radio'];
+                this.qr = new QRious({ element: document.getElementById('lobby-qr'), size: 200 });
+                this.screenText = document.getElementById('radio-status-text');
+                this.pttBtn = document.getElementById('ptt-btn');
+            }
+
+            init() {
+                // PTT Events
+                const start = (e) => { e.preventDefault(); this.app.startTx(); };
+                const stop = (e) => { e.preventDefault(); this.app.stopTx(); };
+                
+                this.pttBtn.addEventListener('mousedown', start);
+                this.pttBtn.addEventListener('touchstart', start, {passive:false});
+                window.addEventListener('mouseup', stop);
+                window.addEventListener('touchend', stop);
+
+                // Timer
+                setInterval(() => {
+                    const d = new Date();
+                    document.getElementById('session-timer').innerText = d.toTimeString().split(' ')[0];
+                }, 1000);
+            }
+
+            switchView(name) {
+                this.views.forEach(v => {
+                    const el = document.getElementById(`view-${v}`);
+                    if (v === name) el.classList.add('active');
+                    else el.classList.remove('active');
+                });
+            }
+
+            updateIdentity(id) {
+                document.getElementById('my-id-display').innerText = id;
+                const url = `${CONFIG.BASE_URL}#${id}`;
+                this.qr.value = url;
+            }
+
+            updateStatus(text, color) {
+                const el = document.getElementById('connection-status');
+                el.innerText = text;
+                el.className = `text-[10px] font-bold uppercase bg-black px-2 py-1 border border-gray-800 ${color}`;
+            }
+
+            setRadioText(text) {
+                this.screenText.innerText = text;
+                this.screenText.className = "text-2xl font-bold text-center py-2 screen-text text-gray-700";
+            }
+
+            setPeerName(id) {
+                document.getElementById('remote-peer-label').innerText = id;
+            }
+
+            toggleManualEntry() {
+                document.getElementById('manual-entry-form').classList.toggle('hidden');
+            }
+
+            setTxState(active) {
+                if (active) {
+                    this.pttBtn.classList.add('active');
+                    this.screenText.innerText = 'TRANSMITTING';
+                    this.screenText.classList.add('text-red-500');
+                    document.getElementById('tx-indicator').classList.add('text-red-500', 'font-bold');
+                } else {
+                    this.pttBtn.classList.remove('active');
+                    this.screenText.innerText = 'CONNECTED';
+                    this.screenText.classList.remove('text-red-500');
+                    document.getElementById('tx-indicator').classList.remove('text-red-500', 'font-bold');
+                }
+            }
+
+            setRxState(active) {
+                if (active) {
+                    this.pttBtn.classList.add('rx-active');
+                    this.screenText.innerText = 'RECEIVING';
+                    this.screenText.classList.add('text-green-500');
+                    document.getElementById('rx-indicator').classList.add('text-green-500', 'font-bold');
+                } else {
+                    this.pttBtn.classList.remove('rx-active');
+                    this.screenText.innerText = 'CONNECTED';
+                    this.screenText.classList.remove('text-green-500');
+                    document.getElementById('rx-indicator').classList.remove('text-green-500', 'font-bold');
+                }
+            }
+
+            resetRadio() {
+                this.setRadioText('WAITING');
+                this.setPeerName('--');
+                this.setTxState(false);
+                this.setRxState(false);
+            }
+
+            copyLink() {
+                const url = CONFIG.BASE_URL + '#' + document.getElementById('my-id-display').innerText;
+                navigator.clipboard.writeText(url);
+                Utils.toast('LINK COPIED');
+            }
+        }
+
+        // --- VISUALIZER LOOP ---
+        function renderVisuals() {
+            const cvs = document.getElementById('visualizer');
+            const ctx = cvs.getContext('2d');
+            
+            function loop() {
+                requestAnimationFrame(loop);
+                if (app.state !== 'SESSION') return;
+                
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, cvs.width, cvs.height);
+                
+                // Only draw if TX or RX active for simple feedback
+                const isTx = app.ui.pttBtn.classList.contains('active');
+                const isRx = app.ui.pttBtn.classList.contains('rx-active');
+                
+                if (isTx) {
+                    const data = app.audio.getLevels();
+                    const w = (cvs.width / data.length) * 2.5;
+                    let x = 0;
+                    ctx.fillStyle = '#ff3333';
+                    for(let i=0; i<data.length; i++) {
+                        const h = (data[i]/255) * cvs.height;
+                        ctx.fillRect(x, cvs.height - h, w, h);
+                        x+=w+1;
+                    }
+                } else if (isRx) {
+                    ctx.fillStyle = '#33ff33';
+                    const bars = 20;
+                    const w = cvs.width/bars;
+                    for(let i=0; i<bars; i++) {
+                        const h = Math.random() * cvs.height * 0.8;
+                        ctx.fillRect(i*w, cvs.height-h, w-1, h);
+                    }
+                } else {
+                     ctx.fillStyle = '#222';
+                     ctx.fillRect(0, cvs.height/2, cvs.width, 1);
+                }
+            }
+            loop();
+        }
+
+        // --- LAUNCH ---
+        window.app = new GhostTalkApp();
+        window.addEventListener('load', () => {
+            app.init();
+            renderVisuals();
+        });
+
+    </script>
+</body>
+</html>
+
+
