@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PixelForge - Client-Side Pixel Art Converter</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* Custom Scrollbar */
@@ -43,8 +45,9 @@
             image-rendering: crisp-edges;
         }
 
-        /* Hide/Show logic */
+        /* Utilities */
         .hidden { display: none !important; }
+        .touch-action-none { touch-action: none; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white overflow-hidden h-screen flex flex-col md:flex-row">
@@ -77,18 +80,23 @@
         </div>
 
         <!-- Canvas Container -->
-        <div id="canvas-container" class="relative hidden shadow-2xl shadow-black/50 group max-w-full max-h-[70vh] p-4">
+        <div id="canvas-container" class="relative hidden shadow-2xl shadow-black/50 group max-w-full max-h-[70vh] p-4 flex items-center justify-center">
             <!-- Offscreen source canvas (hidden) -->
             <canvas id="source-canvas" class="hidden"></canvas>
-            <!-- Preview Image (Source for visual) -->
-            <img id="preview-image" class="pixelated max-w-full max-h-[60vh] md:max-h-[80vh] object-contain border-4 border-slate-800 bg-slate-800 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]" />
             
-            <!-- Grid Overlay -->
-            <div id="grid-overlay" class="absolute inset-0 pointer-events-none opacity-30 hidden" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
-            
+            <!-- Preview Image (Visual Representation) -->
+            <div class="relative">
+                <img id="preview-image" class="pixelated max-w-full max-h-[60vh] md:max-h-[80vh] object-contain border-4 border-slate-800 bg-slate-800 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]" />
+                <!-- Grid Overlay -->
+                <div id="grid-overlay" class="absolute inset-0 pointer-events-none opacity-30 hidden" style="top: 0; left: 0; width: 100%; height: 100%;"></div>
+            </div>
+
             <!-- Loading Spinner -->
             <div id="loading-overlay" class="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm hidden z-50 rounded">
-                <i data-lucide="loader-2" class="animate-spin text-indigo-400 w-8 h-8"></i>
+                <div class="flex flex-col items-center gap-2">
+                    <i data-lucide="loader-2" class="animate-spin text-indigo-400 w-8 h-8"></i>
+                    <span class="text-indigo-200 text-xs font-mono">Processing...</span>
+                </div>
             </div>
         </div>
 
@@ -247,8 +255,12 @@
         self.onmessage = async (e) => {
             const { imageData, config, id } = e.data;
             try {
+                if (!imageData) throw new Error("No image data received");
                 const result = processImage(imageData, config);
-                self.postMessage({ id, success: true, result }, [result.pixels.data.buffer]);
+                // CRITICAL FIX: Do NOT transfer the buffer [result.pixels.data.buffer]. 
+                // Using the transfer list often detaches the buffer before serialization is complete in some browsers,
+                // resulting in an empty image on the main thread.
+                self.postMessage({ id, success: true, result });
             } catch (err) {
                 self.postMessage({ id, success: false, error: err.message });
             }
@@ -284,10 +296,12 @@
                             }
                         }
                         const tidx = (y * targetW + x) * 4;
-                        downscaled.data[tidx] = r / count;
-                        downscaled.data[tidx+1] = g / count;
-                        downscaled.data[tidx+2] = b / count;
-                        downscaled.data[tidx+3] = a / count;
+                        if (count > 0) {
+                            downscaled.data[tidx] = r / count;
+                            downscaled.data[tidx+1] = g / count;
+                            downscaled.data[tidx+2] = b / count;
+                            downscaled.data[tidx+3] = a / count;
+                        }
                     }
                 }
             } else {
@@ -311,15 +325,21 @@
             let palette = [];
             const pixels = [];
             for (let i = 0; i < downscaled.data.length; i += 4) {
+                // Ignore transparent pixels for palette generation
                 if (downscaled.data[i+3] > 128) {
                     pixels.push({ r: downscaled.data[i], g: downscaled.data[i+1], b: downscaled.data[i+2] });
                 }
             }
             
-            if (quantAlgo === 'kmeans') {
-                palette = kMeans(pixels, colorCount);
+            if (pixels.length > 0) {
+                if (quantAlgo === 'kmeans') {
+                    palette = kMeans(pixels, colorCount);
+                } else {
+                    palette = medianCut(pixels, colorCount);
+                }
             } else {
-                palette = medianCut(pixels, colorCount);
+                // Fallback for fully transparent or empty images
+                palette = [{r:0, g:0, b:0}]; 
             }
 
             // 3. Quantization & Dither
@@ -423,7 +443,13 @@
         function kMeans(pixels, k) {
             if (pixels.length <= k) return pixels;
             let centroids = [];
-            for(let i=0; i<k; i++) centroids.push(pixels[Math.floor(Math.random()*pixels.length)]);
+            // Safe initialization for non-empty pixels
+            if (pixels.length > 0) {
+                 for(let i=0; i<k; i++) centroids.push(pixels[Math.floor(Math.random()*pixels.length)]);
+            } else {
+                return [];
+            }
+           
             for(let iter=0; iter<5; iter++) {
                 const assignments = new Array(k).fill(0).map(()=>({r:0,g:0,b:0,count:0}));
                 for(let i=0; i<pixels.length; i++) {
@@ -431,6 +457,7 @@
                     let minDist=Infinity, idx=0;
                     for(let j=0; j<k; j++) {
                         const c = centroids[j];
+                        if (!c) continue; // Safety check
                         const dist = (p.r-c.r)**2 + (p.g-c.g)**2 + (p.b-c.b)**2;
                         if(dist < minDist) { minDist=dist; idx=j; }
                     }
@@ -461,19 +488,20 @@
                 quantAlgo: 'median',
                 ditherAlgo: 'none',
                 ditherStrength: 0.5,
-                paletteMode: 'auto'
+                paletteMode: 'auto',
+                customPalette: [] 
             },
-            originalImage: null, // Image Object
-            processedData: null // { pixels: ImageData, palette: [] }
+            originalImage: null, 
+            processedData: null
         };
 
-        const els = {}; // Cache DOM elements
+        const els = {}; 
         let worker = null;
         let debounceTimer = null;
 
         // --- Init ---
         document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
             initElements();
             initWorker();
             initEventListeners();
@@ -508,23 +536,28 @@
         }
 
         function initWorker() {
-            const blob = new Blob([document.getElementById('worker-code').textContent], { type: "text/javascript" });
-            worker = new Worker(window.URL.createObjectURL(blob));
-            
-            worker.onmessage = (e) => {
-                const { success, result, error } = e.data;
-                els.loadingOverlay.classList.add('hidden');
+            try {
+                const blob = new Blob([document.getElementById('worker-code').textContent], { type: "text/javascript" });
+                worker = new Worker(window.URL.createObjectURL(blob));
                 
-                if (success) {
-                    state.processedData = result;
-                    renderPreview();
-                    updatePaletteUI(result.palette);
-                    updateExportUI();
-                } else {
-                    console.error(error);
-                    alert("Error processing image.");
-                }
-            };
+                worker.onmessage = (e) => {
+                    const { success, result, error } = e.data;
+                    els.loadingOverlay.classList.add('hidden');
+                    
+                    if (success) {
+                        state.processedData = result;
+                        renderPreview();
+                        updatePaletteUI(result.palette);
+                        updateExportUI();
+                    } else {
+                        console.error("Worker Error:", error);
+                        alert("Processing failed: " + error);
+                    }
+                };
+            } catch (e) {
+                console.error("Worker initialization failed:", e);
+                alert("Could not start image processor. Browser might block local workers.");
+            }
         }
 
         function initEventListeners() {
@@ -627,11 +660,16 @@
                 ctx.drawImage(state.originalImage, 0, 0);
                 const imageData = ctx.getImageData(0, 0, state.originalImage.width, state.originalImage.height);
 
-                worker.postMessage({
-                    imageData: imageData,
-                    config: state.config,
-                    id: Date.now()
-                });
+                if (worker) {
+                    worker.postMessage({
+                        imageData: imageData,
+                        config: state.config,
+                        id: Date.now()
+                    });
+                } else {
+                    alert("Worker not initialized");
+                    els.loadingOverlay.classList.add('hidden');
+                }
             }, 100);
         }
 
@@ -657,9 +695,7 @@
             const w = state.processedData.pixels.width;
             const h = state.processedData.pixels.height;
             
-            // We can't easily draw lines on the <img>, so we use background size on overlay
-            // Ideally we'd calculate aspect ratio, but CSS cover/contain makes it tricky.
-            // Simplified: Just update background size assuming 100% fill for now.
+            // Use background size to create a grid pattern that matches pixel size
             els.gridOverlay.style.backgroundSize = `${100/w}% ${100/h}%`;
             els.gridOverlay.style.backgroundImage = `
                 linear-gradient(to right, rgba(255,255,255,0.3) 1px, transparent 1px),
@@ -679,7 +715,7 @@
             palette.forEach(c => {
                 const hex = `#${[c.r,c.g,c.b].map(x=>x.toString(16).padStart(2,'0')).join('')}`;
                 const div = document.createElement('div');
-                div.className = "aspect-square rounded-sm shadow-sm cursor-pointer hover:scale-110 transition-transform relative group bg-slate-700";
+                div.className = "aspect-square rounded-sm shadow-sm cursor-pointer hover:scale-110 transition-transform relative group bg-slate-700 border border-slate-600";
                 div.style.backgroundColor = hex;
                 div.title = hex;
                 els.paletteGrid.appendChild(div);
@@ -739,4 +775,5 @@
     </script>
 </body>
 </html>
+
 
