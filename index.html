@@ -2,984 +2,532 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="description" content="Secure P2P File Transfer. No Cloud. No Limits.">
-    <title>GhostDrop Social</title>
-    
-    <!-- Dependencies -->
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostShare | Anonymous P2P Transfer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg: #ffffff; --fg: #000000; --border: #000000;
-            --dim: #666666; --light: #f4f4f4; --accent: #000000;
-            --danger: #ff0000; --success: #008000;
-            --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+            --bg: #000000;
+            --fg: #ffffff;
+            --dim: #444444;
+            --accent: #ffffff;
+            --err: #ff3333;
+            --font-mono: 'Courier New', Courier, monospace;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
         
         body {
-            margin: 0; padding: 0; background: var(--bg); color: var(--fg);
-            font-family: var(--font-mono); font-size: 13px;
-            height: 100vh; height: 100dvh; overflow: hidden;
-            display: flex; flex-direction: column; user-select: none;
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-mono);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
         }
 
-        /* LAYOUT */
-        #app { display: grid; grid-template-rows: 48px 1fr; grid-template-columns: 280px 1fr; height: 100%; width: 100%; }
-        
-        /* HEADER */
-        #top-bar {
-            grid-column: 1 / -1; grid-row: 1; border-bottom: 2px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px; background: var(--bg); z-index: 10;
-        }
-        .brand { font-weight: 900; letter-spacing: -1px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-        
-        /* SIDEBAR */
-        #sidebar {
-            grid-column: 1; grid-row: 2; border-right: 2px solid var(--border);
-            display: flex; flex-direction: column; background: var(--light); overflow: hidden;
-        }
+        /* Typography */
+        h1, h2, h3 { font-weight: normal; text-transform: uppercase; letter-spacing: 1px; }
+        h1 { font-size: 1.5rem; border-bottom: 2px solid var(--fg); padding-bottom: 0.5rem; margin-bottom: 2rem; }
+        p { margin-bottom: 1rem; font-size: 0.9rem; }
+        small { color: #888; display: block; margin-top: 0.5rem; font-size: 0.75rem; }
 
-        /* MAIN */
-        #main-panel {
-            grid-column: 2; grid-row: 2; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; padding: 24px;
-            background: var(--bg); position: relative; overflow-y: auto;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 768px) {
-            #app { display: flex; flex-direction: column; }
-            #sidebar { display: none; flex: 1; border-right: none; }
-            #main-panel { display: none; flex: 1; }
-            #sidebar.active, #main-panel.active { display: flex; }
-            .mobile-nav { display: flex !important; }
-        }
-
-        /* COMPONENTS */
-        .btn {
-            background: var(--fg); color: var(--bg); border: 2px solid var(--fg);
-            padding: 10px 20px; font-family: inherit; font-weight: bold;
-            cursor: pointer; text-transform: uppercase; display: inline-flex;
-            justify-content: center; align-items: center; gap: 8px; min-width: 100px;
-        }
-        .btn:active { transform: translateY(1px); }
-        .btn:disabled { background: var(--dim); border-color: var(--dim); cursor: not-allowed; }
-        .btn-outline { background: transparent; color: var(--fg); }
-        .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
-        .btn-sm { padding: 4px 8px; min-width: auto; font-size: 11px; }
-        
-        .input {
-            border: 2px solid var(--border); padding: 10px; font-family: inherit;
-            width: 100%; background: var(--bg); outline: none; border-radius: 0;
-        }
-        .input:focus { border-color: var(--dim); background: #fff; }
-
-        /* LISTS */
-        .tab-bar { display: flex; border-bottom: 2px solid var(--border); background: var(--bg); }
-        .tab-item { 
-            flex: 1; text-align: center; padding: 12px; cursor: pointer; 
-            font-weight: bold; background: var(--light); border-bottom: 2px solid transparent;
-        }
-        .tab-item.active { background: var(--bg); border-bottom: 2px solid var(--bg); margin-bottom: -2px; }
-
-        .list-item {
-            padding: 12px 16px; border-bottom: 1px solid #ddd; cursor: pointer;
-            display: flex; align-items: center; justify-content: space-between;
-            transition: background 0.2s; position: relative;
-        }
-        .list-item:hover { background: #fff; }
-        .list-item.active { background: var(--fg); color: var(--bg); }
-        .list-item.pressing { background: #eee; animation: pulse 0.5s infinite; }
-        
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; border: 1px solid #fff; }
-        .status-dot.online { background: #00ff00; border-color: #000; }
-        .status-dot.busy { background: #ffa500; }
-
-        /* STATES */
-        .state-view { text-align: center; max-width: 500px; width: 100%; display: none; }
-        .state-view.active { display: block; animation: fadeIn 0.3s; }
-        
-        .stat-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-            margin: 20px 0; text-align: left; border: 2px solid var(--border); padding: 16px;
-        }
-        .stat-label { color: var(--dim); font-size: 10px; text-transform: uppercase; margin-bottom: 4px; }
-        .stat-val { font-size: 14px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; }
-
-        .progress-container {
-            width: 100%; height: 28px; border: 2px solid var(--border);
-            margin: 20px 0; position: relative; background: var(--light);
-        }
-        .progress-bar { height: 100%; background: var(--fg); width: 0%; transition: width 0.1s linear; }
-        
-        /* CONTEXT MENU */
-        #context-menu {
-            position: absolute; background: var(--bg); border: 2px solid var(--border);
-            box-shadow: 4px 4px 0 rgba(0,0,0,0.2); z-index: 100; display: none; min-width: 150px;
-        }
-        .ctx-item { padding: 10px 16px; cursor: pointer; font-weight: bold; display: block; width: 100%; text-align: left; border: none; background: none; }
-        .ctx-item:hover { background: var(--light); }
-        .ctx-item.danger { color: var(--danger); }
-
-        /* TOAST & MODALS */
-        #toast-box { position: fixed; bottom: 20px; right: 20px; z-index: 9999; pointer-events: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-        .toast { background: var(--fg); color: var(--bg); padding: 12px 20px; font-weight: bold; border: 1px solid var(--bg); animation: slideUp 0.3s; pointer-events: auto; }
-        
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.95);
-            z-index: 2000; display: none; align-items: center; justify-content: center;
-        }
-        .modal-box { background: #fff; border: 2px solid #000; padding: 24px; width: 90%; max-width: 360px; box-shadow: 8px 8px 0 rgba(0,0,0,0.1); }
-
-        .mobile-nav {
-            display: none; height: 50px; border-top: 2px solid var(--border);
-            background: var(--bg); flex-shrink: 0; z-index: 20;
-        }
-        .nav-btn { flex: 1; border: none; background: var(--bg); font-weight: bold; border-right: 1px solid var(--border); }
-        .nav-btn.active { background: var(--light); text-decoration: underline; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        
+        /* Layout */
+        .container { max-width: 600px; margin: 0 auto; width: 100%; }
         .hidden { display: none !important; }
-        .mono-box { background: #eee; padding: 8px; font-family: monospace; word-break: break-all; font-size: 11px; margin: 8px 0; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Components */
+        .btn {
+            background: transparent;
+            color: var(--fg);
+            border: 1px solid var(--fg);
+            padding: 12px 20px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .btn:hover { background: var(--fg); color: var(--bg); }
+        .btn:disabled { border-color: var(--dim); color: var(--dim); cursor: not-allowed; }
+        .btn-small { width: auto; padding: 5px 10px; font-size: 0.8rem; margin: 0; }
+
+        .card { border: 1px solid var(--dim); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
+        
+        .input-group { margin-bottom: 1rem; }
+        input[type="text"] {
+            width: 100%;
+            background: #111;
+            border: 1px solid var(--dim);
+            color: var(--fg);
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .qr-container { 
+            background: white; 
+            padding: 10px; 
+            display: inline-block; 
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .qr-container canvas { display: block; }
+
+        /* ID Badge */
+        .id-badge {
+            font-size: 2rem;
+            letter-spacing: 3px;
+            border: 1px dashed var(--dim);
+            padding: 1rem;
+            margin: 1rem 0;
+            word-break: break-all;
+            background: #111;
+        }
+
+        /* File Transfer UI */
+        .progress-bar {
+            height: 4px;
+            background: var(--dim);
+            margin-top: 0.5rem;
+            width: 100%;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--fg);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border: 1px solid var(--fg);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-left: 0.5rem;
+        }
+        .status-connected { background: var(--fg); color: var(--bg); }
+        .status-disconnected { border-color: var(--dim); color: var(--dim); }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--fg);
+            color: var(--bg);
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 100;
+        }
+
+        /* Utilities */
+        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Mobile specific */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.2rem; }
+            .card { padding: 1rem; }
+            .id-badge { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <!-- TOP BAR -->
-    <header id="top-bar">
-        <div class="brand">
-            <span>GHOST DROP</span>
-            <span id="conn-status-dot" class="status-dot"></span>
-        </div>
-        <div style="text-align: right; display: flex; gap: 8px; align-items: center;">
-            <button class="btn btn-sm btn-outline" onclick="Diagnostics.toggle()">LOGS</button>
-            <div id="my-id-display" class="btn btn-sm" onclick="App.copyId()" style="min-width: 80px;">OFFLINE</div>
-        </div>
+<div class="container">
+    <header class="flex-row">
+        <h1>GhostShare</h1>
+        <div id="connectionStatus" class="status-badge status-disconnected">Disconnected</div>
     </header>
 
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="active">
-        <div class="tab-bar">
-            <div class="tab-item active" onclick="App.setTab('friends')" id="tab-friends">PEERS</div>
-            <div class="tab-item" onclick="App.setTab('history')" id="tab-history">HISTORY</div>
-        </div>
-
-        <!-- FRIENDS LIST -->
-        <div id="view-friends" style="display: flex; flex-direction: column; height: 100%;">
-            <div style="padding: 12px; border-bottom: 2px solid var(--border); background: var(--bg);">
-                <div style="display: flex; gap: 8px;">
-                    <input id="add-id" class="input" placeholder="Peer ID (e.g. ghost-1234)">
-                    <button class="btn btn-outline" style="padding: 0 12px;" onclick="App.scanQR()">[O]</button>
-                </div>
-                <button class="btn btn-block" style="width: 100%; margin-top: 8px;" onclick="Friends.add()">ADD FRIEND</button>
-            </div>
-            <div id="friends-list" style="overflow-y: auto; flex: 1;"></div>
-        </div>
-
-        <!-- HISTORY -->
-        <div id="view-history" style="display: none; flex-direction: column; height: 100%;">
-            <div style="padding: 12px; border-bottom: 2px solid var(--border); text-align: right;">
-                <button class="btn btn-sm btn-outline" onclick="History.clear()">CLEAR</button>
-            </div>
-            <div id="history-list" style="overflow-y: auto; flex: 1;"></div>
-        </div>
-    </aside>
-
-    <!-- MAIN PANEL -->
-    <main id="main-panel">
-        
-        <!-- IDLE -->
-        <div id="screen-idle" class="state-view active">
-            <h2 style="margin-bottom: 8px;">READY</h2>
-            <p style="color: var(--dim);">Select a friend to begin.</p>
-            <div style="margin-top: 40px; border: 1px dashed #ccc; padding: 20px;">
-                <p style="font-size: 11px; margin: 0;">GHOSTDROP SOCIAL v2.0</p>
-                <p style="font-size: 10px; color: var(--dim);">SECURE • P2P • CLIENT-ONLY</p>
-            </div>
-        </div>
-
-        <!-- CONNECTED -->
-        <div id="screen-connected" class="state-view">
-            <h1 id="remote-name" style="font-size: 32px; margin: 0 0 8px 0;">FRIEND</h1>
-            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 32px;">
-                <span id="remote-id" class="mono-box" style="background:transparent; padding:0;"></span>
-                <span id="remote-status" style="font-weight: bold; color: var(--dim);">Offline</span>
-            </div>
+    <!-- VIEW: SETUP -->
+    <div id="view-setup" class="fade-in">
+        <div class="card" style="text-align: center;">
+            <p>YOUR ID</p>
+            <div id="my-id-display" class="id-badge">...</div>
+            <small>Share this ID with your peer</small>
             
-            <input type="file" id="file-input" class="hidden" multiple onchange="Transfer.Sender.queueFiles(this)">
-            <button class="btn" onclick="document.getElementById('file-input').click()" style="padding: 24px 48px; font-size: 16px;">
-                SEND FILES
-            </button>
-            <div style="margin-top: 16px; font-size: 10px; color: var(--dim);">
-                DRAG & DROP SUPPORTED
+            <div id="qr-container" class="qr-container hidden"></div>
+            
+            <div style="margin-top: 1rem;">
+                <button class="btn btn-small" onclick="app.copyId()">Copy ID</button>
+                <button class="btn btn-small" onclick="app.toggleQR()">Show QR</button>
             </div>
         </div>
 
-        <!-- INCOMING OFFER -->
-        <div id="screen-incoming" class="state-view">
-            <h2>INCOMING TRANSFER</h2>
-            <div class="stat-grid">
-                <div><div class="stat-label">FROM</div><div id="inc-sender" class="stat-val">Unknown</div></div>
-                <div><div class="stat-label">SIZE</div><div id="inc-size" class="stat-val">0 MB</div></div>
-                <div style="grid-column: 1/-1;"><div class="stat-label">FILENAME</div><div id="inc-name" class="stat-val">file.ext</div></div>
+        <div class="card">
+            <p>CONNECT TO PEER</p>
+            <div class="input-group">
+                <input type="text" id="peer-id-input" placeholder="ENTER PEER ID" maxlength="6">
             </div>
-            <div style="display: flex; gap: 16px; justify-content: center;">
-                <button class="btn btn-danger" onclick="Transfer.Receiver.respond(false)">REJECT</button>
-                <button class="btn" onclick="Transfer.Receiver.respond(true)">ACCEPT</button>
-            </div>
+            <button class="btn" id="connect-btn" onclick="app.connectToPeer()">Connect</button>
+            <small style="text-align: center;">Connection establishes a direct P2P tunnel.</small>
         </div>
 
-        <!-- TRANSFERRING -->
-        <div id="screen-transfer" class="state-view">
-            <h2 id="trans-title">TRANSFERRING</h2>
-            <div class="progress-container">
-                <div id="prog-bar" class="progress-bar"></div>
-            </div>
-            <div class="stat-grid">
-                <div><div class="stat-label">SPEED</div><div id="trans-speed" class="stat-val">0 KB/s</div></div>
-                <div><div class="stat-label">ETA</div><div id="trans-eta" class="stat-val">--</div></div>
-                <div><div class="stat-label">SENT/RECV</div><div id="trans-bytes" class="stat-val">0 / 0</div></div>
-                <div><div class="stat-label">STATUS</div><div id="trans-status" class="stat-val">Active</div></div>
-            </div>
-            <div style="display: flex; gap: 16px; justify-content: center;">
-                <button id="btn-pause" class="btn btn-outline" onclick="Transfer.togglePause()">PAUSE</button>
-                <button class="btn btn-danger" onclick="Transfer.cancel()">CANCEL</button>
-            </div>
-        </div>
-
-        <!-- COMPLETE -->
-        <div id="screen-complete" class="state-view">
-            <h2>COMPLETED</h2>
-            <div id="comp-checksum" class="mono-box" style="margin: 20px 0; background: #000; color: #fff;">HASH CHECKING...</div>
-            <p id="comp-msg">File transferred successfully.</p>
-            <div style="display: flex; gap: 16px; justify-content: center;">
-                <button id="btn-dl" class="btn hidden">DOWNLOAD</button>
-                <button class="btn btn-outline" onclick="App.resetToConnected()">CLOSE</button>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- MOBILE NAV -->
-    <nav class="mobile-nav">
-        <button class="nav-btn active" onclick="App.mobileNav('friends')" id="mob-friends">PEERS</button>
-        <button class="nav-btn" onclick="App.mobileNav('transfer')" id="mob-transfer">TRANSFER</button>
-        <button class="nav-btn" onclick="App.mobileNav('history')" id="mob-history">HISTORY</button>
-    </nav>
-</div>
-
-<!-- OVERLAYS -->
-<div id="context-menu">
-    <button class="ctx-item" onclick="Friends.editCtx()">Edit Nickname</button>
-    <button class="ctx-item" onclick="App.copyCtx()">Copy ID</button>
-    <button class="ctx-item danger" onclick="Friends.removeCtx()">Remove Friend</button>
-</div>
-
-<div id="modal-qr" class="modal-overlay" onclick="if(event.target===this) App.closeModal('modal-qr')">
-    <div class="modal-box" style="text-align: center;">
-        <h3>MY IDENTITY</h3>
-        <div id="qrcode" style="margin: 16px auto; width: 128px;"></div>
-        <p class="mono-box" id="qr-text"></p>
-        <button class="btn btn-block" onclick="App.closeModal('modal-qr')">CLOSE</button>
-    </div>
-</div>
-
-<div id="modal-scan" class="modal-overlay">
-    <div class="modal-box">
-        <h3>SCAN PEER</h3>
-        <div id="reader" style="width: 100%; height: 250px; background: #eee;"></div>
-        <button class="btn btn-block" style="margin-top: 16px;" onclick="App.stopScan()">CANCEL</button>
-    </div>
-</div>
-
-<div id="modal-diagnostics" class="modal-overlay" onclick="if(event.target===this) Diagnostics.toggle()">
-    <div class="modal-box" style="width: 95%; max-width: 600px; height: 80vh; display: flex; flex-direction: column;">
-        <h3>SYSTEM LOGS</h3>
-        <div id="log-container" style="flex: 1; background: #eee; font-family: monospace; padding: 8px; overflow-y: auto; font-size: 10px; margin-bottom: 16px;"></div>
-        <div style="display: flex; gap: 8px;">
-            <button class="btn btn-sm btn-outline" onclick="Diagnostics.export()">EXPORT</button>
-            <button class="btn btn-sm" onclick="Diagnostics.clear()">CLEAR</button>
-            <button class="btn btn-sm" onclick="Diagnostics.toggle()">CLOSE</button>
+        <div style="margin-top: 2rem; text-align: center; font-size: 0.8rem; color: #666;">
+            <p>Files are transferred directly between devices.</p>
+            <p>No servers. No history.</p>
         </div>
     </div>
+
+    <!-- VIEW: TRANSFER -->
+    <div id="view-transfer" class="hidden fade-in">
+        <div class="card">
+            <h3>Send File</h3>
+            <input type="file" id="fileInput" style="display: none" onchange="app.handleFileSelect(this)">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">Select File</button>
+            <small>Supports any file type. Secure P2P Pipeline.</small>
+        </div>
+
+        <div id="transfers-list">
+            <!-- Transfers injected here -->
+        </div>
+    </div>
+
 </div>
 
-<div id="toast-box"></div>
-
-<!-- LOGIC -->
 <script>
 /**
- * GHOST DROP SOCIAL v2.0
- * Architecture: Modules (App, Net, Transfer, Friends, History, UI, Utils)
+ * GHOSTSHARE 2.0
+ * Uses PeerJS for lightweight signaling (free seeding) to enable Short ID connections.
+ * Data transfer remains strictly Peer-to-Peer via WebRTC DataChannels.
  */
 
-// --- UTILS ---
-const Utils = {
-    id: localStorage.getItem('gd_id') || 'gd-' + Math.random().toString(36).substr(2, 6),
-    now: () => Date.now(),
-    fmtSize: (b) => {
-        const u = ['B','KB','MB','GB']; let i=0;
-        while(b >= 1024 && i < u.length-1){ b/=1024; i++; }
-        return b.toFixed(1)+u[i];
-    },
-    toast: (msg, type='info') => {
-        const d = document.createElement('div');
-        d.className = 'toast'; d.innerText = msg;
-        if(type==='err') d.style.borderColor = 'red';
-        document.getElementById('toast-box').appendChild(d);
-        setTimeout(() => d.remove(), 3000);
-    },
-    // Inline Worker for Checksum (FNV-1a)
-    createWorker: () => {
-        const code = `
-            self.onmessage = function(e) {
-                let h = e.data.seed || 0x811c9dc5;
-                const d = new Uint8Array(e.data.chunk);
-                for(let i=0; i<d.length; i++) {
-                    h ^= d[i]; h = Math.imul(h, 0x01000193);
-                }
-                self.postMessage({ hash: h >>> 0 });
-            };
-        `;
-        return new Worker(URL.createObjectURL(new Blob([code], {type: 'application/javascript'})));
-    }
-};
+const CHUNK_SIZE = 16384; // 16KB chunks for reliable progress tracking
 
-// --- LOGGING ---
-const Diagnostics = {
-    logs: [],
-    log: (msg, type='INFO') => {
-        const entry = `[${new Date().toLocaleTimeString()}] [${type}] ${msg}`;
-        console.log(entry);
-        Diagnostics.logs.unshift(entry);
-        if(Diagnostics.logs.length > 200) Diagnostics.logs.pop();
-        const c = document.getElementById('log-container');
-        if(c) c.innerHTML = Diagnostics.logs.join('<br>');
-    },
-    toggle: () => {
-        const el = document.getElementById('modal-diagnostics');
-        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
-        Diagnostics.render();
-    },
-    render: () => document.getElementById('log-container').innerHTML = Diagnostics.logs.join('<br>'),
-    clear: () => { Diagnostics.logs = []; Diagnostics.render(); },
-    export: () => {
-        const blob = new Blob([Diagnostics.logs.join('\n')], {type: 'text/plain'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'ghostdrop-logs.txt';
-        a.click();
-    }
-};
+// Utility: Visual toast
+function showToast(msg) {
+    const el = document.createElement('div');
+    el.className = 'toast fade-in';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
 
-// --- DATA ---
-const Data = {
-    friends: JSON.parse(localStorage.getItem('gd_friends') || '{}'),
-    history: JSON.parse(localStorage.getItem('gd_history') || '[]'),
-    saveFriends: () => localStorage.setItem('gd_friends', JSON.stringify(Data.friends)),
-    saveHistory: () => localStorage.setItem('gd_history', JSON.stringify(Data.history))
-};
+// Utility: Byte formatting
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
-// --- NETWORK ---
-const Net = {
-    peer: null,
-    conns: {},
-    backoff: 1000,
-    heartbeatInt: null,
-    
-    init: () => {
-        localStorage.setItem('gd_id', Utils.id);
-        Net.connectPeer();
-        // Manifest Injection for PWA
-        const manifest = {
-            name: "GhostDrop", short_name: "GhostDrop", start_url: ".", display: "standalone",
-            background_color: "#ffffff", theme_color: "#ffffff",
-            icons: [{ src: "https://unpkg.com/feather-icons/dist/icons/box.svg", sizes: "192x192", type: "image/svg+xml" }]
+class GhostShare {
+    constructor() {
+        this.peer = null;
+        this.conn = null;
+        this.myId = '';
+        this.transfers = {}; // id -> transferObj
+        
+        this.el = {
+            status: document.getElementById('connectionStatus'),
+            myId: document.getElementById('my-id-display'),
+            peerInput: document.getElementById('peer-id-input'),
+            qr: document.getElementById('qr-container'),
+            transfersList: document.getElementById('transfers-list'),
+            connectBtn: document.getElementById('connect-btn')
         };
-        const link = document.createElement('link'); link.rel = 'manifest';
-        link.href = 'data:application/json;base64,' + btoa(JSON.stringify(manifest));
-        document.head.appendChild(link);
-    },
 
-    connectPeer: () => {
-        if(Net.peer) Net.peer.destroy();
-        Diagnostics.log(`Init Peer: ${Utils.id}`);
-        Net.peer = new Peer(Utils.id, { debug: 1 });
-        
-        Net.peer.on('open', (id) => {
-            document.getElementById('my-id-display').innerText = id;
-            document.getElementById('conn-status-dot').classList.add('online');
-            Net.backoff = 1000;
-            Net.reconnectFriends();
-            Net.startHeartbeat();
-        });
-        
-        Net.peer.on('error', (err) => {
-            Diagnostics.log(`Peer Err: ${err.type}`);
-            document.getElementById('conn-status-dot').classList.remove('online');
-            if(['network-disconnected', 'peer-unavailable', 'server-error'].includes(err.type)) {
-                setTimeout(Net.connectPeer, Net.backoff);
-                Net.backoff = Math.min(Net.backoff * 2, 30000);
+        this.initPeer();
+    }
+
+    // --- INITIALIZATION & ID GENERATION ---
+
+    generateShortId() {
+        // Generate a random 6-character alphanumeric ID
+        return Math.random().toString(36).substr(2, 6).toUpperCase();
+    }
+
+    initPeer() {
+        this.myId = this.generateShortId();
+        this.el.myId.textContent = this.myId;
+        this.generateQR(this.myId);
+
+        // Initialize PeerJS with public free signaling server
+        this.peer = new Peer(this.myId, {
+            debug: 2,
+            config: {
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
             }
         });
-        
-        Net.peer.on('connection', Net.handleConn);
-    },
 
-    handleConn: (conn) => {
-        Diagnostics.log(`Connected: ${conn.peer}`);
-        if(Net.conns[conn.peer]) Net.conns[conn.peer].close();
-        Net.conns[conn.peer] = conn;
-
-        conn.on('open', () => {
-            Friends.updateStatus(conn.peer, 'online');
-            conn.send({ type: 'PING' }); // Immediate ping
+        this.peer.on('open', (id) => {
+            console.log('My ID:', id);
+            this.el.status.textContent = 'Ready';
         });
-        
-        conn.on('data', (data) => {
-            if(data.constructor === ArrayBuffer || data instanceof Uint8Array) {
-                Transfer.Receiver.ingest(data);
+
+        this.peer.on('connection', (conn) => {
+            this.handleConnection(conn);
+        });
+
+        this.peer.on('error', (err) => {
+            console.error(err);
+            if (err.type === 'peer-unavailable') {
+                showToast("Peer ID not found or offline.");
+                this.resetUI();
             } else {
-                try {
-                    const msg = (typeof data === 'string') ? JSON.parse(data) : data;
-                    Transfer.router(conn.peer, msg);
-                } catch(e) { Diagnostics.log('Msg Parse Err'); }
+                showToast("Connection Error: " + err.type);
             }
         });
-        
-        conn.on('close', () => {
-            Diagnostics.log(`Closed: ${conn.peer}`);
-            Friends.updateStatus(conn.peer, 'offline');
-            Transfer.abortIfPeer(conn.peer);
+    }
+
+    // --- CONNECTION HANDLING ---
+
+    connectToPeer() {
+        const peerId = this.el.peerInput.value.trim().toUpperCase();
+        if (!peerId) return showToast("Enter a Peer ID");
+        if (peerId === this.myId) return showToast("Cannot connect to yourself");
+
+        this.el.connectBtn.disabled = true;
+        this.el.connectBtn.textContent = "Connecting...";
+
+        const conn = this.peer.connect(peerId, {
+            reliable: true
         });
+
+        this.handleConnection(conn);
+    }
+
+    handleConnection(conn) {
+        this.conn = conn;
+
+        this.conn.on('open', () => {
+            this.el.status.className = 'status-badge status-connected';
+            this.el.status.textContent = 'Connected';
+            showToast("Connected to " + this.conn.peer);
+            
+            // Switch view
+            document.getElementById('view-setup').classList.add('hidden');
+            document.getElementById('view-transfer').classList.remove('hidden');
+        });
+
+        this.conn.on('data', (data) => this.handleData(data));
         
-        conn.on('error', (e) => Diagnostics.log(`Conn Err ${conn.peer}: ${e}`));
-    },
+        this.conn.on('close', () => {
+            showToast("Connection Closed");
+            this.resetApp();
+        });
+    }
 
-    connectTo: (id) => {
-        if(!id || id === Utils.id) return;
-        if(Net.conns[id] && Net.conns[id].open) return;
-        const conn = Net.peer.connect(id, { reliable: true });
-        Net.handleConn(conn);
-    },
+    resetApp() {
+        location.reload();
+    }
 
-    reconnectFriends: () => Object.keys(Data.friends).forEach(Net.connectTo),
+    resetUI() {
+        this.el.connectBtn.disabled = false;
+        this.el.connectBtn.textContent = "Connect";
+    }
 
-    startHeartbeat: () => {
-        if(Net.heartbeatInt) clearInterval(Net.heartbeatInt);
-        Net.heartbeatInt = setInterval(() => {
-            Object.values(Net.conns).forEach(c => {
-                if(c.open) c.send({ type: 'PING' });
+    // --- UI HELPERS ---
+
+    copyId() {
+        navigator.clipboard.writeText(this.myId).then(() => showToast("ID Copied"));
+    }
+
+    toggleQR() {
+        this.el.qr.classList.toggle('hidden');
+    }
+
+    generateQR(text) {
+        this.el.qr.innerHTML = '';
+        try {
+            new QRCode(this.el.qr, {
+                text: text,
+                width: 128,
+                height: 128,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.L
             });
-        }, 10000); // 10s Ping
-    },
-    
-    send: (peerId, data) => {
-        const conn = Net.conns[peerId];
-        if(conn && conn.open) conn.send(data);
+        } catch(e) {
+            this.el.qr.innerHTML = '<small>QR Error</small>';
+        }
     }
-};
 
-// --- FRIENDS ---
-const Friends = {
-    active: null,
-    
-    add: () => {
-        const inp = document.getElementById('add-id');
-        const id = inp.value.trim();
-        if(!id || id === Utils.id) return Utils.toast('Invalid ID', 'err');
-        if(Data.friends[id]) return Utils.toast('Already added');
-        
-        Data.friends[id] = { name: 'Friend', added: Utils.now(), status: 'offline' };
-        Data.saveFriends();
-        Net.connectTo(id);
-        Friends.render();
-        inp.value = '';
-        Utils.toast('Friend Added');
-    },
-    
-    remove: (id) => {
-        delete Data.friends[id];
-        Data.saveFriends();
-        if(Net.conns[id]) Net.conns[id].close();
-        if(Friends.active === id) App.setTab('friends'); // Reset view
-        Friends.render();
-    },
+    // --- FILE TRANSFER ---
 
-    updateStatus: (id, status) => {
-        if(Data.friends[id]) {
-            Data.friends[id].status = status;
-            Data.friends[id].lastSeen = Utils.now();
-            Friends.render();
-            if(Friends.active === id) App.renderMain();
-        }
-    },
+    handleFileSelect(input) {
+        const file = input.files[0];
+        if (!file) return;
+        this.sendFile(file);
+        input.value = '';
+    }
 
-    rename: (id, newName) => {
-        if(Data.friends[id] && newName) {
-            Data.friends[id].name = newName.substr(0, 20);
-            Data.saveFriends();
-            Friends.render();
-            if(Friends.active === id) document.getElementById('remote-name').innerText = newName;
-        }
-    },
+    sendFile(file) {
+        if (!this.conn || !this.conn.open) return showToast("Connection lost");
 
-    select: (id) => {
-        Friends.active = id;
-        Friends.render();
-        App.renderMain();
-        App.mobileNav('transfer');
-    },
+        const fileId = Date.now().toString();
+        this.createTransferUI(fileId, file.name, file.size, true);
 
-    render: () => {
-        const list = document.getElementById('friends-list');
-        list.innerHTML = '';
-        Object.keys(Data.friends).forEach(id => {
-            const f = Data.friends[id];
-            const div = document.createElement('div');
-            div.className = `list-item ${Friends.active === id ? 'active' : ''}`;
-            
-            // Interaction logic
-            const setupInteraction = (el) => {
-                let timer;
-                const start = (e) => {
-                    el.classList.add('pressing');
-                    timer = setTimeout(() => {
-                        el.classList.remove('pressing');
-                        Friends.showCtx(e, id);
-                    }, 600); // Long press
-                };
-                const end = () => { clearTimeout(timer); el.classList.remove('pressing'); };
-                
-                el.onmousedown = start; el.onmouseup = end; el.onmouseleave = end;
-                el.ontouchstart = start; el.ontouchend = end;
-                el.onclick = () => {
-                    if(!timer) return; // Prevent click if long-press fired
-                    Friends.select(id);
-                }
-                el.oncontextmenu = (e) => { e.preventDefault(); Friends.showCtx(e, id); };
-            };
-
-            div.innerHTML = `
-                <div>
-                    <div style="font-weight:bold;">${f.name}</div>
-                    <div style="font-size:10px; opacity:0.7; font-family:monospace;">${id}</div>
-                </div>
-                <div class="status-dot ${f.status}"></div>
-            `;
-            setupInteraction(div);
-            list.appendChild(div);
+        // 1. Send Metadata
+        this.conn.send({
+            type: 'meta',
+            id: fileId,
+            name: file.name,
+            size: file.size,
+            mime: file.type
         });
-    },
 
-    // Context Menu Logic
-    ctxTarget: null,
-    showCtx: (e, id) => {
-        Friends.ctxTarget = id;
-        const ctx = document.getElementById('context-menu');
-        const x = e.pageX || e.touches[0].pageX;
-        const y = e.pageY || e.touches[0].pageY;
-        ctx.style.display = 'block';
-        ctx.style.left = Math.min(x, window.innerWidth - 160) + 'px';
-        ctx.style.top = Math.min(y, window.innerHeight - 120) + 'px';
-        
-        // Close on click elsewhere
-        const closer = () => { ctx.style.display = 'none'; document.removeEventListener('click', closer); };
-        setTimeout(() => document.addEventListener('click', closer), 100);
-    },
-    editCtx: () => {
-        const name = prompt("New Nickname:", Data.friends[Friends.ctxTarget].name);
-        if(name) Friends.rename(Friends.ctxTarget, name);
-    },
-    removeCtx: () => {
-        if(confirm(`Remove ${Data.friends[Friends.ctxTarget].name}?`)) Friends.remove(Friends.ctxTarget);
-    }
-};
+        // 2. Chunked sending
+        const fileReader = new FileReader();
+        let offset = 0;
 
-// --- TRANSFER ENGINE ---
-const Transfer = {
-    session: null, // { type: 'sender'|'receiver', peerId, ... }
-    worker: null,
-
-    router: (peerId, msg) => {
-        if(msg.type === 'PING') return; // Heartbeat handled silently
-        if(msg.type === 'OFFER') Transfer.Receiver.handleOffer(peerId, msg);
-        if(msg.type === 'ACCEPT') Transfer.Sender.startStream(msg);
-        if(msg.type === 'REJECT' || msg.type === 'CANCEL') Transfer.handleCancel(peerId);
-        if(msg.type === 'PAUSE') Transfer.handlePause(msg.state);
-        if(msg.type === 'DONE') Transfer.Sender.finalize();
-    },
-
-    togglePause: () => {
-        if(!Transfer.session) return;
-        const newState = !Transfer.session.paused;
-        Transfer.session.paused = newState;
-        document.getElementById('btn-pause').innerText = newState ? "RESUME" : "PAUSE";
-        document.getElementById('trans-status').innerText = newState ? "Paused" : "Active";
-        Net.send(Transfer.session.peerId, { type: 'PAUSE', state: newState });
-    },
-
-    handlePause: (state) => {
-        if(Transfer.session) {
-            Transfer.session.paused = state;
-            document.getElementById('trans-status').innerText = state ? "Peer Paused" : "Active";
-        }
-    },
-
-    handleCancel: (peerId) => {
-        if(Transfer.session && Transfer.session.peerId === peerId) {
-            Utils.toast('Transfer Cancelled');
-            Transfer.reset();
-        }
-    },
-
-    cancel: () => {
-        if(Transfer.session) {
-            Net.send(Transfer.session.peerId, { type: 'CANCEL' });
-            History.add(Transfer.session.type, Transfer.session.meta.name, Transfer.session.meta.size, Transfer.session.peerId, 'CANCELLED');
-        }
-        Transfer.reset();
-    },
-
-    abortIfPeer: (peerId) => {
-        if(Transfer.session && Transfer.session.peerId === peerId) {
-            Utils.toast('Connection Lost', 'err');
-            Transfer.reset();
-        }
-    },
-
-    reset: () => {
-        if(Transfer.worker) { Transfer.worker.terminate(); Transfer.worker = null; }
-        Transfer.session = null;
-        App.renderMain();
-    },
-
-    Sender: {
-        queue: [],
-        queueFiles: (input) => {
-            const files = Array.from(input.files);
-            input.value = '';
-            if(!files.length) return;
-            if(!Friends.active || !Net.conns[Friends.active]?.open) return Utils.toast('Peer not ready', 'err');
+        fileReader.onload = (e) => {
+            if (!this.transfers[fileId].active) return;
             
-            // For now, process one at a time. Multi-queue logic would go here.
-            Transfer.Sender.offer(files[0]);
-        },
-
-        offer: (file) => {
-            if(Transfer.session) return Utils.toast('Busy');
-            
-            Transfer.session = {
-                type: 'sender', peerId: Friends.active, file: file,
-                paused: false, offset: 0, startTime: 0, hash: 0x811c9dc5,
-                meta: { name: file.name, size: file.size, type: file.type }
-            };
-            
-            Net.send(Friends.active, { 
-                type: 'OFFER', name: file.name, size: file.size, mime: file.type 
+            // Send chunk wrapped in object to distinguish from control messages
+            // PeerJS handles serialization
+            this.conn.send({
+                type: 'chunk',
+                id: fileId,
+                data: e.target.result // ArrayBuffer
             });
-            App.showScreen('screen-transfer'); // Actually show waiting state? Reusing transfer screen for simplicity
-            document.getElementById('trans-status').innerText = "Waiting for Accept...";
-            Transfer.worker = Utils.createWorker();
-        },
 
-        startStream: async (msg) => {
-            if(!Transfer.session || Transfer.session.type !== 'sender') return;
-            Transfer.session.startTime = Utils.now();
-            document.getElementById('trans-status').innerText = "Sending...";
-            
-            const CHUNK_SIZE = 16 * 1024; // 16KB Safe Chunk
-            const s = Transfer.session;
-            const conn = Net.conns[s.peerId];
+            offset += e.target.result.byteLength;
+            this.updateProgress(fileId, offset, file.size);
 
-            // Setup Worker for Hashing
-            Transfer.worker.onmessage = (e) => { s.hash = e.data.hash; };
-
-            const readAndSend = async () => {
-                while (s.offset < s.file.size) {
-                    if(!Transfer.session) return; // Cancelled
-                    
-                    if(s.paused) {
-                        await new Promise(r => setTimeout(r, 500));
-                        continue; 
-                    }
-
-                    // Backpressure
-                    if(conn.dataChannel.bufferedAmount > 64 * 1024) {
-                        await new Promise(r => setTimeout(r, 50));
-                        continue;
-                    }
-
-                    const slice = s.file.slice(s.offset, s.offset + CHUNK_SIZE);
-                    const buff = await slice.arrayBuffer();
-
-                    // Async Hash update
-                    Transfer.worker.postMessage({ seed: s.hash, chunk: buff });
-                    
-                    try {
-                        conn.send(buff);
-                    } catch(e) {
-                        Diagnostics.log('Send Error');
-                        return Transfer.cancel();
-                    }
-
-                    s.offset += buff.byteLength;
-                    UI.updateProgress(s.offset, s.file.size, s.startTime);
-                }
-                
-                // Done Sending
-                // Wait a tick for last hash
-                setTimeout(() => {
-                    Net.send(s.peerId, { type: 'DONE', hash: s.hash });
-                    document.getElementById('trans-status').innerText = "Verifying...";
-                }, 500);
-            };
-
-            readAndSend();
-        },
-
-        finalize: () => {
-            const s = Transfer.session;
-            History.add('sent', s.file.name, s.file.size, s.peerId, 'SUCCESS');
-            App.showScreen('screen-complete');
-            document.getElementById('comp-msg').innerText = "File sent successfully.";
-            document.getElementById('comp-checksum').innerText = "HASH: " + s.hash.toString(16).toUpperCase();
-            document.getElementById('btn-dl').classList.add('hidden');
-            Transfer.worker.terminate();
-            Transfer.session = null;
-        }
-    },
-
-    Receiver: {
-        chunks: [],
-        
-        handleOffer: (peerId, msg) => {
-            if(Transfer.session) { Net.send(peerId, { type: 'BUSY' }); return; }
-            Transfer.session = {
-                type: 'receiver', peerId: peerId, meta: msg,
-                received: 0, startTime: 0, hash: 0x811c9dc5, paused: false,
-                blobUrl: null
-            };
-            
-            document.getElementById('inc-sender').innerText = Data.friends[peerId]?.name || "Unknown";
-            document.getElementById('inc-name').innerText = msg.name;
-            document.getElementById('inc-size').innerText = Utils.fmtSize(msg.size);
-            App.showScreen('screen-incoming');
-            App.mobileNav('transfer');
-        },
-
-        respond: (accept) => {
-            const s = Transfer.session;
-            Net.send(s.peerId, { type: accept ? 'ACCEPT' : 'REJECT' });
-            if(!accept) Transfer.reset();
-            else {
-                s.startTime = Utils.now();
-                Transfer.worker = Utils.createWorker();
-                Transfer.worker.onmessage = (e) => { s.hash = e.data.hash; };
-                App.showScreen('screen-transfer');
-            }
-        },
-
-        ingest: (buff) => {
-            const s = Transfer.session;
-            if(!s || s.type !== 'receiver') return;
-            
-            const arr = new Uint8Array(buff);
-            s.received += arr.byteLength;
-            s.chunks.push(arr); // In-memory. Large files will hit RAM limits. FS API needed for >500MB
-            
-            // Offload hashing
-            Transfer.worker.postMessage({ seed: s.hash, chunk: buff });
-            
-            UI.updateProgress(s.received, s.meta.size, s.startTime);
-
-            if(s.received >= s.meta.size) {
-                 document.getElementById('trans-status').innerText = "Finalizing...";
-            }
-        },
-
-        finalize: (msg) => {
-            // Called by router on DONE msg
-            const s = Transfer.session;
-            const valid = (s.hash === msg.hash);
-            
-            const status = valid ? 'SUCCESS' : 'CORRUPT';
-            History.add('recv', s.meta.name, s.meta.size, s.peerId, status);
-            
-            App.showScreen('screen-complete');
-            const chk = document.getElementById('comp-checksum');
-            chk.innerText = valid ? `VERIFIED: ${s.hash.toString(16).toUpperCase()}` : "INTEGRITY CHECK FAILED";
-            chk.style.background = valid ? "#000" : "#ff0000";
-
-            if(valid) {
-                const blob = new Blob(s.chunks, { type: s.meta.mime });
-                s.blobUrl = URL.createObjectURL(blob);
-                const btn = document.getElementById('btn-dl');
-                btn.classList.remove('hidden');
-                btn.onclick = () => {
-                    const a = document.createElement('a');
-                    a.href = s.blobUrl; a.download = s.meta.name;
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                };
-            }
-            Transfer.worker.terminate();
-            s.chunks = []; // clear RAM
-        }
-    }
-};
-
-// --- HISTORY ---
-const History = {
-    add: (type, name, size, peer, status) => {
-        Data.history.unshift({ type, name, size, peer, status, date: Utils.now() });
-        if(Data.history.length > 50) Data.history.pop();
-        Data.saveHistory();
-        History.render();
-    },
-    render: () => {
-        const list = document.getElementById('history-list');
-        list.innerHTML = '';
-        Data.history.forEach(h => {
-            const div = document.createElement('div');
-            div.className = 'list-item';
-            div.innerHTML = `
-                <div>
-                    <div style="font-weight:bold;">${h.type==='sent'?'↑':'↓'} ${h.name}</div>
-                    <div style="font-size:10px; color:${h.status==='SUCCESS'?'green':'red'}">${h.status}</div>
-                </div>
-                <div style="text-align:right; font-size:10px; color:var(--dim);">
-                    <div>${Utils.fmtSize(h.size)}</div>
-                    <div>${new Date(h.date).toLocaleDateString()}</div>
-                </div>
-            `;
-            list.appendChild(div);
-        });
-    },
-    clear: () => { Data.history = []; Data.saveHistory(); History.render(); }
-};
-
-// --- UI CONTROLLER ---
-const UI = {
-    updateProgress: (curr, total, start) => {
-        const pct = (curr/total)*100;
-        const now = Utils.now();
-        const duration = (now - start) / 1000;
-        const speed = duration > 0 ? curr / duration : 0;
-        const rem = total - curr;
-        const eta = speed > 0 ? rem / speed : 0;
-
-        document.getElementById('prog-bar').style.width = pct + '%';
-        document.getElementById('trans-speed').innerText = Utils.fmtSize(speed) + '/s';
-        document.getElementById('trans-bytes').innerText = `${Utils.fmtSize(curr)} / ${Utils.fmtSize(total)}`;
-        document.getElementById('trans-eta').innerText = eta < 1 ? 'Done' : Math.ceil(eta) + 's';
-    }
-};
-
-const App = {
-    init: () => {
-        Net.init();
-        Friends.render();
-        History.render();
-        
-        // Drag Drop
-        const dropZone = document.body;
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.background = '#f0f0f0'; };
-        dropZone.ondragleave = () => dropZone.style.background = '#fff';
-        dropZone.ondrop = (e) => {
-            e.preventDefault(); dropZone.style.background = '#fff';
-            if(e.dataTransfer.files.length && Friends.active) {
-                Transfer.Sender.offer(e.dataTransfer.files[0]);
+            if (offset < file.size) {
+                // Simple flow control: wait a tick
+                // For a robust app, we'd check bufferedAmount, but PeerJS abstracts this.
+                // We use setTimeout to prevent freezing the UI on large files.
+                setTimeout(readSlice, 5); 
+            } else {
+                this.updateStatus(fileId, "Sent");
             }
         };
-    },
 
-    setTab: (tab) => {
-        document.querySelectorAll('.tab-item').forEach(e => e.classList.remove('active'));
-        document.getElementById('tab-'+tab).classList.add('active');
-        document.getElementById('view-friends').style.display = tab==='friends' ? 'flex' : 'none';
-        document.getElementById('view-history').style.display = tab==='history' ? 'flex' : 'none';
-    },
+        const readSlice = () => {
+            const slice = file.slice(offset, offset + CHUNK_SIZE);
+            fileReader.readAsArrayBuffer(slice);
+        };
 
-    showScreen: (id) => {
-        document.querySelectorAll('.state-view').forEach(e => e.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    },
+        readSlice();
+    }
 
-    renderMain: () => {
-        if(Transfer.session) return; // Don't interrupt transfer
-        if(!Friends.active) return App.showScreen('screen-idle');
+    handleData(data) {
+        if (data.type === 'meta') {
+            this.transfers[data.id] = {
+                fileName: data.name,
+                fileSize: data.size,
+                fileType: data.mime,
+                receivedSize: 0,
+                buffer: [],
+                active: true
+            };
+            this.createTransferUI(data.id, data.name, data.size, false);
         
-        const f = Data.friends[Friends.active];
-        if(!f) { Friends.active = null; return App.renderMain(); }
-        
-        App.showScreen('screen-connected');
-        document.getElementById('remote-name').innerText = f.name;
-        document.getElementById('remote-id').innerText = Friends.active;
-        document.getElementById('remote-status').innerText = f.status.toUpperCase();
-        document.getElementById('remote-status').style.color = f.status === 'online' ? 'green' : 'gray';
-    },
+        } else if (data.type === 'chunk') {
+            const t = this.transfers[data.id];
+            if (t && t.active) {
+                t.buffer.push(data.data);
+                t.receivedSize += data.data.byteLength;
+                
+                this.updateProgress(data.id, t.receivedSize, t.fileSize);
 
-    resetToConnected: () => {
-        Transfer.reset();
-        App.renderMain();
-    },
-
-    // Mobile
-    mobileNav: (tab) => {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('mob-'+tab).classList.add('active');
+                if (t.receivedSize >= t.fileSize) {
+                    this.finalizeDownload(data.id);
+                }
+            }
         
-        const sb = document.getElementById('sidebar');
-        const main = document.getElementById('main-panel');
-        
-        if(tab === 'transfer') {
-            sb.style.display = 'none'; main.style.display = 'flex';
-        } else {
-            sb.style.display = 'flex'; main.style.display = 'none';
-            App.setTab(tab);
+        } else if (data.type === 'cancel') {
+            if (this.transfers[data.id]) {
+                this.transfers[data.id].active = false;
+                this.updateStatus(data.id, "Cancelled by peer");
+            }
         }
-    },
+    }
 
-    // QR & Modals
-    copyId: () => { navigator.clipboard.writeText(Utils.id); Utils.toast('ID Copied'); },
-    copyCtx: () => { navigator.clipboard.writeText(Friends.ctxTarget); Utils.toast('Copied'); },
-    
-    scanQR: () => {
-        App.openModal('modal-scan');
-        const scanner = new Html5Qrcode("reader");
-        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
-            scanner.stop().then(() => scanner.clear());
-            App.closeModal('modal-scan');
-            document.getElementById('add-id').value = txt;
-            Friends.add();
-        }).catch(err => Diagnostics.log('Cam Error'));
-        App.scanner = scanner;
-    },
-    stopScan: () => {
-        if(App.scanner) App.scanner.stop().then(() => App.scanner.clear());
-        App.closeModal('modal-scan');
-    },
-    
-    openModal: (id) => document.getElementById(id).style.display = 'flex',
-    closeModal: (id) => document.getElementById(id).style.display = 'none'
+    finalizeDownload(id) {
+        const t = this.transfers[id];
+        t.active = false;
+        const blob = new Blob(t.buffer, { type: t.fileType });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = t.fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        this.updateStatus(id, "Downloaded");
+        setTimeout(() => URL.revokeObjectURL(url), 10000); 
+    }
+
+    // --- TRANSFER UI ---
+
+    createTransferUI(id, name, size, isSender) {
+        this.transfers[id] = this.transfers[id] || {};
+        this.transfers[id].active = true;
+
+        const el = document.createElement('div');
+        el.className = 'card fade-in';
+        el.id = `ui-${id}`;
+        el.innerHTML = `
+            <div class="flex-row">
+                <strong>${isSender ? 'Sending:' : 'Receiving:'} ${name}</strong>
+                <small>${formatBytes(size)}</small>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-${id}"></div></div>
+            <div class="flex-row" style="margin-top: 5px;">
+                <small id="stat-${id}">Preparing...</small>
+                <button class="btn btn-small" onclick="app.cancelTransfer('${id}')" style="width: auto;">Cancel</button>
+            </div>
+        `;
+        this.el.transfersList.prepend(el);
+    }
+
+    updateProgress(id, current, total) {
+        const pct = Math.round((current / total) * 100);
+        const bar = document.getElementById(`bar-${id}`);
+        const stat = document.getElementById(`stat-${id}`);
+        if (bar) bar.style.width = `${pct}%`;
+        if (stat) stat.textContent = `${pct}%`;
+    }
+
+    updateStatus(id, msg) {
+        const stat = document.getElementById(`stat-${id}`);
+        if (stat) stat.textContent = msg;
+    }
+
+    cancelTransfer(id) {
+        if (this.transfers[id]) {
+            this.transfers[id].active = false;
+            this.updateStatus(id, "Cancelled");
+            if (this.conn && this.conn.open) {
+                this.conn.send({ type: 'cancel', id: id });
+            }
+        }
+    }
+}
+
+// Init App
+const app = new GhostShare();
+
+// Prevent accidental navigation
+window.onbeforeunload = function() {
+    if (app.conn && app.conn.open) {
+        return "Active connection will be lost.";
+    }
 };
-
-// Event Listeners for PWA
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); App.deferredPrompt = e; });
-window.onload = App.init;
-
-// Expose for context menu debug
-window.Friends = Friends; window.App = App; window.Transfer = Transfer; window.Diagnostics = Diagnostics;
 </script>
 </body>
 </html>
+
 
