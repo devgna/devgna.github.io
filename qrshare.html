@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>OPTICAL_LINK // PROTOCOL_V1</title>
+    
+    <!-- External Libraries (CDN) -->
+    <!-- QRCode for generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
+    <!-- jsQR for scanning -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- PeerJS for signaling (GitHub Pages compatible) -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #0a0a0a;
+            --primary: #00ff41;
+            --secondary: #008F11;
+            --alert: #ff003c;
+            --dim: #333;
+            --grid-line: rgba(0, 255, 65, 0.1);
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--primary);
+            font-family: var(--font-mono);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* Dynamic Viewport Height for Mobile Browsers */
+            height: 100vh;
+            height: 100dvh; 
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CRT Effect Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
+        }
+
+        /* Layout */
+        header {
+            border-bottom: 1px solid var(--secondary);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            z-index: 10;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; text-shadow: 0 0 5px var(--primary); }
+        .status-badge { font-size: 0.75rem; background: var(--dim); padding: 4px 8px; border-radius: 2px; white-space: nowrap; }
+        .status-badge.connected { background: var(--secondary); color: #000; font-weight: bold; box-shadow: 0 0 10px var(--secondary); }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+            background: var(--dim);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            position: absolute;
+            top: 0; left: 0;
+            background: rgba(0,0,0,0.8);
+            color: var(--secondary);
+            padding: 5px 10px;
+            font-size: 0.7rem;
+            border-bottom: 1px solid var(--secondary);
+            width: 100%;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        /* Sender UI */
+        #qr-display {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff; /* QR requires contrast */
+            padding: 20px;
+        }
+        #qr-canvas { width: 100%; height: auto; max-height: 100%; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
+
+        /* Receiver UI */
+        #camera-feed {
+            flex: 1;
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        video { 
+            width: 100%; height: 100%; object-fit: cover; 
+            /* transform: scaleX(-1); removed for rear camera usability */
+        }
+        #reconstruction-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        
+        /* Controls & Stats */
+        .control-deck {
+            grid-column: 1 / -1;
+            height: 200px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--secondary);
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .deck-col { padding: 15px; border-right: 1px solid var(--dim); overflow-y: auto; }
+        
+        button {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 16px; /* Larger touch target */
+            font-family: var(--font-mono);
+            cursor: pointer;
+            margin-bottom: 10px;
+            width: 100%;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        button:active { background: var(--secondary); color: #000; }
+        button:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
+        button:disabled { border-color: var(--dim); color: var(--dim); cursor: not-allowed; box-shadow: none; }
+        button.action-btn { background: var(--secondary); color: #000; font-weight: bold; border: none; }
+
+        input[type="file"] { display: none; }
+        .file-label {
+            display: block;
+            border: 1px dashed var(--dim);
+            padding: 15px;
+            text-align: center;
+            color: var(--dim);
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .file-label:hover { border-color: var(--primary); color: var(--primary); }
+
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .stat-val { color: #fff; }
+
+        /* Connection Modal - REFACTORED */
+        #modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal {
+            background: var(--panel-bg);
+            border: 1px solid var(--primary);
+            padding: 20px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+            text-align: center;
+        }
+        .modal h2 { margin-top: 0; border-bottom: 1px solid var(--dim); padding-bottom: 10px; margin-bottom: 20px; font-size: 1.2rem;}
+        
+        .identity-box {
+            font-size: 2rem;
+            color: #fff;
+            letter-spacing: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--primary);
+            cursor: pointer;
+            word-break: break-all;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        @media (min-width: 600px) {
+            .input-group { flex-direction: row; }
+        }
+
+        .input-group input {
+            background: #000;
+            border: 1px solid var(--secondary);
+            color: var(--primary);
+            padding: 15px;
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            flex: 1;
+            text-align: center;
+            border-radius: 0;
+        }
+
+        .qr-identity-preview {
+            background: #fff;
+            padding: 10px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Visualizer */
+        #vis-canvas {
+            width: 100%; height: 100%;
+            image-rendering: pixelated;
+        }
+        
+        .role-select-btn {
+            height: 120px;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 900px) {
+            h1 { font-size: 1rem; }
+            
+            main {
+                /* Stack panels vertically on mobile */
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr; 
+            }
+            
+            /* Logic to hide panels based on role to save space */
+            body.mode-sender #camera-panel { display: none; }
+            body.mode-sender main { grid-template-rows: 1fr; }
+
+            body.mode-receiver main { grid-template-rows: 40% 60%; } /* Camera smaller, Vis larger */
+
+            .control-deck {
+                height: auto;
+                max-height: 40vh;
+                grid-template-columns: 1fr; /* Stack controls */
+                overflow-y: auto;
+            }
+            
+            .deck-col {
+                border-right: none;
+                border-bottom: 1px solid var(--dim);
+                padding: 10px;
+            }
+            .deck-col:last-child { border-bottom: none; }
+
+            /* Hide logs on mobile to save space */
+            #log-panel { display: none; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+
+    <!-- Connection Modal -->
+    <div id="modal-overlay">
+        <div class="modal">
+            <h2>// NEURAL_LINK_INIT</h2>
+            
+            <!-- Step 1: Identity & Mode Selection -->
+            <div id="view-mode-select">
+                <p>ESTABLISHING IDENTITY...</p>
+                <div id="my-identity" class="identity-box">...</div>
+                
+                <p>SELECT OPERATIONAL MODE</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="role-select-btn" onclick="app.selectSender()">
+                        TRANSMIT<br>DATA
+                    </button>
+                    <button class="role-select-btn" onclick="app.selectReceiver()">
+                        RECEIVE<br>DATA
+                    </button>
+                </div>
+                <p id="https-warning" style="color: var(--alert); font-size: 0.8rem; display: none;">
+                    WARNING: HTTPS REQUIRED FOR CAMERA ACCESS
+                </p>
+            </div>
+
+            <!-- Step 2: Sender Waiting -->
+            <div id="view-sender-wait" class="hidden">
+                <p>WAITING FOR UPLINK</p>
+                <div class="qr-identity-preview">
+                    <canvas id="canvas-identity-qr"></canvas>
+                </div>
+                <p>Ask receiver to scan this or enter code:</p>
+                <div id="display-identity-code" class="identity-box" style="font-size: 2rem;"></div>
+                <button onclick="app.resetMode()">CANCEL</button>
+            </div>
+
+            <!-- Step 3: Receiver Connect -->
+            <div id="view-receiver-join" class="hidden">
+                <p>ESTABLISH UPLINK</p>
+                <div class="input-group">
+                    <input type="text" id="input-remote-id" placeholder="CODE" maxlength="5">
+                    <button onclick="app.manualConnect()">CONNECT</button>
+                </div>
+                <p>- OR -</p>
+                <button class="action-btn" onclick="app.startIdentityScan()">SCAN IDENTITY QR</button>
+                <button onclick="app.resetMode()">CANCEL</button>
+            </div>
+            
+            <div id="connection-status" style="margin-top: 15px; color: #888; font-size: 0.8rem;">
+                > INITIALIZING NETWORK...
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div>
+            <h1>OPTICAL_LINK <span style="font-size:0.6em; opacity: 0.7;">// V2.1</span></h1>
+        </div>
+        <div>
+            <span id="role-badge" class="status-badge">IDLE</span>
+            <span id="conn-badge" class="status-badge">DISCONNECTED</span>
+            <span id="id-badge" class="status-badge" style="background: #222; color: #888; display: none;"></span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Left: Transmitter / Reconstructor -->
+        <div class="panel" id="vis-panel">
+            <div class="panel-header">
+                <span>VISUAL_PLANE</span>
+                <span id="vis-status">STANDBY</span>
+            </div>
+            <!-- Sender sees QR, Receiver sees File Reconstruct -->
+            <div id="sender-view" class="hidden" style="width: 100%; height: 100%;">
+                <div id="qr-display">
+                    <canvas id="qr-canvas"></canvas>
+                </div>
+            </div>
+            <div id="receiver-view" class="hidden" style="width: 100%; height: 100%; background: #111;">
+                <canvas id="vis-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Right: Camera / Source -->
+        <div class="panel" id="camera-panel">
+            <div class="panel-header">
+                <span>OPTICAL_INPUT</span>
+                <span id="cam-status">OFFLINE</span>
+            </div>
+            <div id="camera-feed">
+                <video id="video-el" playsinline autoplay muted></video>
+                <canvas id="reconstruction-overlay"></canvas>
+                <div id="cam-placeholder" style="position: absolute; color: var(--dim);">
+                    [ CAMERA FEED ]
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="control-deck">
+        <div class="deck-col">
+            <h3>// CONTROLS</h3>
+            
+            <!-- Sender Controls -->
+            <div id="sender-controls" class="hidden">
+                <label for="file-input" class="file-label" id="file-label-text">Select File Payload</label>
+                <input type="file" id="file-input">
+                <button id="btn-transmit" disabled onclick="sender.startTransmission()">INITIATE TRANSFER</button>
+                <div style="margin-top: 10px;">
+                    <label>
+                        <input type="checkbox" id="turbo-mode"> TURBO MODE (High FPS)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Receiver Controls -->
+            <div id="receiver-controls" class="hidden">
+                <button id="btn-scan" onclick="receiver.startScanning()">ACTIVATE SENSORS</button>
+                <button id="btn-save" disabled onclick="receiver.downloadFile()">EXTRACT DATA</button>
+            </div>
+        </div>
+
+        <div class="deck-col" id="log-panel">
+            <h3>// LOGS</h3>
+            <div id="log-console" style="font-size: 0.75rem; color: #888; font-family: monospace;">
+                > System initialized...<br>
+            </div>
+        </div>
+
+        <div class="deck-col">
+            <h3>// TELEMETRY</h3>
+            <div class="stat-row"><span>FPS:</span> <span id="stat-fps" class="stat-val">0</span></div>
+            <div class="stat-row"><span>RTT:</span> <span id="stat-rtt" class="stat-val">0ms</span></div>
+            <div class="stat-row"><span>Loss:</span> <span id="stat-loss" class="stat-val">0%</span></div>
+            <div class="stat-row"><span>Progress:</span> <span id="stat-prog" class="stat-val">0%</span></div>
+            <div class="stat-row"><span>Rate:</span> <span id="stat-bits" class="stat-val">0 kbps</span></div>
+        </div>
+    </div>
+
+    <script>
+        // --- UTILS ---
+        const $ = id => document.getElementById(id);
+        const log = msg => {
+            const el = $('log-console');
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            el.innerHTML += `> [${time}] ${msg}<br>`;
+            el.scrollTop = el.scrollHeight;
+        };
+
+        // HTTPS Check
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            $('https-warning').style.display = 'block';
+            log("WARNING: Camera access requires HTTPS.");
+        }
+
+        // Simple CRC32 implementation for integrity check
+        const crc32 = (function() {
+            let table = new Uint32Array(256);
+            for(let i=0; i<256; i++) {
+                let c = i;
+                for(let k=0; k<8; k++) c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+                table[i] = c;
+            }
+            return function(str) {
+                let crc = -1;
+                for(let i=0, l=str.length; i<l; i++) {
+                    crc = (crc >>> 8) ^ table[(crc ^ str.charCodeAt(i)) & 0xFF];
+                }
+                return (crc ^ (-1)) >>> 0;
+            }
+        })();
+
+        // --- PROTOCOL CONFIG ---
+        const CHUNK_SIZE = 800; // Safe size for QR V10-V20
+        const PROTOCOL_HEADER = "OPT"; // Magic bytes
+
+        // --- CONNECTION MANAGER (PeerJS) ---
+        class ConnectionManager {
+            constructor() {
+                this.peer = null;
+                this.conn = null;
+                this.id = this.generateId();
+                this.role = null;
+                this.onConnect = null;
+                this.onMsg = null;
+            }
+
+            generateId() {
+                // Generate 5-char code (avoiding ambiguous chars)
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let result = '';
+                for (let i = 0; i < 5; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            init() {
+                $('my-identity').innerText = this.id;
+                $('id-badge').innerText = `ID: ${this.id}`;
+                $('id-badge').style.display = 'inline-block';
+                
+                // Prefix ID to namespace it on public server
+                const namespacedId = `opt-link-v1-${this.id}`;
+                
+                this.peer = new Peer(namespacedId, {
+                    debug: 1,
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' },
+                            { urls: 'stun:stun2.l.google.com:19302' },
+                            { urls: 'stun:stun3.l.google.com:19302' }
+                        ]
+                    }
+                });
+
+                this.peer.on('open', (id) => {
+                    log(`Network Identity: ${this.id}`);
+                    $('connection-status').innerText = "> NETWORK READY. SELECT MODE.";
+                    $('connection-status').style.color = "#00ff41";
+                });
+
+                this.peer.on('connection', (conn) => {
+                    log(`Incoming connection...`);
+                    this.handleConnection(conn);
+                });
+
+                this.peer.on('error', (err) => {
+                    log(`Network Error: ${err.type}`);
+                    $('connection-status').innerText = `> ERROR: ${err.type}`;
+                    $('connection-status').style.color = "#ff003c";
+                });
+            }
+
+            connect(remoteId) {
+                const namespacedRemote = `opt-link-v1-${remoteId.toUpperCase()}`;
+                log(`Connecting to ${remoteId}...`);
+                const conn = this.peer.connect(namespacedRemote);
+                this.handleConnection(conn);
+            }
+
+            handleConnection(conn) {
+                this.conn = conn;
+                
+                this.conn.on('open', () => {
+                    log("Control Plane ESTABLISHED");
+                    $('conn-badge').innerText = "CONNECTED";
+                    $('conn-badge').classList.add('connected');
+                    $('modal-overlay').classList.add('hidden'); // Close modal on success
+                    
+                    if (this.onConnect) this.onConnect();
+                });
+
+                this.conn.on('data', (data) => {
+                    if (this.onMsg) this.onMsg(data);
+                });
+
+                this.conn.on('close', () => {
+                    log("Control Plane LOST");
+                    $('conn-badge').innerText = "DISCONNECTED";
+                    $('conn-badge').classList.remove('connected');
+                });
+            }
+
+            send(data) {
+                if (this.conn && this.conn.open) {
+                    this.conn.send(data);
+                }
+            }
+        }
+
+        // --- SENDER ---
+        class Sender {
+            constructor() {
+                this.file = null;
+                this.chunks = [];
+                this.windowSize = 8;
+                this.windowStart = 0;
+                this.isTransmitting = false;
+                this.lastAckTime = 0;
+                this.acksReceived = new Set();
+                this.fps = 10;
+                this.loopId = null;
+            }
+
+            setFile(file) {
+                this.file = file;
+                $('file-label-text').innerText = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+                $('btn-transmit').disabled = false;
+            }
+
+            // Optimized Chunking using FileReader (Fast & supports all types)
+            async chunkFile() {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const dataUrl = e.target.result;
+                        // The result is "data:<mime>;base64,<payload>"
+                        const b64 = dataUrl.split(',')[1];
+                        
+                        this.chunks = [];
+                        const total = Math.ceil(b64.length / CHUNK_SIZE);
+                        
+                        for (let i = 0; i < total; i++) {
+                            const chunk = b64.substr(i * CHUNK_SIZE, CHUNK_SIZE);
+                            const payload = `${i}|${total}|${chunk}`;
+                            const checksum = crc32(payload);
+                            // Packet Format: SEQ|TOTAL|DATA|CRC
+                            this.chunks.push(`${payload}|${checksum}`);
+                        }
+                        log(`File chunked into ${total} packets.`);
+                        resolve();
+                    };
+                    reader.onerror = (err) => {
+                        log("File Read Error: " + err);
+                        reject(err);
+                    };
+                    reader.readAsDataURL(this.file);
+                });
+            }
+
+            onControlPlaneReady() {
+                // Can trigger auto-send if file selected
+            }
+
+            async startTransmission() {
+                if (!this.file) return;
+                await this.chunkFile();
+                this.isTransmitting = true;
+                this.windowStart = 0;
+                this.acksReceived.clear();
+                $('vis-status').innerText = "TRANSMITTING";
+                
+                // Initial metadata packet to prepare receiver
+                connection.send({ type: 'META', name: this.file.name, size: this.file.size, type: this.file.type, total: this.chunks.length });
+
+                this.transmitLoop();
+            }
+
+            transmitLoop() {
+                if (!this.isTransmitting) return;
+
+                const now = performance.now();
+                const turbo = $('turbo-mode').checked;
+                const targetFPS = turbo ? 30 : 10;
+                
+                // Strategy: Round robin within sliding window
+                let packetsInWindow = [];
+                for (let i = 0; i < this.windowSize; i++) {
+                    let seq = this.windowStart + i;
+                    if (seq < this.chunks.length && !this.acksReceived.has(seq)) {
+                        packetsInWindow.push(seq);
+                    }
+                }
+
+                if (packetsInWindow.length === 0) {
+                    if (this.windowStart >= this.chunks.length) {
+                        this.finish();
+                        return;
+                    }
+                } else {
+                    const rotateIdx = Math.floor((now / 100) % packetsInWindow.length);
+                    const sendSeq = packetsInWindow[rotateIdx];
+                    this.renderQR(this.chunks[sendSeq]);
+                    $('stat-prog').innerText = `${Math.floor((this.acksReceived.size / this.chunks.length)*100)}%`;
+                }
+
+                this.loopId = setTimeout(() => this.transmitLoop(), 1000 / targetFPS);
+            }
+
+            renderQR(data) {
+                // Ensure canvas is clear before draw
+                const cvs = $('qr-canvas');
+                
+                QRCode.toCanvas(cvs, data, { 
+                    width: 600, // High res for better scanning
+                    margin: 2,
+                    color: { dark: "#000000", light: "#ffffff" },
+                    errorCorrectionLevel: 'L'
+                }, error => {
+                    if (error) console.error(error);
+                });
+            }
+
+            handleControlMessage(msg) {
+                if (msg.type === 'ACK') {
+                    msg.seqs.forEach(s => this.acksReceived.add(s));
+                    while (this.acksReceived.has(this.windowStart) && this.windowStart < this.chunks.length) {
+                        this.windowStart++;
+                    }
+                    if (msg.ts) {
+                         const rtt = Math.round(performance.now() - msg.ts);
+                         $('stat-rtt').innerText = rtt + "ms";
+                    }
+                }
+            }
+
+            finish() {
+                this.isTransmitting = false;
+                $('vis-status').innerText = "COMPLETE";
+                this.renderQR("END");
+                connection.send({ type: 'FIN' });
+                log("Transmission complete.");
+            }
+        }
+
+        // --- RECEIVER ---
+        class Receiver {
+            constructor() {
+                this.packets = []; 
+                this.receivedMask = new Set();
+                this.totalPackets = 0;
+                this.meta = null;
+                this.isScanning = false;
+                this.video = $('video-el');
+                this.canvas = document.createElement('canvas'); // decode canvas
+                this.ctx = this.canvas.getContext('2d');
+                this.lastAckTime = 0;
+                this.pendingAcks = [];
+                this.visCanvas = $('vis-canvas');
+                this.visCtx = this.visCanvas.getContext('2d');
+                
+                // Mode: 'DATA' or 'IDENTITY'
+                this.scanMode = 'DATA'; 
+            }
+
+            onControlPlaneReady() {
+                // UI update already handled by connection manager
+            }
+
+            async startScanning(mode = 'DATA') {
+                this.scanMode = mode;
+                // Stop existing streams first to prevent conflict
+                this.stopScanning();
+
+                try {
+                    // Try to get specific "Environment" (rear) camera first
+                    let stream;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { 
+                                facingMode: { exact: "environment" },
+                                width: { ideal: 1280 } 
+                            } 
+                        });
+                    } catch (e) {
+                        log("Rear camera specific request failed, falling back...");
+                        // Fallback to "ideal" environment or just any video
+                        stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { facingMode: "environment" } 
+                        });
+                    }
+                    
+                    this.video.srcObject = stream;
+                    this.video.setAttribute("playsinline", true); // Required for iOS Safari
+                    
+                    // Wait for the video to actually be ready to play
+                    await this.video.play();
+                    
+                    requestAnimationFrame(() => this.tick());
+                    $('cam-status').innerText = mode === 'IDENTITY' ? "SCANNING ID" : "ACTIVE";
+                    this.isScanning = true;
+                } catch (e) {
+                    log("Camera Error: " + e.message);
+                    if (e.name === 'NotAllowedError') {
+                        alert("Camera permission denied. Please allow camera access in your browser settings.");
+                    } else if (e.name === 'NotFoundError') {
+                         alert("No camera found on this device.");
+                    } else {
+                        // Attempt one last generic fallback
+                        try {
+                             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                             this.video.srcObject = stream;
+                             this.video.setAttribute("playsinline", true);
+                             await this.video.play();
+                             requestAnimationFrame(() => this.tick());
+                             this.isScanning = true;
+                        } catch(err2) {
+                            alert("Fatal Camera Error: " + e.message + "\nEnsure you are using HTTPS.");
+                        }
+                    }
+                }
+            }
+            
+            stopScanning() {
+                this.isScanning = false;
+                if(this.video.srcObject) {
+                    this.video.srcObject.getTracks().forEach(t => t.stop());
+                    this.video.srcObject = null;
+                }
+            }
+
+            tick() {
+                if (this.video.readyState === this.video.HAVE_ENOUGH_DATA && this.isScanning) {
+                    this.canvas.height = this.video.videoHeight;
+                    this.canvas.width = this.video.videoWidth;
+                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                    
+                    const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
+
+                    if (code && code.data) {
+                        if (this.scanMode === 'IDENTITY') {
+                             this.processIdentity(code.data);
+                        } else {
+                             this.processCode(code.data);
+                        }
+                    }
+                }
+                if (this.isScanning) requestAnimationFrame(() => this.tick());
+            }
+            
+            processIdentity(raw) {
+                // Expected format: "OPTLINK:ABCDE"
+                if (raw.startsWith('OPTLINK:')) {
+                    const remoteId = raw.split(':')[1];
+                    if (remoteId && remoteId.length === 5) {
+                        log(`Identity found: ${remoteId}`);
+                        this.stopScanning();
+                        $('input-remote-id').value = remoteId;
+                        connection.connect(remoteId);
+                    }
+                }
+            }
+
+            processCode(raw) {
+                if (raw === "END") {
+                    this.finalize();
+                    return;
+                }
+
+                const parts = raw.split('|');
+                if (parts.length < 4) return;
+
+                const checksum = parseInt(parts.pop());
+                const payloadStr = parts.join('|');
+                
+                if (crc32(payloadStr) !== checksum) return;
+
+                const seq = parseInt(parts[0]);
+                const total = parseInt(parts[1]);
+                const data = parts[2];
+
+                if (!this.meta) {
+                    this.totalPackets = total;
+                    this.initVisualizer();
+                }
+
+                if (!this.receivedMask.has(seq)) {
+                    this.receivedMask.add(seq);
+                    this.packets[seq] = data;
+                    this.pendingAcks.push(seq);
+                    this.updateVisualizer(seq);
+                    
+                    if (this.pendingAcks.length >= 1 || (Date.now() - this.lastAckTime > 100)) {
+                        connection.send({
+                            type: 'ACK',
+                            seqs: this.pendingAcks,
+                            ts: performance.now()
+                        });
+                        this.pendingAcks = [];
+                        this.lastAckTime = Date.now();
+                    }
+
+                    $('stat-prog').innerText = `${Math.floor((this.receivedMask.size / total)*100)}%`;
+                    if (this.receivedMask.size === total) {
+                        log("All packets received. Awaiting FIN.");
+                        this.finalize();
+                    }
+                }
+            }
+
+            initVisualizer() {
+                const w = this.visCanvas.width = this.visCanvas.offsetWidth;
+                const h = this.visCanvas.height = this.visCanvas.offsetHeight;
+                this.visCtx.fillStyle = "#000";
+                this.visCtx.fillRect(0,0,w,h);
+                this.gridCols = Math.ceil(Math.sqrt(this.totalPackets));
+                this.gridRows = Math.ceil(this.totalPackets / this.gridCols);
+                this.cellW = w / this.gridCols;
+                this.cellH = h / this.gridRows;
+            }
+
+            updateVisualizer(seq) {
+                const r = Math.floor(seq / this.gridCols);
+                const c = seq % this.gridCols;
+                const green = 100 + Math.random() * 155;
+                this.visCtx.fillStyle = `rgb(0, ${green}, 50)`;
+                this.visCtx.fillRect(c * this.cellW, r * this.cellH, this.cellW - 1, this.cellH - 1);
+            }
+
+            finalize() {
+                if (!this.isScanning) return;
+                this.isScanning = false;
+                $('btn-save').disabled = false;
+                $('vis-status').innerText = "RECONSTRUCTED";
+                log("Data stream ended. File ready.");
+                
+                this.visCtx.fillStyle = "#00ff41";
+                this.visCtx.fillRect(0,0,this.visCanvas.width, this.visCanvas.height);
+                setTimeout(() => {
+                   if (this.meta && this.meta.type.startsWith('image/')) {
+                       this.renderImagePreview();
+                   }
+                }, 200);
+            }
+
+            renderImagePreview() {
+                const b64 = this.packets.join('');
+                const img = new Image();
+                img.onload = () => {
+                    this.visCtx.drawImage(img, 0, 0, this.visCanvas.width, this.visCanvas.height);
+                };
+                img.src = `data:${this.meta.type};base64,${b64}`;
+            }
+
+            downloadFile() {
+                const b64 = this.packets.join('');
+                const byteCharacters = atob(b64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {type: this.meta ? this.meta.type : 'application/octet-stream'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = this.meta ? this.meta.name : 'download.bin';
+                link.click();
+            }
+        }
+
+        // --- APP LOGIC ---
+        const connection = new ConnectionManager();
+        const sender = new Sender();
+        const receiver = new Receiver();
+        
+        // Init Identity on Load
+        connection.init();
+        
+        const app = {
+            selectSender: () => {
+                connection.role = 'sender';
+                document.body.classList.add('mode-sender'); // Add class for mobile CSS logic
+                $('role-badge').innerText = "SENDER";
+                $('view-mode-select').classList.add('hidden');
+                $('view-sender-wait').classList.remove('hidden');
+                
+                // Show Identity QR
+                const identityString = `OPTLINK:${connection.id}`;
+                $('display-identity-code').innerText = connection.id;
+                QRCode.toCanvas($('canvas-identity-qr'), identityString, { width: 250, margin: 1 }, (err)=>{});
+                
+                // Setup UI for post-connect
+                $('sender-view').classList.remove('hidden');
+                $('sender-controls').classList.remove('hidden');
+                $('cam-placeholder').innerText = "[ PREVIEW DISABLED ]";
+                
+                connection.onConnect = () => {
+                     // Auto-bind sender logic
+                     sender.onControlPlaneReady();
+                };
+                connection.onMsg = (msg) => sender.handleControlMessage(msg);
+            },
+            
+            selectReceiver: () => {
+                connection.role = 'receiver';
+                document.body.classList.add('mode-receiver'); // Add class for mobile CSS logic
+                $('role-badge').innerText = "RECEIVER";
+                $('view-mode-select').classList.add('hidden');
+                $('view-receiver-join').classList.remove('hidden');
+                
+                // Setup UI for post-connect
+                $('receiver-view').classList.remove('hidden');
+                $('receiver-controls').classList.remove('hidden');
+                
+                connection.onConnect = () => {
+                    receiver.onControlPlaneReady();
+                    // Stop any ID scanning if active
+                    receiver.stopScanning(); 
+                };
+                connection.onMsg = (msg) => {
+                    // Handle Metadata
+                    if(msg.type === 'META') {
+                        receiver.meta = msg;
+                        log(`File Incoming: ${msg.name} (${msg.size} bytes)`);
+                        $('vis-status').innerText = "RECEIVING...";
+                    }
+                    if(msg.type === 'FIN') {
+                        receiver.finalize();
+                    }
+                };
+            },
+            
+            manualConnect: () => {
+                const code = $('input-remote-id').value;
+                if(code && code.length === 5) {
+                    connection.connect(code);
+                }
+            },
+            
+            startIdentityScan: () => {
+                // Temporarily use the main receiver camera to scan ID
+                $('modal-overlay').classList.add('hidden'); // hide modal to see camera
+                // We need a temporary UI to say "Scanning ID..."
+                $('cam-status').innerText = "SCANNING IDENTITY";
+                receiver.startScanning('IDENTITY');
+            },
+            
+            resetMode: () => {
+                $('view-mode-select').classList.remove('hidden');
+                $('view-sender-wait').classList.add('hidden');
+                $('view-receiver-join').classList.add('hidden');
+                document.body.classList.remove('mode-sender', 'mode-receiver');
+            },
+            
+            copyToClipboard: (id) => {
+                const el = $(id);
+                el.select();
+                document.execCommand('copy');
+            }
+        };
+
+        // File Input Handler
+        $('file-input').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) sender.setFile(e.target.files[0]);
+        });
+        
+        // Window Resize Handler to fix canvas scaling on mobile rotate
+        window.addEventListener('resize', () => {
+            if(receiver.meta) receiver.initVisualizer();
+        });
+
+    </script>
+</body>
+</html>
