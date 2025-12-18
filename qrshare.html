@@ -3,1091 +3,777 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OPTILINK v1.2 // ROBUST TRANSPORT</title>
+    <title>OPTILINK v1.3 | Robust Optical Transfer</title>
     
-    <!-- External Libraries (CDNs) -->
+    <!-- Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        :root {
-            --bg: #020202;
-            --term-green: #0aff0a;
-            --term-cyan: #00f0ff;
-            --term-red: #ff003c;
-            --term-amber: #ffb000;
-            --term-dim: #003333;
-            --scan-line: rgba(0, 255, 255, 0.05);
-            --font-mono: 'Courier New', Courier, monospace;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg);
-            color: var(--term-green);
-            font-family: var(--font-mono);
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Cyberpunk FX */
-        .scanlines {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(18, 16, 16, 0), rgba(0, 0, 0, 0.25) 50%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.25));
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 999;
-        }
-        
-        .glow { text-shadow: 0 0 5px var(--term-green); }
-        .glow-cyan { text-shadow: 0 0 5px var(--term-cyan); color: var(--term-cyan); }
-        .glow-red { text-shadow: 0 0 5px var(--term-red); color: var(--term-red); }
-        .glow-amber { text-shadow: 0 0 5px var(--term-amber); color: var(--term-amber); }
-
-        /* UI Structure */
-        #app {
-            display: grid;
-            grid-template-rows: 60px 1fr 50px;
-            height: 100%;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--term-dim);
-            padding-bottom: 10px;
-        }
-
-        .status-badge {
-            padding: 5px 10px;
-            background: rgba(0, 51, 51, 0.3);
-            border: 1px solid var(--term-green);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            min-width: 120px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        .status-badge.error { border-color: var(--term-red); color: var(--term-red); }
-        .status-badge.active { border-color: var(--term-cyan); color: var(--term-cyan); box-shadow: 0 0 10px var(--term-dim); }
-
-        main {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        /* Screens */
-        .screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        .screen.active { display: flex; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Connect Screen */
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            background: rgba(0, 20, 20, 0.85);
-            padding: 40px;
-            border: 1px solid var(--term-cyan);
-            box-shadow: 0 0 15px var(--term-dim);
-            width: 100%;
-            max-width: 400px;
-        }
-
-        input {
-            background: #000;
-            border: 1px solid var(--term-green);
-            color: var(--term-green);
-            padding: 12px;
-            font-family: var(--font-mono);
-            font-size: 1.2rem;
-            text-align: center;
-            text-transform: uppercase;
-            outline: none;
-        }
-        input:focus { border-color: var(--term-cyan); box-shadow: 0 0 8px var(--term-dim); }
-
-        button {
-            background: rgba(0, 51, 51, 0.5);
-            border: 1px solid var(--term-green);
-            color: var(--term-green);
-            padding: 12px 20px;
-            font-family: var(--font-mono);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        button:hover { background: var(--term-green); color: #000; box-shadow: 0 0 10px var(--term-green); }
-        button:disabled { border-color: #333; color: #555; cursor: not-allowed; background: #000; box-shadow: none; }
-
-        .or-divider { font-size: 0.8rem; opacity: 0.7; margin: 10px 0; text-align: center; letter-spacing: 2px;}
-
-        /* Sender UI */
-        #qr-wrapper {
-            position: relative;
-            padding: 5px;
-            border: 2px solid var(--term-dim);
-            background: #000;
-        }
-        #qr-wrapper.transmitting { border-color: var(--term-cyan); box-shadow: 0 0 20px var(--term-dim); }
-        
-        #qr-display {
-            width: 400px;
-            height: 400px;
-            background: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            image-rendering: pixelated;
-        }
-        
-        #qr-display img { width: 100%; height: 100%; display: block; }
-        
-        #qr-overlay-stats {
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .scan-line {
             position: absolute;
-            bottom: 0; left: 0; right: 0;
-            background: rgba(0,0,0,0.8);
-            color: var(--term-cyan);
-            font-size: 0.7rem;
-            display: flex;
-            justify-content: space-between;
-            padding: 2px 5px;
-        }
-
-        .file-drop {
-            border: 2px dashed var(--term-dim);
-            padding: 40px;
-            margin-bottom: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .file-drop:hover { border-color: var(--term-cyan); background: rgba(0, 255, 255, 0.05); }
-
-        /* Receiver UI */
-        #scanner-container {
-            position: relative;
             width: 100%;
-            max-width: 640px;
-            height: 480px;
-            border: 2px solid var(--term-cyan);
-            background: #000;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 2px;
+            background: #22c55e;
+            animation: scan 2s linear infinite;
+            box-shadow: 0 0 4px #22c55e;
         }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Changed from cover to contain for scanning accuracy */
-            opacity: 0.8;
-        }
-
-        /* Scanning Reticle */
-        #scan-target {
-            position: absolute;
-            width: 250px;
-            height: 250px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 0 2000px rgba(0,0,0,0.5);
-            pointer-events: none;
-            z-index: 5;
-            transition: border-color 0.1s;
-        }
-        #scan-target.active { border-color: var(--term-cyan); box-shadow: 0 0 20px var(--term-cyan), 0 0 0 2000px rgba(0,0,0,0.5); }
-        #scan-target::before, #scan-target::after {
-            content: ''; position: absolute; width: 20px; height: 20px;
-            border-color: var(--term-cyan); border-style: solid;
-        }
-        #scan-target::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
-        #scan-target::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
-
-        #visualizer-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: grid;
-            gap: 1px;
-            pointer-events: none;
-            mix-blend-mode: screen;
-            z-index: 10;
-        }
-
-        .vis-cell { 
-            background: rgba(0, 20, 20, 0.3); 
-            border: 1px solid rgba(0, 255, 255, 0.05);
-        }
-        .vis-cell.done { 
-            background: rgba(0, 255, 0, 0.6); 
-            border-color: var(--term-green);
-            box-shadow: 0 0 5px var(--term-green);
-        }
-        .vis-cell.missing { 
-            background: rgba(255, 0, 60, 0.3); 
-            border-color: var(--term-red);
-        }
-        
-        /* Stats Footer */
-        footer {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            border-top: 1px solid var(--term-dim);
-            padding-top: 10px;
-            align-items: center;
-            background: #020202;
-        }
-
-        .stats-group { display: flex; gap: 15px; }
-        .stat-item { display: flex; flex-direction: column; }
-        .stat-label { color: #666; font-size: 0.6rem; }
-        .stat-value { color: var(--term-cyan); font-weight: bold; }
-        .stat-value.warn { color: var(--term-amber); }
-        .stat-value.bad { color: var(--term-red); }
-
-        /* Complete View */
-        #result-container {
-            text-align: center;
-            width: 100%;
-            max-width: 600px;
-        }
-        #complete-preview {
-            max-width: 100%;
-            max-height: 400px;
-            border: 2px solid var(--term-green);
-            box-shadow: 0 0 30px rgba(10, 255, 10, 0.2);
-            margin-bottom: 20px;
-        }
-
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        canvas { border-radius: 0.5rem; }
         .hidden { display: none !important; }
-        
-        /* Utility */
-        .blink { animation: blinker 1s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
-<body>
-    <div class="scanlines"></div>
-    
-    <div id="app">
-        <header>
-            <div class="logo glow">OPTILINK <span style="font-size:0.5em; color:var(--term-cyan)">v1.2</span></div>
-            <div id="connection-status" class="status-badge">SYSTEM INIT</div>
-        </header>
+<body class="h-screen flex flex-col overflow-hidden">
 
-        <main>
-            <!-- Screen 1: Connection -->
-            <div id="screen-connect" class="screen active">
-                <div class="input-group">
-                    <h2 class="glow-cyan" style="margin:0; text-align:center">UPLINK CONFIG</h2>
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <span style="font-size: 0.7rem; color: #666;">LOCAL IDENTITY</span><br>
-                        <span id="my-token" class="glow" style="font-size: 2.5rem; letter-spacing: 5px;">...</span>
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center shadow-lg z-10">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-qrcode text-emerald-500 text-2xl"></i>
+            <h1 class="font-bold text-xl tracking-tight">OPTILINK <span class="text-xs font-mono text-slate-400 bg-slate-800 px-1 rounded">v1.3 STABLE</span></h1>
+        </div>
+        <div id="connection-status" class="flex items-center gap-2 text-sm text-amber-500 font-mono">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+            <span>Initializing P2P...</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        
+        <!-- Mode Selection Overlay -->
+        <div id="mode-select" class="absolute inset-0 z-50 bg-slate-900/95 flex flex-col items-center justify-center gap-8 backdrop-blur-sm">
+            <h2 class="text-3xl font-bold text-white mb-4">Select Role</h2>
+            <div class="flex gap-8">
+                <button onclick="app.setRole('sender')" class="group flex flex-col items-center gap-4 p-8 bg-slate-800 rounded-xl hover:bg-emerald-600 transition-all border border-slate-700 hover:border-emerald-500 hover:scale-105 shadow-xl w-64">
+                    <i class="fa-solid fa-upload text-5xl text-emerald-400 group-hover:text-white"></i>
+                    <div class="text-center">
+                        <span class="block text-xl font-bold text-white">Sender</span>
+                        <span class="text-sm text-slate-400 group-hover:text-emerald-100">Upload & Generate QR</span>
                     </div>
-                    
-                    <div class="or-divider">-- REMOTE TARGET --</div>
+                </button>
+                <button onclick="app.setRole('receiver')" class="group flex flex-col items-center gap-4 p-8 bg-slate-800 rounded-xl hover:bg-blue-600 transition-all border border-slate-700 hover:border-blue-500 hover:scale-105 shadow-xl w-64">
+                    <i class="fa-solid fa-camera text-5xl text-blue-400 group-hover:text-white"></i>
+                    <div class="text-center">
+                        <span class="block text-xl font-bold text-white">Receiver</span>
+                        <span class="text-sm text-slate-400 group-hover:text-blue-100">Scan & Download</span>
+                    </div>
+                </button>
+            </div>
+            <div class="mt-8 text-slate-500 text-sm max-w-md text-center">
+                <p>Ensure both devices are on the same network if P2P fails, or simply ensure the camera can see the screen clearly.</p>
+            </div>
+        </div>
 
-                    <input type="text" id="target-token" placeholder="ENTER TOKEN" maxlength="5">
-                    <button id="btn-connect" disabled>ESTABLISH LINK</button>
-                    <div id="connect-msg" style="text-align: center; font-size: 0.7rem; color: var(--term-amber); height: 1em;"></div>
-                </div>
+        <!-- SENDER VIEW -->
+        <div id="sender-view" class="hidden flex-1 flex flex-col h-full bg-slate-900 p-6 items-center">
+            
+            <!-- File Input Area -->
+            <div id="upload-area" class="w-full max-w-2xl mb-6 p-8 border-2 border-dashed border-slate-600 rounded-xl bg-slate-800/50 text-center hover:border-emerald-500 hover:bg-slate-800 transition-colors cursor-pointer" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" class="hidden" onchange="sender.handleFile(this.files[0])">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-400 mb-3"></i>
+                <p class="text-lg font-medium text-slate-300">Click to select file</p>
+                <p class="text-sm text-slate-500">Max recommended: 10MB</p>
             </div>
 
-            <!-- Screen 2: Sender -->
-            <div id="screen-sender" class="screen">
-                <div id="file-select-area">
-                    <div class="file-drop" id="drop-zone">
-                        <div class="glow-cyan" style="font-size: 1.5rem; margin-bottom: 10px;">LOAD PAYLOAD</div>
-                        <span style="font-size:0.8rem; color:#888">DRAG FILE OR CLICK TO BROWSE</span><br>
-                        <span style="font-size:0.7rem; color:#444">OPTIMIZED FOR < 10MB</span>
-                        <input type="file" id="file-input" hidden>
-                    </div>
-                </div>
-
-                <div id="sender-interface" class="hidden">
-                    <div id="qr-wrapper">
-                        <div id="qr-display"></div>
-                        <div id="qr-overlay-stats">
-                            <span id="sender-seq">SEQ: 0</span>
-                            <span id="sender-win">WIN: 10</span>
+            <!-- Transfer UI -->
+            <div id="sender-ui" class="hidden w-full max-w-4xl flex flex-col items-center h-full">
+                
+                <div class="w-full flex justify-between items-end mb-4">
+                    <div>
+                        <h2 id="sender-filename" class="text-lg font-bold text-white truncate max-w-md">filename.ext</h2>
+                        <div class="text-xs text-slate-400 font-mono">
+                            <span id="sender-filesize">0 KB</span> • 
+                            SEQ: <span id="sender-seq" class="text-emerald-400">0</span> • 
+                            WND: <span id="sender-window" class="text-blue-400">0</span>
                         </div>
                     </div>
-                    <div style="margin-top: 15px; text-align: center;">
-                        <div class="glow-cyan blink">OPTICAL TRANSMISSION ACTIVE</div>
-                        <div style="font-size: 0.8rem; color: #666">ENSURE LINE OF SIGHT</div>
-                        <button id="btn-pause" style="margin-top:10px; padding: 5px 10px; font-size: 0.8rem;">PAUSE</button>
+                    <div class="flex gap-2">
+                         <button onclick="sender.togglePause()" id="sender-pause-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded text-white text-sm font-bold shadow transition-colors">
+                            <i class="fa-solid fa-pause"></i> PAUSE
+                        </button>
+                        <button onclick="location.reload()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-white text-sm font-bold shadow transition-colors">
+                            CANCEL
+                        </button>
+                    </div>
+                </div>
+
+                <!-- QR Container -->
+                <div class="relative bg-white p-4 rounded-xl shadow-2xl flex-shrink-0 mb-4">
+                    <div id="qrcode" class="w-[300px] h-[300px] md:w-[400px] md:h-[400px]"></div>
+                    <div id="sender-complete-overlay" class="hidden absolute inset-0 bg-emerald-500/90 rounded-xl flex flex-col items-center justify-center text-white backdrop-blur-sm">
+                        <i class="fa-solid fa-check-circle text-6xl mb-2"></i>
+                        <span class="text-2xl font-bold">SENT</span>
+                    </div>
+                </div>
+
+                <!-- Stats/Logs -->
+                <div class="w-full bg-slate-800 rounded-lg p-4 flex-1 overflow-hidden flex flex-col border border-slate-700">
+                    <div class="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                        <span>Transfer Log</span>
+                        <span id="sender-progress">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-700 h-2 rounded-full mb-3 overflow-hidden">
+                        <div id="sender-progress-bar" class="h-full bg-emerald-500 w-0 transition-all duration-300"></div>
+                    </div>
+                    <div id="sender-log" class="font-mono text-xs text-slate-300 overflow-y-auto flex-1 space-y-1 p-2 bg-slate-900/50 rounded border border-slate-700/50">
+                        <div class="text-emerald-500">System initialized. Waiting for file...</div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Screen 3: Receiver -->
-            <div id="screen-receiver" class="screen">
-                <div id="scanner-container">
-                    <div id="scan-target"></div>
-                    <video id="scan-video" playsinline></video>
-                    <canvas id="scan-canvas" hidden></canvas>
-                    <div id="visualizer-overlay"></div>
-                </div>
-                <div style="margin-top: 10px; text-align:center">
-                    <div class="glow-cyan">OPTICAL SENSOR ACTIVE</div>
-                    <div style="font-size: 0.8rem; color: #666">ALIGN QR INSIDE TARGET</div>
-                </div>
-            </div>
-
-            <!-- Screen 4: Complete -->
-            <div id="screen-complete" class="screen">
-                <h1 class="glow-green">PAYLOAD RECONSTRUCTED</h1>
-                <div id="result-container"></div>
-                <button id="btn-reset" style="margin-top: 20px;">RESET LINK</button>
-            </div>
-        </main>
-
-        <footer>
-            <div class="stats-group">
-                <div class="stat-item">
-                    <span class="stat-label">STATUS</span>
-                    <span id="stat-state" class="stat-value">IDLE</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">SPEED</span>
-                    <span id="stat-speed" class="stat-value">0 KB/s</span>
-                </div>
-            </div>
+        <!-- RECEIVER VIEW -->
+        <div id="receiver-view" class="hidden flex-1 flex flex-col h-full bg-black relative">
             
-            <div class="stats-group">
-                <div class="stat-item">
-                    <span class="stat-label">PROGRESS</span>
-                    <span id="stat-seq" class="stat-value">0</span>
+            <!-- Camera Overlay UI -->
+            <div class="absolute top-4 left-4 right-4 z-20 flex justify-between items-start pointer-events-none">
+                <div class="bg-slate-900/80 backdrop-blur text-white px-3 py-2 rounded-lg border border-slate-700 pointer-events-auto">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase">Receiving</h2>
+                    <div id="rx-filename" class="font-bold truncate max-w-[150px]">Waiting...</div>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">FPS/WIN</span>
-                    <span id="stat-fps" class="stat-value">15/10</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">DROP/NACK</span>
-                    <span id="stat-loss" class="stat-value">0</span>
+                <div class="bg-slate-900/80 backdrop-blur text-white px-3 py-2 rounded-lg border border-slate-700 pointer-events-auto flex flex-col items-end">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Throughput</div>
+                    <div class="font-mono text-emerald-400 font-bold"><span id="rx-fps">0</span> FPS</div>
+                    <div class="font-mono text-xs text-slate-400"><span id="rx-bps">0</span> KB/s</div>
                 </div>
             </div>
-        </footer>
-    </div>
 
+            <!-- Main Canvas -->
+            <div class="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
+                <video id="video" playsinline class="hidden"></video>
+                <canvas id="canvas" class="w-full h-full object-contain"></canvas>
+                
+                <!-- Scanning Guide -->
+                <div id="scan-guide" class="absolute w-64 h-64 border-2 border-emerald-500/50 rounded-lg box-border shadow-[0_0_100px_rgba(16,185,129,0.2)]">
+                    <div class="scan-line"></div>
+                    <div class="absolute -top-6 w-full text-center text-emerald-400 text-xs font-bold uppercase tracking-widest bg-black/50 py-1 rounded">Align QR Code</div>
+                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="absolute bottom-0 w-full bg-slate-900/90 backdrop-blur border-t border-slate-800 p-4 z-20 pb-8 md:pb-4">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="flex-1">
+                        <div class="flex justify-between text-xs text-slate-300 mb-1">
+                            <span id="rx-progress-text">0 / 0 chunks</span>
+                            <span id="rx-percent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
+                            <div id="rx-progress-bar" class="h-full bg-emerald-500 w-0 transition-all duration-200"></div>
+                        </div>
+                    </div>
+                    <button onclick="receiver.reset()" class="bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-lg transition-colors">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                
+                <div id="rx-complete-msg" class="hidden bg-emerald-600 text-white p-3 rounded-lg text-center font-bold shadow-lg animate-bounce cursor-pointer hover:bg-emerald-500 transition-colors" onclick="receiver.downloadFile()">
+                    <i class="fa-solid fa-download mr-2"></i> TRANSFER COMPLETE - CLICK TO DOWNLOAD
+                </div>
+                
+                <div class="flex gap-2 mt-2 overflow-x-auto">
+                    <select id="camera-select" class="bg-slate-800 text-white text-xs p-2 rounded border border-slate-700 outline-none focus:border-emerald-500">
+                        <option value="environment">Rear Camera (Default)</option>
+                        <option value="user">Front Camera</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- App Logic -->
     <script>
-        /**
-         * OPTILINK v1.2 - ROBUST OPTICAL TRANSPORT
-         * Improvements: Connection Timeout, Input Sanitization, Simpler Peer IDs
-         */
-
         // --- CONFIGURATION ---
-        const CONFIG = {
-            // FIX: Shortened prefix to minimize PeerJS broker issues
-            APP_PREFIX: 'ol-v1-',
-            CHUNK_SIZE: 300,        // LOWERED from 700 for better scan reliability 
-            QR_CORRECTION: 'L',      
-            MIN_FPS: 5,
-            MAX_FPS: 30,
-            DEFAULT_FPS: 15,
-            MIN_WINDOW: 5,
-            MAX_WINDOW: 50,          
-            NACK_INTERVAL_MS: 500,   
-            RTT_ALPHA: 0.125,        
-            TIMEOUT_FACTOR: 2.0      
-        };
-
-        const STATES = {
-            INIT: 'INIT',
-            WAITING: 'WAITING',
-            CONNECTING: 'CONNECTING',
-            CONNECTED: 'CONNECTED',
-            TRANSMITTING: 'TRANSMITTING',
-            RECEIVING: 'RECEIVING',
-            PAUSED: 'PAUSED',
-            COMPLETED: 'COMPLETED',
-            ERROR: 'ERROR'
-        };
-
-        const MSG = {
-            META: 'META',
-            ACK: 'ACK',
-            NACK: 'NACK',
-            FIN: 'FIN'
-        };
-
-        // --- UTILS ---
+        const PROTOCOL_VER = 1;
+        const CHUNK_SIZE = 700; // Safe payload size for QR version 10-20
+        const QR_ERROR_LEVEL = QRCode.CorrectLevel.L; // Lower error correction = more data
+        const SCAN_FPS_LIMIT = 15; // Limit decode attempts per second
+        const WINDOW_MAX_SIZE = 30;
         
-        // Optimized CRC32
-        const crc32 = (function() {
-            let table = new Uint32Array(256);
-            for(let i=0; i<256; i++) {
-                let c = i;
-                for(let k=0; k<8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-                table[i] = c;
+        // --- UTILS ---
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        const log = (msg, type='info') => {
+            console.log(`[${type.toUpperCase()}] ${msg}`);
+            // Also append to sender log if visible
+            const logEl = document.getElementById('sender-log');
+            if(logEl) {
+                const div = document.createElement('div');
+                div.className = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-emerald-400' : 'text-slate-300');
+                div.innerText = `> ${msg}`;
+                logEl.appendChild(div);
+                logEl.scrollTop = logEl.scrollHeight;
             }
-            return function(arr) {
-                let crc = -1;
-                for(let i=0; i<arr.length; i++) crc = (crc >>> 8) ^ table[(crc ^ arr[i]) & 0xFF];
-                return (crc ^ -1) >>> 0;
-            };
-        })();
-
-        function generateToken() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
-            let res = '';
-            for(let i=0; i<5; i++) res += chars.charAt(Math.floor(Math.random()*chars.length));
-            return res;
-        }
-
-        function formatBytes(bytes) {
-            if(bytes === 0) return '0 B';
-            const sizes = ['B', 'KB', 'MB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(1024));
-            return parseFloat((bytes / Math.pow(1024, i)).toFixed(1)) + ' ' + sizes[i];
-        }
+        };
 
         // --- GLOBAL STATE ---
-
-        const state = {
-            current: STATES.INIT,
+        const app = {
+            role: null,
             peer: null,
             conn: null,
-            myToken: null,
-            role: null, // 'SENDER', 'RECEIVER'
-            
-            // Transfer Data
-            file: null,
-            chunks: [],     // Array of Uint8Array packets
-            totalChunks: 0,
-            
-            // Sender State
-            windowBase: 0,    // Oldest unacked packet
-            windowSize: 10,
-            fps: CONFIG.DEFAULT_FPS,
-            sentPackets: new Map(), // seq -> timestamp
-            priorityQueue: [],      // NACK'd packets to resend immediately
-            rtt: 200,               // Estimated Round Trip Time (ms)
-            
-            // Receiver State
-            receivedChunks: new Map(),
-            highestContiguous: -1,
-            missing: new Set(),
-            lastNackTime: 0,
-
-            // Telemetry
-            startTime: 0,
-            bytesTransferred: 0,
-            totalNacks: 0,
-            lastFrameHash: '' // Debounce
-        };
-
-        const ui = {
-            screens: document.querySelectorAll('.screen'),
-            status: document.getElementById('connection-status'),
-            myToken: document.getElementById('my-token'),
-            targetToken: document.getElementById('target-token'),
-            btnConnect: document.getElementById('btn-connect'),
-            connectMsg: document.getElementById('connect-msg'),
-            qrDisplay: document.getElementById('qr-display'),
-            qrWrapper: document.getElementById('qr-wrapper'),
-            overlaySeq: document.getElementById('sender-seq'),
-            overlayWin: document.getElementById('sender-win'),
-            video: document.getElementById('scan-video'),
-            canvas: document.getElementById('scan-canvas'),
-            visualizer: document.getElementById('visualizer-overlay'),
-            scanTarget: document.getElementById('scan-target'),
-            stats: {
-                state: document.getElementById('stat-state'),
-                speed: document.getElementById('stat-speed'),
-                seq: document.getElementById('stat-seq'),
-                fps: document.getElementById('stat-fps'),
-                loss: document.getElementById('stat-loss')
-            }
-        };
-
-        // --- CORE STATE MACHINE ---
-
-        function setState(newState, msg) {
-            console.log(`[STATE] ${state.current} -> ${newState}`);
-            state.current = newState;
-            ui.status.innerText = msg || newState;
-            ui.stats.state.innerText = newState;
-
-            ui.status.className = 'status-badge ' + 
-                (newState === STATES.ERROR ? 'error' : 
-                 (newState === STATES.TRANSMITTING || newState === STATES.RECEIVING) ? 'active' : '');
-
-            // Screen Routing
-            if (newState === STATES.CONNECTED) {
-                showScreen(state.role === 'SENDER' ? 'screen-sender' : 'screen-receiver');
-            } else if (newState === STATES.COMPLETED) {
-                showScreen('screen-complete');
-            } else if (newState === STATES.PAUSED) {
-                ui.status.innerText = "LINK PAUSED";
-            }
-        }
-
-        function showScreen(id) {
-            ui.screens.forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
-        // --- NETWORK LAYER (WebRTC) ---
-
-        function initNetwork() {
-            state.myToken = generateToken();
-            ui.myToken.innerText = state.myToken;
-
-            // Connect to PeerJS Public Cloud
-            state.peer = new Peer(CONFIG.APP_PREFIX + state.myToken, { debug: 1 });
-
-            state.peer.on('open', () => {
-                setState(STATES.WAITING, "READY TO LINK");
-                ui.btnConnect.disabled = false;
-            });
-
-            state.peer.on('connection', (conn) => {
-                // Incoming connection
-                if (state.conn) { conn.close(); return; } // Single peer only
-                handleConnection(conn, 'RECEIVER');
-            });
-
-            state.peer.on('error', (err) => {
-                console.error("PEER ERROR:", err);
-                // Handle duplicate ID or network issues
-                if (err.type === 'unavailable-id') {
-                    // Regenerate on collision (rare)
-                    initNetwork(); 
-                    return;
-                }
-                ui.connectMsg.innerText = "NET ERROR: " + err.type;
-                ui.status.className = 'status-badge error';
-                ui.btnConnect.disabled = false;
-            });
-        }
-
-        function connectToPeer(target) {
-            if (!target) return;
-            const cleanTarget = target.trim().toUpperCase();
-            
-            if (cleanTarget.length !== 5) {
-                alert("TOKEN MUST BE 5 CHARACTERS");
-                return;
-            }
-
-            ui.btnConnect.disabled = true;
-            ui.connectMsg.innerText = "SEARCHING...";
-            
-            console.log("Attempting connect to:", CONFIG.APP_PREFIX + cleanTarget);
-            
-            const conn = state.peer.connect(CONFIG.APP_PREFIX + cleanTarget, { reliable: true });
-            
-            // Connection Timeout Watchdog
-            const timeoutTimer = setTimeout(() => {
-                if (state.current !== STATES.CONNECTED) {
-                    console.warn("Connection timeout");
-                    ui.connectMsg.innerText = "TIMEOUT - RETRY?";
-                    ui.btnConnect.disabled = false;
-                    conn.close();
-                }
-            }, 5000); // 5 Seconds timeout
-
-            handleConnection(conn, 'SENDER', timeoutTimer);
-        }
-
-        function handleConnection(conn, role, timeoutTimer = null) {
-            state.conn = conn;
-            state.role = role;
-
-            conn.on('open', () => {
-                if(timeoutTimer) clearTimeout(timeoutTimer);
-                console.log("Connection Established");
-                setState(STATES.CONNECTED);
-                ui.connectMsg.innerText = "";
-                if (role === 'RECEIVER') startReceiverLoop();
-            });
-
-            conn.on('data', (data) => handleControlMsg(data));
-
-            conn.on('close', () => {
-                if(timeoutTimer) clearTimeout(timeoutTimer);
-                setState(STATES.ERROR, "LINK LOST");
-                alert("Peer Connection Lost. Check Network.");
-                location.reload();
-            });
-
-            conn.on('error', (err) => {
-                if(timeoutTimer) clearTimeout(timeoutTimer);
-                console.error("CONN ERROR:", err);
-                ui.connectMsg.innerText = "LINK FAILED";
-                ui.btnConnect.disabled = false;
-            });
-        }
-
-        function sendControl(msg) {
-            if (state.conn && state.conn.open) {
-                state.conn.send(msg);
-            }
-        }
-
-        function handleControlMsg(msg) {
-            if (msg.type === MSG.ACK) {
-                handleAck(msg.seq);
-            } else if (msg.type === MSG.NACK) {
-                handleNack(msg.seqs);
-            } else if (msg.type === MSG.META) {
-                prepareReceiver(msg);
-            } else if (msg.type === MSG.FIN) {
-                finishReceiver();
-            }
-        }
-
-        // --- DATA PLANE: SENDER ---
-
-        function processFile(file) {
-            state.file = file;
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                const buffer = new Uint8Array(e.target.result);
-                state.chunks = [];
-                state.totalChunks = Math.ceil(buffer.length / CONFIG.CHUNK_SIZE);
-                state.windowBase = 0;
+            peerId: null,
+            setRole: (r) => {
+                app.role = r;
+                document.getElementById('mode-select').classList.add('hidden');
+                document.getElementById('connection-status').innerHTML = 
+                    `<span class="text-emerald-400 font-bold">ID: ${app.peerId ? app.peerId.substring(0,4) : '...'}</span>`;
                 
-                // Pre-chunking
-                for (let i = 0; i < state.totalChunks; i++) {
-                    const start = i * CONFIG.CHUNK_SIZE;
-                    const end = Math.min(start + CONFIG.CHUNK_SIZE, buffer.length);
-                    state.chunks.push(createPacket(i, state.totalChunks, buffer.slice(start, end)));
+                if (r === 'sender') {
+                    document.getElementById('sender-view').classList.remove('hidden');
+                    sender.init();
+                } else {
+                    document.getElementById('receiver-view').classList.remove('hidden');
+                    receiver.init();
                 }
-
-                // Send Meta
-                sendControl({
-                    type: MSG.META,
-                    name: file.name,
-                    size: file.size,
-                    mime: file.type,
-                    total: state.totalChunks
+            },
+            initP2P: () => {
+                app.peer = new Peer(null, { debug: 1 });
+                
+                app.peer.on('open', (id) => {
+                    app.peerId = id;
+                    document.getElementById('connection-status').innerHTML = 
+                        `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-wifi mr-1"></i> READY (${id.substring(0,4)})</span>`;
                 });
 
-                startSenderLoop();
-            };
-            reader.readAsArrayBuffer(file);
-        }
+                app.peer.on('connection', (conn) => {
+                    app.conn = conn;
+                    app.setupConnHandlers();
+                    // Auto-switch to receiver if connected to
+                    if (!app.role) app.setRole('receiver');
+                });
 
-        function createPacket(seq, total, payload) {
-            // Header: 12 bytes [SEQ(4), TOTAL(4), CRC(4)]
-            // We concat header + payload
-            const packet = new Uint8Array(12 + payload.length);
-            const view = new DataView(packet.buffer);
-            view.setUint32(0, seq);
-            view.setUint32(4, total);
-            view.setUint32(8, crc32(payload));
-            packet.set(payload, 12);
-            return packet; // Store Uint8Array directly
-        }
+                app.peer.on('error', (err) => {
+                    document.getElementById('connection-status').innerHTML = 
+                        `<span class="text-red-500 font-bold">P2P Error</span>`;
+                    console.error(err);
+                });
+            },
+            connectToPeer: (remoteId) => {
+                if (!app.peer) return;
+                const conn = app.peer.connect(remoteId);
+                app.conn = conn;
+                app.setupConnHandlers();
+            },
+            setupConnHandlers: () => {
+                app.conn.on('open', () => {
+                    document.getElementById('connection-status').innerHTML = 
+                        `<span class="text-blue-400 font-bold"><i class="fa-solid fa-link mr-1"></i> LINKED</span>`;
+                    log("Control plane established via WebRTC", "success");
+                });
+                app.conn.on('data', (data) => {
+                    if (app.role === 'sender') sender.handleControlMsg(data);
+                });
+                app.conn.on('close', () => {
+                    log("Control plane disconnected", "error");
+                });
+            },
+            sendControl: (msg) => {
+                if (app.conn && app.conn.open) {
+                    app.conn.send(msg);
+                }
+            }
+        };
 
-        function startSenderLoop() {
-            setState(STATES.TRANSMITTING);
-            document.getElementById('file-select-area').classList.add('hidden');
-            document.getElementById('sender-interface').classList.remove('hidden');
+        // --- SENDER LOGIC ---
+        const sender = {
+            file: null,
+            chunks: [],
+            totalChunks: 0,
+            acked: new Set(),
+            nacked: new Set(),
+            windowBase: 0,
+            windowSize: 10, // Start conservative
+            isPaused: false,
+            isComplete: false,
+            qrEl: null,
+            qrObj: null,
+            loopId: null,
+            lastRenderTime: 0,
             
-            state.startTime = Date.now();
-            let lastFrameTime = 0;
-            let currentSeqToSend = 0;
-            let retransmitOffset = 0; // Carousel pointer
+            // State: 'IDLE', 'TRANSFER', 'DRAINING', 'COMPLETE'
+            state: 'IDLE',
 
-            function loop(timestamp) {
-                if (state.current !== STATES.TRANSMITTING) {
-                    if (state.current === STATES.PAUSED) {
-                         // Idle wait
-                         requestAnimationFrame(loop);
-                         return;
+            init: () => {
+                sender.qrEl = document.getElementById('qrcode');
+            },
+
+            handleFile: async (file) => {
+                if (!file) return;
+                sender.file = file;
+                document.getElementById('upload-area').classList.add('hidden');
+                document.getElementById('sender-ui').classList.remove('hidden');
+                
+                document.getElementById('sender-filename').innerText = file.name;
+                document.getElementById('sender-filesize').innerText = (file.size / 1024).toFixed(1) + ' KB';
+
+                log(`Processing ${file.name}...`);
+                
+                // Chunking
+                const buffer = await file.arrayBuffer();
+                const bytes = new Uint8Array(buffer);
+                sender.chunks = [];
+                
+                for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+                    const chunkBytes = bytes.slice(i, i + CHUNK_SIZE);
+                    // Convert chunk to Base64 manually to ensure safety
+                    let binary = '';
+                    const len = chunkBytes.byteLength;
+                    for (let j = 0; j < len; j++) {
+                        binary += String.fromCharCode(chunkBytes[j]);
                     }
-                    return; // Stop if completed or error
+                    sender.chunks.push(window.btoa(binary));
+                }
+                
+                sender.totalChunks = sender.chunks.length;
+                log(`File split into ${sender.totalChunks} chunks.`);
+                
+                // Start Transfer
+                sender.startTransfer();
+            },
+
+            startTransfer: () => {
+                sender.state = 'TRANSFER';
+                sender.acked.clear();
+                sender.nacked.clear();
+                sender.windowBase = 0;
+                sender.isPaused = false;
+                sender.isComplete = false;
+                sender.loop();
+            },
+
+            togglePause: () => {
+                sender.isPaused = !sender.isPaused;
+                const btn = document.getElementById('sender-pause-btn');
+                btn.innerHTML = sender.isPaused ? '<i class="fa-solid fa-play"></i> RESUME' : '<i class="fa-solid fa-pause"></i> PAUSE';
+                btn.classList.toggle('bg-amber-600');
+                btn.classList.toggle('bg-emerald-600');
+                log(sender.isPaused ? "Transfer Paused" : "Transfer Resumed");
+            },
+
+            loop: () => {
+                if (sender.isComplete) return;
+
+                sender.loopId = requestAnimationFrame(sender.loop);
+                
+                // Throttle QR generation to ~15 FPS to allow receiver camera to focus
+                const now = performance.now();
+                if (now - sender.lastRenderTime < 66) return; // 15 FPS
+                sender.lastRenderTime = now;
+
+                if (sender.isPaused) return;
+
+                // Priority Logic
+                let seqToSend = -1;
+                let isFin = false;
+
+                if (sender.state === 'DRAINING') {
+                    // Only send FIN
+                    isFin = true;
+                } else {
+                    // 1. High Priority: NACKs
+                    if (sender.nacked.size > 0) {
+                        seqToSend = sender.nacked.values().next().value;
+                        sender.nacked.delete(seqToSend); // Move to inflight
+                    } 
+                    // 2. Medium Priority: New Packets within Window
+                    else if (sender.windowBase < sender.totalChunks) {
+                        // Find next unacked packet in window
+                        for (let i = 0; i < sender.windowSize; i++) {
+                            const candidate = sender.windowBase + i;
+                            if (candidate < sender.totalChunks && !sender.acked.has(candidate)) {
+                                seqToSend = candidate;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 3. Carousel/Keepalive: If window is stalled, rotate oldest unacked
+                    if (seqToSend === -1 && sender.windowBase < sender.totalChunks) {
+                         // Just retransmit windowBase to poke receiver
+                         seqToSend = sender.windowBase;
+                    }
                 }
 
-                const interval = 1000 / state.fps;
+                if (sender.state === 'TRANSFER' && sender.acked.size === sender.totalChunks) {
+                    sender.state = 'DRAINING';
+                    log("All packets ACKed. Entering DRAINING state (sending FIN).", "success");
+                    isFin = true;
+                }
 
-                if (timestamp - lastFrameTime > interval) {
-                    let packetData = null;
-                    let seq = -1;
+                // Generate Data String
+                // Format: V1|SEQ|TOTAL|B64 or FIN|HASH
+                let qrData = '';
+                if (isFin) {
+                    qrData = `FIN|${sender.file.name}|${sender.file.size}|${sender.totalChunks}`;
+                } else if (seqToSend !== -1) {
+                    qrData = `1|${seqToSend}|${sender.totalChunks}|${sender.chunks[seqToSend]}`;
+                    
+                    // Update UI
+                    document.getElementById('sender-seq').innerText = seqToSend;
+                    document.getElementById('sender-window').innerText = `${sender.windowBase}-${sender.windowBase + sender.windowSize}`;
+                }
 
-                    // Ensure we don't try to send packets already ACKed
-                    currentSeqToSend = Math.max(currentSeqToSend, state.windowBase);
+                if (qrData) {
+                    sender.renderQR(qrData);
+                }
+            },
 
-                    // 1. Priority: NACK Queue
-                    if (state.priorityQueue.length > 0) {
-                        seq = state.priorityQueue.shift();
-                        packetData = state.chunks[seq];
-                        ui.qrWrapper.style.borderColor = 'var(--term-red)'; // Visual cue for retransmit
-                    } 
-                    // 2. Normal Window
-                    else if (currentSeqToSend < state.windowBase + state.windowSize && currentSeqToSend < state.totalChunks) {
-                        seq = currentSeqToSend;
-                        packetData = state.chunks[seq];
-                        currentSeqToSend++;
-                        ui.qrWrapper.style.borderColor = 'var(--term-cyan)';
+            renderQR: (text) => {
+                sender.qrEl.innerHTML = '';
+                // Using QRCode.js
+                // We recreate the object to prevent memory leaks/state issues in some versions
+                new QRCode(sender.qrEl, {
+                    text: text,
+                    width: 400,
+                    height: 400,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QR_ERROR_LEVEL
+                });
+            },
+
+            handleControlMsg: (msg) => {
+                if (msg.type === 'ack') {
+                    // Cumulative ACK or Single ACK logic? 
+                    // Let's assume the receiver sends simple ACKs for now to be robust
+                    const seq = msg.seq;
+                    if (!sender.acked.has(seq)) {
+                        sender.acked.add(seq);
+                        sender.nacked.delete(seq);
+                        sender.updateProgress();
+                        sender.advanceWindow();
                     }
-                    // 3. Window Full? Cycle through unacked packets (Carousel Mode)
-                    else if (state.windowBase < state.totalChunks) {
-                         // The window is full, meaning we have unacked packets holding us back.
-                         // Instead of waiting or random probing, we cycle through the current window.
-                         // This ensures the receiver gets multiple chances at the data.
-                         
-                         const windowLimit = Math.min(state.windowBase + state.windowSize, state.totalChunks);
-                         const range = windowLimit - state.windowBase;
-                         
-                         if (range > 0) {
-                             retransmitOffset = (retransmitOffset + 1) % range;
-                             seq = state.windowBase + retransmitOffset;
-                             packetData = state.chunks[seq];
-                             ui.qrWrapper.style.borderColor = 'var(--term-amber)'; // Color for cycling
-                         }
-                    } else {
-                        // All chunks sent, send FIN via QR too? No, Control Plane handles FIN.
-                        // Just pulse last packet to ensure receipt
-                        if (Math.random() > 0.9) sendControl({ type: MSG.FIN });
-                    }
+                } 
+                else if (msg.type === 'nack') {
+                    // Receiver explicitly missed these
+                    msg.seqs.forEach(s => {
+                        if (!sender.acked.has(s)) sender.nacked.add(s);
+                    });
+                }
+                else if (msg.type === 'fin_ack') {
+                    sender.finish();
+                }
+                else if (msg.type === 'hello') {
+                    // Handshake, maybe update peer ID for direct comms
+                    log("Receiver connected.", "success");
+                }
+            },
 
-                    if (packetData) {
-                        renderQR(packetData);
-                        state.sentPackets.set(seq, Date.now());
-                        lastFrameTime = timestamp;
+            advanceWindow: () => {
+                // Window Base is the smallest number NOT in acked set
+                while (sender.acked.has(sender.windowBase) && sender.windowBase < sender.totalChunks) {
+                    sender.windowBase++;
+                }
+                // Adaptive Window: Grow if things are going well (heuristic)
+                // Simple AIMD or static for now. Let's keep it safe.
+                if (sender.windowSize < WINDOW_MAX_SIZE) sender.windowSize++;
+            },
+
+            updateProgress: () => {
+                const pct = Math.floor((sender.acked.size / sender.totalChunks) * 100);
+                document.getElementById('sender-progress').innerText = `${pct}%`;
+                document.getElementById('sender-progress-bar').style.width = `${pct}%`;
+            },
+
+            finish: () => {
+                if (sender.isComplete) return;
+                sender.isComplete = true;
+                sender.state = 'COMPLETE';
+                cancelAnimationFrame(sender.loopId);
+                document.getElementById('sender-complete-overlay').classList.remove('hidden');
+                log("Transfer Complete!", "success");
+            }
+        };
+
+        // --- RECEIVER LOGIC ---
+        const receiver = {
+            video: null,
+            canvas: null,
+            ctx: null,
+            scanLoopId: null,
+            
+            chunks: new Map(), // seq -> data
+            totalChunks: 0,
+            meta: null, // { name, size }
+            
+            startTime: 0,
+            bytesReceived: 0,
+            lastScanTime: 0,
+            lastDecodedData: null,
+            
+            // Stats
+            frameCount: 0,
+            lastStatTime: 0,
+
+            init: () => {
+                receiver.video = document.getElementById('video');
+                receiver.canvas = document.getElementById('canvas');
+                receiver.ctx = receiver.canvas.getContext('2d', { willReadFrequently: true });
+                
+                // Camera handling
+                const camSelect = document.getElementById('camera-select');
+                camSelect.addEventListener('change', () => receiver.startCamera(camSelect.value));
+                receiver.startCamera('environment');
+
+                // Send Hello if Peer connected
+                if (app.conn && app.conn.open) {
+                    app.sendControl({ type: 'hello', id: app.peerId });
+                }
+            },
+
+            startCamera: async (facingMode) => {
+                if (receiver.video.srcObject) {
+                    receiver.video.srcObject.getTracks().forEach(t => t.stop());
+                }
+                
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: facingMode,
+                            width: { ideal: 1920 }, // Request high res
+                            height: { ideal: 1080 } 
+                        } 
+                    });
+                    receiver.video.srcObject = stream;
+                    receiver.video.setAttribute("playsinline", true);
+                    receiver.video.play();
+                    requestAnimationFrame(receiver.scan);
+                } catch (e) {
+                    log("Camera Access Denied or Error", "error");
+                    alert("Camera access required.");
+                }
+            },
+
+            scan: () => {
+                if (receiver.video.readyState === receiver.video.HAVE_ENOUGH_DATA) {
+                    const now = performance.now();
+                    
+                    // Throttle scanning to save CPU and battery
+                    if (now - receiver.lastScanTime > (1000 / SCAN_FPS_LIMIT)) {
+                        receiver.lastScanTime = now;
+                        
+                        // 1. Draw video to canvas (Smart Crop / Downscale)
+                        // We use a fixed width for processing to ensure consistency regardless of 4k vs 720p cameras
+                        const processWidth = 800;
+                        const scale = processWidth / receiver.video.videoWidth;
+                        const processHeight = receiver.video.videoHeight * scale;
+
+                        receiver.canvas.width = processWidth;
+                        receiver.canvas.height = processHeight;
+                        
+                        receiver.ctx.drawImage(receiver.video, 0, 0, receiver.canvas.width, receiver.canvas.height);
+                        
+                        // 2. Scan with jsQR
+                        const imageData = receiver.ctx.getImageData(0, 0, receiver.canvas.width, receiver.canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: "dontInvert",
+                        });
+
+                        if (code && code.data) {
+                            receiver.handleData(code.data);
+                            receiver.drawBox(code.location);
+                        }
                         
                         // Stats Update
-                        ui.overlaySeq.innerText = `SEQ: ${seq}`;
-                        ui.overlayWin.innerText = `WIN: ${state.windowSize}`;
-                        updateSenderStats();
+                        receiver.frameCount++;
+                        if (now - receiver.lastStatTime >= 1000) {
+                            document.getElementById('rx-fps').innerText = receiver.frameCount;
+                            receiver.frameCount = 0;
+                            receiver.lastStatTime = now;
+                        }
                     }
                 }
-                requestAnimationFrame(loop);
-            }
-            requestAnimationFrame(loop);
-        }
+                receiver.scanLoopId = requestAnimationFrame(receiver.scan);
+            },
 
-        function renderQR(data) {
-            // qrcode.js needs string. We use Base64.
-            // Optimized buffer to b64
-            let binary = '';
-            const len = data.byteLength;
-            for (let i = 0; i < len; i++) binary += String.fromCharCode(data[i]);
-            const b64 = btoa(binary);
+            drawBox: (loc) => {
+                receiver.ctx.beginPath();
+                receiver.ctx.lineWidth = 4;
+                receiver.ctx.strokeStyle = "#10b981";
+                receiver.ctx.moveTo(loc.topLeftCorner.x, loc.topLeftCorner.y);
+                receiver.ctx.lineTo(loc.topRightCorner.x, loc.topRightCorner.y);
+                receiver.ctx.lineTo(loc.bottomRightCorner.x, loc.bottomRightCorner.y);
+                receiver.ctx.lineTo(loc.bottomLeftCorner.x, loc.bottomLeftCorner.y);
+                receiver.ctx.lineTo(loc.topLeftCorner.x, loc.topLeftCorner.y);
+                receiver.ctx.stroke();
+            },
 
-            ui.qrDisplay.innerHTML = '';
-            // Lower error correction level allows larger data chunks
-            new QRCode(ui.qrDisplay, {
-                text: b64,
-                width: 380,
-                height: 380,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel[CONFIG.QR_CORRECTION]
-            });
-        }
-
-        function handleAck(seq) {
-            // Adaptive Window (TCP Reno-ish)
-            // Fix: Allow moving if seq is same as windowBase (ACKing the blocker)
-            if (seq >= state.windowBase) {
-                // Good cumulative ACK
-                state.windowBase = seq + 1;
-                state.windowSize = Math.min(state.windowSize + 1, CONFIG.MAX_WINDOW);
-                state.fps = Math.min(state.fps + 0.5, CONFIG.MAX_FPS);
-            }
-        }
-
-        function handleNack(seqs) {
-            state.totalNacks += seqs.length;
-            // Adaptive Decrease
-            state.windowSize = Math.max(Math.floor(state.windowSize * 0.7), CONFIG.MIN_WINDOW);
-            state.fps = Math.max(state.fps - 2, CONFIG.MIN_FPS);
-
-            // Add to priority queue (unique)
-            seqs.forEach(s => {
-                if (!state.priorityQueue.includes(s)) state.priorityQueue.push(s);
-            });
-        }
-
-        function updateSenderStats() {
-            const elapsed = (Date.now() - state.startTime) / 1000;
-            const bytes = state.windowBase * CONFIG.CHUNK_SIZE;
-            const speed = bytes / elapsed;
-            
-            ui.stats.speed.innerText = formatBytes(speed) + '/s';
-            ui.stats.seq.innerText = `${Math.floor((state.windowBase / state.totalChunks)*100)}%`;
-            ui.stats.fps.innerText = `${Math.floor(state.fps)} / W:${state.windowSize}`;
-            ui.stats.loss.innerText = state.totalNacks;
-        }
-
-        // --- DATA PLANE: RECEIVER ---
-
-        function prepareReceiver(meta) {
-            state.fileMeta = meta;
-            state.totalChunks = meta.total;
-            state.receivedChunks = new Map();
-            state.highestContiguous = -1;
-            state.startTime = Date.now();
-            
-            // Build visualizer grid
-            ui.visualizer.innerHTML = '';
-            // Aspect ratio estimation based on total packets (assuming square filling)
-            // CSS Grid dynamic cols
-            const cols = Math.ceil(Math.sqrt(meta.total));
-            ui.visualizer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            
-            for(let i=0; i<meta.total; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'vis-cell';
-                cell.id = `cell-${i}`;
-                ui.visualizer.appendChild(cell);
-            }
-
-            setState(STATES.RECEIVING);
-        }
-
-        function startReceiverLoop() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-                .then(stream => {
-                    ui.video.srcObject = stream;
-                    ui.video.play();
-                    requestAnimationFrame(receiverTick);
-                })
-                .catch(err => {
-                    console.error("Camera error", err);
-                    setState(STATES.ERROR, "CAM BLOCKED");
-                });
-        }
-
-        function receiverTick() {
-            if (state.current !== STATES.RECEIVING && state.current !== STATES.CONNECTED) {
-                if (state.current !== STATES.COMPLETED) requestAnimationFrame(receiverTick);
-                return;
-            }
-
-            if (ui.video.readyState === ui.video.HAVE_ENOUGH_DATA) {
-                const cvs = ui.canvas;
-                const ctx = cvs.getContext('2d');
-                // Use a smaller internal resolution for performance if needed, 
-                // but JSQR likes full res for density.
-                cvs.width = ui.video.videoWidth;
-                cvs.height = ui.video.videoHeight;
-                ctx.drawImage(ui.video, 0, 0);
-
-                const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
-                });
-
-                if (code) {
-                    // Visual feedback whenever ANY code is detected
-                    ui.scanTarget.classList.add('active');
-                    setTimeout(() => ui.scanTarget.classList.remove('active'), 100);
-
-                    // Process if new or we want to retry
-                    if (code.data && code.data !== state.lastFrameHash) {
-                        state.lastFrameHash = code.data; 
-                        processQrData(code.data);
-                    }
+            handleData: (data) => {
+                // Debounce exact duplicates to prevent processing logic spam
+                // But we MUST allow resending ACK if sender missed it, so we throttle time, not forever
+                if (data === receiver.lastDecodedData && (performance.now() - receiver.lastScanTime < 200)) {
+                    return;
                 }
-            }
+                receiver.lastDecodedData = data;
 
-            // Periodic NACK check
-            const now = Date.now();
-            if (now - state.lastNackTime > CONFIG.NACK_INTERVAL_MS && state.highestContiguous < state.totalChunks - 1) {
-                sendNacks();
-                state.lastNackTime = now;
-            }
-
-            requestAnimationFrame(receiverTick);
-        }
-
-        function processQrData(b64) {
-            try {
-                // Decode
-                const binary = atob(b64);
-                const bytes = new Uint8Array(binary.length);
-                for(let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
-                const view = new DataView(bytes.buffer);
-                if (bytes.length < 12) return; // Too short
-
-                const seq = view.getUint32(0);
-                const total = view.getUint32(4);
-                const crc = view.getUint32(8);
-                const payload = bytes.slice(12);
-
-                if (crc32(payload) !== crc) {
-                    console.warn("CRC ERR", seq);
+                // Protocol Parsing
+                // Format: 1|SEQ|TOTAL|B64 or FIN|NAME|SIZE|TOTAL
+                const parts = data.split('|');
+                
+                if (parts[0] === 'FIN') {
+                    // FIN packet
+                    const name = parts[1];
+                    const size = parseInt(parts[2]);
+                    const total = parseInt(parts[3]);
+                    
+                    if (!receiver.meta) receiver.meta = { name, size };
+                    
+                    // Check if we actually have everything
+                    if (receiver.chunks.size === total) {
+                        app.sendControl({ type: 'fin_ack' });
+                        receiver.completeTransfer();
+                    } else {
+                        // We are missing stuff despite sender thinking we are done?
+                        // This implies state desync. Send NACKs for what we know we miss.
+                        // (Usually shouldn't happen with strict window logic, but good safety)
+                        receiver.checkMissingAndNack(total);
+                    }
                     return;
                 }
 
-                if (!state.receivedChunks.has(seq)) {
-                    state.receivedChunks.set(seq, payload);
-                    state.bytesTransferred += payload.length;
+                if (parts[0] !== '1') return; // Version mismatch
+
+                const seq = parseInt(parts[1]);
+                const total = parseInt(parts[2]);
+                const payload = parts[3];
+
+                // First packet init
+                if (receiver.totalChunks === 0) {
+                    receiver.totalChunks = total;
+                    receiver.startTime = Date.now();
+                    document.getElementById('rx-progress-text').innerText = `0 / ${total} chunks`;
+                }
+
+                // Store Data
+                if (!receiver.chunks.has(seq)) {
+                    receiver.chunks.set(seq, payload);
                     
-                    updateVisualizer(seq);
-                    updateReceiverStats();
+                    // Update stats
+                    // Base64 is ~1.33x size, roughly calculate original bytes
+                    const byteEst = payload.length * 0.75; 
+                    receiver.bytesReceived += byteEst;
+                    
+                    // Send ACK
+                    app.sendControl({ type: 'ack', seq: seq });
+                    
+                    receiver.updateUI();
+                } else {
+                    // Duplicate received, still ACK it because Sender might have lost the previous ACK
+                    app.sendControl({ type: 'ack', seq: seq });
+                }
 
-                    // Update contiguous pointer
-                    while (state.receivedChunks.has(state.highestContiguous + 1)) {
-                        state.highestContiguous++;
-                    }
+                // Every 10 packets or so, check for holes and send NACKs
+                // This speeds up recovery in case of selective loss
+                if (seq % 10 === 0) {
+                    receiver.checkMissingAndNack(seq);
+                }
+            },
 
-                    // Send ACK occasionally or on gap fill
-                    if (seq % 5 === 0 || seq === state.highestContiguous) {
-                        sendControl({ type: MSG.ACK, seq: state.highestContiguous });
-                    }
-
-                    if (state.receivedChunks.size === state.totalChunks) {
-                        sendControl({ type: MSG.FIN });
-                        finishReceiver();
+            checkMissingAndNack: (upToSeq) => {
+                // Find holes before the current sequence
+                const missing = [];
+                // Look back a reasonable amount (e.g., 50 packets) to not flood NACKs for whole file
+                const startCheck = Math.max(0, upToSeq - 50);
+                for (let i = startCheck; i < upToSeq; i++) {
+                    if (!receiver.chunks.has(i)) {
+                        missing.push(i);
                     }
                 }
-            } catch(e) {
-                // Ignore non-protocol QRs
-            }
-        }
-
-        function sendNacks() {
-            if (!state.receivedChunks.size) return;
-            
-            const nacks = [];
-            // Look ahead from highestContiguous
-            // Cap at a reasonable lookahead (e.g. 50 packets) to avoid massive NACK lists
-            const lookahead = 50;
-            const end = Math.min(state.totalChunks, state.highestContiguous + lookahead);
-            
-            for(let i = state.highestContiguous + 1; i < end; i++) {
-                if (!state.receivedChunks.has(i)) {
-                    nacks.push(i);
-                    // Visual feedback for missing
-                    const cell = document.getElementById(`cell-${i}`);
-                    if (cell) cell.classList.add('missing');
+                if (missing.length > 0) {
+                    app.sendControl({ type: 'nack', seqs: missing });
                 }
-            }
+            },
 
-            if (nacks.length > 0) {
-                sendControl({ type: MSG.NACK, seqs: nacks });
-                ui.stats.loss.innerText = parseInt(ui.stats.loss.innerText) + nacks.length;
-            }
-        }
+            updateUI: () => {
+                const count = receiver.chunks.size;
+                const total = receiver.totalChunks;
+                const pct = Math.floor((count / total) * 100);
+                
+                document.getElementById('rx-progress-text').innerText = `${count} / ${total} chunks`;
+                document.getElementById('rx-percent').innerText = `${pct}%`;
+                document.getElementById('rx-progress-bar').style.width = `${pct}%`;
 
-        function updateVisualizer(seq) {
-            const cell = document.getElementById(`cell-${seq}`);
-            if (cell) {
-                cell.className = 'vis-cell done';
-            }
-        }
+                // Calculate Speed
+                const duration = (Date.now() - receiver.startTime) / 1000;
+                if (duration > 1) {
+                    const speed = (receiver.bytesReceived / 1024) / duration;
+                    document.getElementById('rx-bps').innerText = speed.toFixed(1);
+                }
 
-        function updateReceiverStats() {
-            const elapsed = (Date.now() - state.startTime) / 1000;
-            const speed = state.bytesTransferred / elapsed;
+                // Check completion (Early check, before FIN)
+                if (count === total && !receiver.isComplete) {
+                     // We have everything, we can conceptually finish.
+                     // We wait for FIN usually to get filename, but we can trigger ready state.
+                     app.sendControl({ type: 'fin_ack' });
+                }
+            },
+
+            completeTransfer: () => {
+                if (receiver.isComplete) return;
+                receiver.isComplete = true;
+                
+                document.getElementById('rx-complete-msg').classList.remove('hidden');
+                document.getElementById('rx-filename').innerText = receiver.meta ? receiver.meta.name : "Unknown File";
+                
+                // Stop camera
+                if (receiver.video.srcObject) {
+                    receiver.video.srcObject.getTracks().forEach(t => t.stop());
+                }
+                cancelAnimationFrame(receiver.scanLoopId);
+            },
+
+            downloadFile: () => {
+                if (!receiver.isComplete) return;
+
+                // Reconstruct File
+                // 1. Sort chunks
+                const sortedKeys = Array.from(receiver.chunks.keys()).sort((a,b) => a-b);
+                
+                // 2. Pre-allocate buffer
+                // We need to decode base64 to find exact size or just append blobs
+                const blobs = [];
+                
+                for (let key of sortedKeys) {
+                    const b64 = receiver.chunks.get(key);
+                    const byteCharacters = atob(b64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    blobs.push(byteArray);
+                }
+
+                const blob = new Blob(blobs, { type: "application/octet-stream" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = receiver.meta ? receiver.meta.name : `optilink_file_${Date.now()}.bin`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            },
             
-            ui.stats.speed.innerText = formatBytes(speed) + '/s';
-            ui.stats.seq.innerText = `${Math.floor((state.receivedChunks.size / state.totalChunks)*100)}%`;
-        }
-
-        function finishReceiver() {
-            if (state.current === STATES.COMPLETED) return;
-            setState(STATES.COMPLETED);
-
-            // Assemble
-            const sortedChunks = [];
-            for(let i=0; i<state.totalChunks; i++) {
-                sortedChunks.push(state.receivedChunks.get(i));
+            reset: () => {
+                location.reload();
             }
-            
-            const blob = new Blob(sortedChunks, { type: state.fileMeta.mime });
-            const url = URL.createObjectURL(blob);
-            
-            const container = document.getElementById('result-container');
-            container.innerHTML = '';
+        };
 
-            if (state.fileMeta.mime.startsWith('image/')) {
-                const img = document.createElement('img');
-                img.src = url;
-                img.id = 'complete-preview';
-                container.appendChild(img);
-            } else {
-                const msg = document.createElement('div');
-                msg.innerHTML = `<h3 class="glow-cyan">${state.fileMeta.name}</h3><p>${formatBytes(state.fileMeta.size)}</p>`;
-                container.appendChild(msg);
-            }
-
-            const btn = document.createElement('a');
-            btn.href = url;
-            btn.download = state.fileMeta.name;
-            btn.innerHTML = `<button>SAVE FILE TO DISK</button>`;
-            container.appendChild(btn);
-        }
-
-        // --- EVENTS ---
-
-        ui.btnConnect.addEventListener('click', () => {
-            const val = ui.targetToken.value;
-            if (val.length === 5) connectToPeer(val);
-        });
-
-        document.getElementById('btn-pause').addEventListener('click', (e) => {
-            if (state.current === STATES.TRANSMITTING) {
-                setState(STATES.PAUSED);
-                e.target.innerText = "RESUME";
-                ui.qrWrapper.style.opacity = 0.2;
-            } else if (state.current === STATES.PAUSED) {
-                setState(STATES.TRANSMITTING);
-                e.target.innerText = "PAUSE";
-                ui.qrWrapper.style.opacity = 1;
-            }
-        });
-
-        document.getElementById('btn-reset').addEventListener('click', () => location.reload());
-
-        // File Input Logic
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--term-cyan)'; });
-        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--term-dim)'; });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            if(e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
-        });
-        fileInput.addEventListener('change', (e) => {
-            if(e.target.files.length) processFile(e.target.files[0]);
-        });
-
-        // Start
-        initNetwork();
+        // Initialize P2P immediately
+        app.initP2P();
 
     </script>
 </body>
