@@ -26,7 +26,9 @@
             background: var(--bg); color: var(--fg);
             font-family: var(--font-mono);
             font-size: 13px;
+            /* Fix for mobile URL bar issue */
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             overscroll-behavior-y: contain;
             display: flex; flex-direction: column;
@@ -164,6 +166,9 @@
         /* MOBILE NAV */
         .mobile-nav {
             display: none; height: 50px; border-top: 2px solid var(--border);
+            background: var(--bg); 
+            flex-shrink: 0;
+            z-index: 20;
         }
         .nav-btn {
             flex: 1; border: none; background: var(--bg);
@@ -876,5 +881,6 @@ window.onload = app.init;
 </script>
 </body>
 </html>
+
 
 
