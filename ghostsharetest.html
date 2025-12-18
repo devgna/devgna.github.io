@@ -262,14 +262,14 @@
  * AUDIO MODEM IMPLEMENTATION (19kHz FSK)
  * Specs: 19000Hz (0) / 19500Hz (1)
  * Packet: [0xAA HEADER] + [DATA] + [CHECKSUM]
- * Revised for robustness: 60ms bit time, time-based decoding
+ * Revised for speed: 40ms bit time, contrast-based decoding
  */
 class AudioModem {
     constructor() {
         this.ctx = null;
         this.FREQ_LOW = 19000;
         this.FREQ_HIGH = 19500;
-        this.BIT_TIME = 0.060; // 60ms per bit - slower but more robust
+        this.BIT_TIME = 0.040; // 40ms - Fast enough for 2s loop
         this.HEADER = 0xAA; 
         this.isBroadcasting = false;
         this.isListening = false;
@@ -292,12 +292,11 @@ class AudioModem {
         this.isBroadcasting = true;
         const ctx = await this.initCtx();
 
-        // 1. Convert Text to Bit Array (Header + Text + Checksum)
+        // 1. Convert Text to Bit Array
         const bytes = new TextEncoder().encode(text);
         let checksum = 0;
         bytes.forEach(b => checksum = (checksum + b) % 255);
         
-        // Add preamble (Header) to help wake up receiver AGC
         const packet = [this.HEADER, ...bytes, checksum];
         const bits = [];
         packet.forEach(byte => {
@@ -311,7 +310,7 @@ class AudioModem {
         gain.connect(ctx.destination);
         
         const now = ctx.currentTime;
-        const fade = 0.005;
+        const fade = 0.001; // 1ms fade for punchy signal
 
         // 3. Schedule Frequencies
         gain.gain.setValueAtTime(0, now);
@@ -356,7 +355,6 @@ class AudioModem {
         if (this.isListening) return;
         const ctx = await this.initCtx();
 
-        // Mobile Constraint: No echo cancellation to preserve high freq
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
         });
@@ -364,7 +362,7 @@ class AudioModem {
         const source = ctx.createMediaStreamSource(stream);
         const analyzer = ctx.createAnalyser();
         analyzer.fftSize = 2048; 
-        analyzer.smoothingTimeConstant = 0; // Immediate response
+        analyzer.smoothingTimeConstant = 0.1; 
         source.connect(analyzer);
 
         const buffer = new Float32Array(analyzer.frequencyBinCount);
@@ -372,7 +370,7 @@ class AudioModem {
 
         // Decoder State
         let bitBuffer = []; 
-        let currentSignal = null; // 0 or 1
+        let currentSignal = null; 
         let signalStartTime = 0;
         
         const process = () => {
@@ -383,38 +381,45 @@ class AudioModem {
 
             analyzer.getFloatFrequencyData(buffer);
 
-            // Bins logic
+            // Calculate Bins
             const binLow = Math.floor(this.FREQ_LOW / (ctx.sampleRate / analyzer.fftSize));
             const binHigh = Math.floor(this.FREQ_HIGH / (ctx.sampleRate / analyzer.fftSize));
             
             const p0 = buffer[binLow];
             const p1 = buffer[binHigh];
-            const threshold = -85; // Lowered threshold for sensitivity
-
-            // Determine dominant frequency
+            
+            // Contrast Detection Logic
+            // We use relative difference instead of absolute threshold
+            const diff = p1 - p0; // Positive = 1, Negative = 0
+            const maxVal = Math.max(p0, p1);
+            const NOISE_FLOOR = -90; // dB
+            
             let detected = null;
-            if (p0 > threshold && p0 > p1 + 3) detected = 0;
-            else if (p1 > threshold && p1 > p0 + 3) detected = 1;
+
+            // Must be louder than background noise AND have clear separation (>5dB)
+            if (maxVal > NOISE_FLOOR) {
+                if (diff > 5) detected = 1;
+                else if (diff < -5) detected = 0;
+            }
 
             const now = performance.now();
 
-            if (detected !== null) {
-                // Visual feedback check
-                const btn = document.getElementById('btn-listen');
-                if(btn) btn.style.opacity = (Math.floor(now / 100) % 2 === 0) ? '0.7' : '1';
+            // Visual feedback
+            const btn = document.getElementById('btn-listen');
+            if(btn) btn.style.opacity = (detected !== null && (Math.floor(now / 100) % 2 === 0)) ? '0.7' : '1';
 
+            if (detected !== null) {
                 if (currentSignal === null) {
-                    // Start of a new signal block
                     currentSignal = detected;
                     signalStartTime = now;
                 } else if (detected !== currentSignal) {
-                    // Transition detected! Calculate how many bits passed
+                    // Signal Changed: Calculate duration of previous signal
                     const duration = now - signalStartTime;
-                    const bitCount = Math.round(duration / (this.BIT_TIME * 1000));
+                    // Add 10ms tolerance for processing jitter
+                    const bitCount = Math.round((duration + 10) / (this.BIT_TIME * 1000));
                     
                     if (bitCount > 0) {
                         for(let k=0; k<bitCount; k++) bitBuffer.push(currentSignal);
-                        // Manage buffer size
                         if (bitBuffer.length > 200) bitBuffer = bitBuffer.slice(-200);
                         this.scanBuffer(bitBuffer, onFound);
                     }
@@ -423,10 +428,10 @@ class AudioModem {
                     signalStartTime = now;
                 }
             } else {
-                // Silence - if we were tracking a signal, flush it
+                // Silence Gap: Flush remaining signal if any
                 if (currentSignal !== null) {
                     const duration = now - signalStartTime;
-                    const bitCount = Math.round(duration / (this.BIT_TIME * 1000));
+                    const bitCount = Math.round((duration + 10) / (this.BIT_TIME * 1000));
                     if (bitCount > 0) {
                         for(let k=0; k<bitCount; k++) bitBuffer.push(currentSignal);
                         if (bitBuffer.length > 200) bitBuffer = bitBuffer.slice(-200);
@@ -434,8 +439,6 @@ class AudioModem {
                     }
                     currentSignal = null;
                 }
-                const btn = document.getElementById('btn-listen');
-                if(btn) btn.style.opacity = '1';
             }
 
             requestAnimationFrame(process);
@@ -444,11 +447,10 @@ class AudioModem {
     }
 
     scanBuffer(bits, callback) {
-        // Look for Header (0xAA = 10101010)
-        if (bits.length < 100) return;
+        if (bits.length < 50) return;
 
         // Try to frame from every possible start position
-        for (let i = 0; i < bits.length - 80; i++) {
+        for (let i = 0; i < bits.length - 40; i++) {
             // Check Header
             let header = 0;
             for(let b=0; b<8; b++) header = (header << 1) | bits[i+b];
@@ -458,8 +460,11 @@ class AudioModem {
                 let ptr = i + 8;
                 let failed = false;
                 
-                // Read 13 bytes (12 ID + 1 Sum)
-                for (let c=0; c<13; c++) {
+                // Read 13 bytes (12 ID + 1 Sum) - but we scan safely
+                // Note: The ID is 8 bytes (hex pairs of 4 bytes)
+                // Let's read until we fail or hit max
+                
+                for (let c=0; c<9; c++) { // 8 bytes ID + 1 byte Sum
                     let val = 0;
                     for (let b=0; b<8; b++) {
                         if (ptr >= bits.length) { failed = true; break; }
@@ -477,7 +482,8 @@ class AudioModem {
 
                 if (calcSum === receivedSum) {
                     const id = new TextDecoder().decode(new Uint8Array(payload));
-                    if (id.match(/^[A-Z0-9]{12}$/)) {
+                    // Validate basic ID format (AlphaNumeric)
+                    if (id.match(/^[A-Z0-9]+$/)) {
                         this.stopListen();
                         callback(id);
                         return;
