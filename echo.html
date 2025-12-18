@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ECHO / GHOSTLINK</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --term-bg: #161b22;
+            --fg: #c9d1d9;
+            --accent: #00ff41; /* Cyberpunk Green */
+            --accent-dim: rgba(0, 255, 65, 0.2);
+            --danger: #ff3333;
+            --warn: #ffcc00;
+            --font: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- HEADER & STATUS --- */
+        header {
+            background: var(--term-bg);
+            border-bottom: 1px solid #333;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo { font-weight: bold; letter-spacing: 2px; color: var(--accent); }
+        .status-led {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #333; display: inline-block; margin-right: 5px;
+            box-shadow: 0 0 5px #333;
+        }
+        .status-led.on { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+        .status-led.busy { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+        /* --- VISUALIZER --- */
+        #scope-container {
+            position: relative;
+            height: 120px;
+            background: #000;
+            border-bottom: 1px solid #333;
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+        
+        .freq-readout {
+            position: absolute; top: 5px; right: 5px;
+            font-size: 10px; color: var(--accent);
+            background: rgba(0,0,0,0.7); padding: 2px 4px;
+        }
+
+        /* --- TERMINAL / LOG --- */
+        #log {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            scroll-behavior: smooth;
+        }
+        
+        .msg { padding: 8px; border-left: 3px solid #333; background: rgba(255,255,255,0.02); animation: fadein 0.2s; }
+        .msg.tx { border-color: var(--accent); align-self: flex-end; text-align: right; }
+        .msg.rx { border-color: var(--warn); align-self: flex-start; }
+        .msg.sys { border-color: transparent; color: #666; font-size: 12px; text-align: center; align-self: center; }
+        
+        .meta { font-size: 10px; color: #555; margin-top: 4px; display: block; }
+
+        @keyframes fadein { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CONTROLS --- */
+        #controls {
+            background: var(--term-bg);
+            border-top: 1px solid #333;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-row { display: flex; gap: 10px; }
+        
+        input[type="text"] {
+            flex: 1;
+            background: #000;
+            border: 1px solid #333;
+            color: var(--accent);
+            font-family: var(--font);
+            padding: 12px;
+            font-size: 16px;
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: var(--accent); }
+        input[type="text"]:disabled { opacity: 0.5; }
+
+        button {
+            background: #333;
+            color: var(--fg);
+            border: 1px solid #444;
+            padding: 0 20px;
+            font-family: var(--font);
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        button:active { background: #444; }
+
+        /* PTT BUTTON */
+        #btn-tx {
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            height: 50px;
+            font-size: 18px;
+            letter-spacing: 2px;
+            transition: all 0.1s;
+        }
+        #btn-tx:active:not(:disabled) {
+            background: var(--accent);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent);
+        }
+        #btn-tx:disabled {
+            border-color: #444; color: #555; background: transparent; cursor: not-allowed;
+        }
+        #btn-tx.transmitting {
+            background: var(--accent);
+            color: #000;
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        /* SETTINGS DRAWER */
+        #settings {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        select { background: #000; color: #888; border: 1px solid #333; padding: 4px; font-family: var(--font); }
+
+        @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
+        
+        .debug-overlay {
+            position: fixed; top: 50px; left: 10px; 
+            font-size: 10px; color: lime; pointer-events: none;
+            background: rgba(0,0,0,0.8); padding: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">GHOSTLINK <span style="font-size:10px; color:#666">v1.0</span></div>
+        <div>
+            <span class="status-led" id="led-status"></span>
+            <span id="txt-status" style="font-size:12px; color:#666">OFFLINE</span>
+        </div>
+    </header>
+
+    <div id="scope-container">
+        <canvas id="scope"></canvas>
+        <div class="freq-readout" id="freq-readout">INIT...</div>
+        <div class="debug-overlay" id="debug-stats"></div>
+    </div>
+
+    <div id="log">
+        <div class="msg sys">SYSTEM READY. INITIALIZING AUDIO CORE...</div>
+        <div class="msg sys">WARNING: DISABLE "SILENT MODE" ON IPHONE.</div>
+        <div class="msg sys"> KEEP VOLUME MAX.</div>
+    </div>
+
+    <div id="controls">
+        <div id="settings">
+            <span>BAND:
+                <select id="sel-band">
+                    <option value="low">LOW (800/1200Hz) - Robust</option>
+                    <option value="mid" selected>MID (2000/2500Hz) - Default</option>
+                    <option value="high">HIGH (18.5/19.5kHz) - Stealth</option>
+                </select>
+            </span>
+            <span id="queue-len">Q: 0</span>
+        </div>
+        <div class="input-row">
+            <input type="text" id="msg-input" placeholder="ENTER MESSAGE..." maxlength="32" autocomplete="off">
+        </div>
+        <button id="btn-tx" onclick="app.queueMessage()">TRANSMIT</button>
+    </div>
+
+<script>
+/**
+ * ECHO CORE - ACOUSTIC MODEM LOGIC
+ * Architecture:
+ * 1. AudioContext (Main Thread) -> Manages Graph
+ * 2. AudioWorklet (DSP Thread) -> BFSK Modulator / Goertzel Demodulator
+ * 3. App (Main Thread) -> Packet Framing, CRC, UI
+ */
+
+// --- CONFIGURATION ---
+const CONFIG = {
+    sampleRate: 44100, // Requested
+    baudRate: 25,      // 40ms symbols (Very robust)
+    bands: {
+        low:  { mark: 1200, space: 800 },
+        mid:  { mark: 2500, space: 2000 },
+        high: { mark: 19500,space: 18500 }
+    },
+    preambleByte: 0xAA, // 10101010
+    syncByte: 0x3C,     // 00111100 (Distinct sync word)
+    packetHeader: 0x00, // Reserved
+};
+
+// --- DSP WORKLET CODE (INLINED) ---
+const WORKLET_CODE = `
+class ModemProcessor extends AudioWorkletProcessor {
+    constructor() {
+        super();
+        this.phase = 0;
+        this.isTx = false;
+        this.txBuffer = []; // Queue of frequencies to play
+        this.samplesPerSymbol = 0;
+        this.sampleCount = 0;
+        
+        // RX State
+        this.markFreq = 2500;
+        this.spaceFreq = 2000;
+        
+        // Goertzel State
+        this.q1_m = 0; this.q2_m = 0; // Mark
+        this.q1_s = 0; this.q2_s = 0; // Space
+        
+        // Energy Integration
+        this.energyMark = 0;
+        this.energySpace = 0;
+        this.integrationCount = 0;
+        this.integrationLimit = 0; // Will be set by message
+
+        this.port.onmessage = (e) => {
+            const msg = e.data;
+            if (msg.type === 'CONFIG') {
+                this.samplesPerSymbol = Math.floor(sampleRate / msg.baud);
+                this.markFreq = msg.mark;
+                this.spaceFreq = msg.space;
+                this.integrationLimit = Math.floor(this.samplesPerSymbol / 2); // Integrate over half symbol
+                
+                // Pre-calc Goertzel coefficients
+                const k_m = Math.round((0.5 + (this.samplesPerSymbol * this.markFreq) / sampleRate));
+                this.coeff_m = 2 * Math.cos((2 * Math.PI * k_m) / this.samplesPerSymbol);
+                
+                const k_s = Math.round((0.5 + (this.samplesPerSymbol * this.spaceFreq) / sampleRate));
+                this.coeff_s = 2 * Math.cos((2 * Math.PI * k_s) / this.samplesPerSymbol);
+            }
+            else if (msg.type === 'TX_DATA') {
+                // Receive frequency sequence
+                this.txBuffer.push(...msg.freqs);
+                this.isTx = true;
+            }
+        };
+    }
+
+    process(inputs, outputs, parameters) {
+        const input = inputs[0];
+        const output = outputs[0];
+        const channelIn = input && input.length > 0 ? input[0] : null;
+        const channelOut = output[0];
+
+        // --- TX BLOCK ---
+        if (this.isTx && this.txBuffer.length > 0) {
+            const freq = this.txBuffer[0];
+            const phaseInc = (2 * Math.PI * freq) / sampleRate;
+
+            for (let i = 0; i < channelOut.length; i++) {
+                channelOut[i] = Math.sin(this.phase);
+                this.phase += phaseInc;
+                if (this.phase > 2 * Math.PI) this.phase -= 2 * Math.PI;
+
+                this.sampleCount++;
+                if (this.sampleCount >= this.samplesPerSymbol) {
+                    this.sampleCount = 0;
+                    this.txBuffer.shift();
+                    if (this.txBuffer.length === 0) {
+                        this.isTx = false;
+                        this.port.postMessage({ type: 'TX_COMPLETE' });
+                        // Fill remainder of buffer with 0 to avoid clicks? 
+                        // Actually better to ramp down, but for BFSK silence is 0
+                    } else {
+                        // Update freq for next sample loop (approx)
+                        // In a rigorous implementation we'd update phaseInc per sample or per symbol boundary
+                        // But here we switch inside the block, so we need to break
+                        break; 
+                    }
+                }
+            }
+        } else {
+            // Silence
+            for (let i = 0; i < channelOut.length; i++) channelOut[i] = 0;
+        }
+
+        // --- RX BLOCK (GOERTZEL) ---
+        if (channelIn) {
+            // We process every sample for demodulation
+            // Optimization: Downsample or Block processing could happen here
+            
+            for (let i = 0; i < channelIn.length; i++) {
+                const sample = channelIn[i];
+
+                // Goertzel Iteration
+                // Mark
+                let q0_m = this.coeff_m * this.q1_m - this.q2_m + sample;
+                this.q2_m = this.q1_m;
+                this.q1_m = q0_m;
+
+                // Space
+                let q0_s = this.coeff_s * this.q1_s - this.q2_s + sample;
+                this.q2_s = this.q1_s;
+                this.q1_s = q0_s;
+
+                this.integrationCount++;
+
+                if (this.integrationCount >= this.samplesPerSymbol) {
+                    // Calculate Magnitude Squared
+                    const mag_m = (this.q1_m * this.q1_m) + (this.q2_m * this.q2_m) - (this.coeff_m * this.q1_m * this.q2_m);
+                    const mag_s = (this.q1_s * this.q1_s) + (this.q2_s * this.q2_s) - (this.coeff_s * this.q1_s * this.q2_s);
+                    
+                    // Reset
+                    this.q1_m = 0; this.q2_m = 0;
+                    this.q1_s = 0; this.q2_s = 0;
+                    this.integrationCount = 0;
+
+                    // Send power metrics to Main Thread
+                    this.port.postMessage({ 
+                        type: 'RX_METRIC', 
+                        mark: mag_m, 
+                        space: mag_s 
+                    });
+                }
+            }
+        }
+
+        return true;
+    }
+}
+
+registerProcessor('modem-processor', ModemProcessor);
+`;
+
+// --- MAIN APP ---
+class EchoModem {
+    constructor() {
+        this.ctx = null;
+        this.worklet = null;
+        this.analyser = null;
+        this.gain = null;
+        this.isReady = false;
+        
+        // Protocol State
+        this.rxBuffer = []; // Bits
+        this.rxState = 'IDLE'; // IDLE, PREAMBLE, SYNC, DATA
+        this.rxByteAssembly = 0;
+        this.rxBitCount = 0;
+        this.rxPacketLen = 0;
+        this.rxDataBytes = [];
+        
+        // PHY State
+        this.threshold = 0.5; // Adaptive threshold
+        this.noiseFloor = 0.001;
+        this.lastDecision = 0;
+        this.consecutiveBits = 0;
+
+        // UI Refs
+        this.canvas = document.getElementById('scope');
+        this.canvasCtx = this.canvas.getContext('2d');
+        this.dom = {
+            log: document.getElementById('log'),
+            led: document.getElementById('led-status'),
+            txt: document.getElementById('txt-status'),
+            input: document.getElementById('msg-input'),
+            btn: document.getElementById('btn-tx'),
+            band: document.getElementById('sel-band')
+        };
+
+        this.setupEvents();
+    }
+
+    setupEvents() {
+        this.dom.btn.addEventListener('click', () => {
+            if (!this.isReady) this.initAudio().then(() => this.queueMessage());
+            else this.queueMessage();
+        });
+        
+        this.dom.input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.dom.btn.click();
+        });
+
+        this.dom.band.addEventListener('change', () => {
+            if(this.isReady) this.configureModem();
+        });
+
+        window.addEventListener('resize', () => this.resizeCanvas());
+        this.resizeCanvas();
+    }
+
+    resizeCanvas() {
+        this.canvas.width = this.canvas.parentElement.clientWidth;
+        this.canvas.height = this.canvas.parentElement.clientHeight;
+    }
+
+    async initAudio() {
+        try {
+            this.log('SYS', 'INITIALIZING AC...', true);
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: CONFIG.sampleRate });
+            
+            // Resume if suspended (browser policy)
+            if (this.ctx.state === 'suspended') await this.ctx.resume();
+
+            // Load Worklet
+            const blob = new Blob([WORKLET_CODE], { type: 'application/javascript' });
+            await this.ctx.audioWorklet.addModule(URL.createObjectURL(blob));
+
+            this.worklet = new AudioWorkletNode(this.ctx, 'modem-processor');
+            
+            // RX Pipeline
+            // Important: Disable echo cancellation for raw audio
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                    channelCount: 1
+                }
+            });
+            
+            const source = this.ctx.createMediaStreamSource(stream);
+            this.analyser = this.ctx.createAnalyser();
+            this.analyser.fftSize = 2048;
+            this.analyser.smoothingTimeConstant = 0.2;
+
+            source.connect(this.analyser);
+            this.analyser.connect(this.worklet);
+            
+            // TX Pipeline
+            this.gain = this.ctx.createGain();
+            this.gain.gain.value = 1.0;
+            this.worklet.connect(this.gain);
+            this.gain.connect(this.ctx.destination);
+
+            // Message Handling
+            this.worklet.port.onmessage = (e) => this.handleWorkletMessage(e.data);
+
+            this.configureModem();
+            this.isReady = true;
+            this.dom.led.classList.add('on');
+            this.dom.txt.innerText = 'ONLINE / LISTENING';
+            this.log('SYS', 'AUDIO CORE ACTIVE. 25 BAUD.');
+            
+            this.renderLoop();
+
+        } catch (e) {
+            this.log('SYS', 'INIT FAILED: ' + e.message);
+            console.error(e);
+        }
+    }
+
+    configureModem() {
+        const bandKey = this.dom.band.value;
+        const band = CONFIG.bands[bandKey];
+        document.getElementById('freq-readout').innerText = `RX: ${band.space}/${band.mark} Hz`;
+        
+        this.worklet.port.postMessage({
+            type: 'CONFIG',
+            baud: CONFIG.baudRate,
+            mark: band.mark,
+            space: band.space
+        });
+    }
+
+    // --- PROTOCOL LOGIC ---
+
+    handleWorkletMessage(msg) {
+        if (msg.type === 'RX_METRIC') {
+            this.processRxBit(msg.mark, msg.space);
+        } else if (msg.type === 'TX_COMPLETE') {
+            this.endTx();
+        }
+    }
+
+    processRxBit(pwrMark, pwrSpace) {
+        // 1. Adaptive Noise Floor
+        const totalPwr = pwrMark + pwrSpace;
+        this.noiseFloor = (this.noiseFloor * 0.99) + (totalPwr * 0.01);
+
+        // 2. Decision
+        // Require signal to be significantly above noise floor
+        if (totalPwr < this.noiseFloor * 3) {
+            this.resetRx('silence');
+            return;
+        }
+
+        // Relative power decision (Robust against volume changes)
+        const bit = pwrMark > pwrSpace ? 1 : 0;
+        
+        // Debug
+        // console.log(bit, pwrMark.toFixed(0), pwrSpace.toFixed(0));
+
+        // 3. State Machine
+        this.feedStateMachine(bit);
+    }
+
+    feedStateMachine(bit) {
+        // Shift bit into buffer
+        this.rxBuffer.push(bit);
+        if (this.rxBuffer.length > 8) this.rxBuffer.shift();
+        
+        const byte = parseInt(this.rxBuffer.join(''), 2);
+
+        switch (this.rxState) {
+            case 'IDLE':
+                // Look for SYNC word (0x3C)
+                if (byte === CONFIG.syncByte) {
+                    this.rxState = 'HEADER';
+                    this.log('SYS', 'SYNC DETECTED...', true);
+                    this.rxBuffer = []; // Clear for next bits
+                    this.rxDataBytes = [];
+                    this.rxBitCount = 0;
+                    this.rxByteAssembly = 0;
+                }
+                break;
+
+            case 'HEADER':
+                // Next 8 bits is Length
+                this.rxByteAssembly = (this.rxByteAssembly << 1) | bit;
+                this.rxBitCount++;
+                if (this.rxBitCount === 8) {
+                    this.rxPacketLen = this.rxByteAssembly;
+                    this.rxState = 'DATA';
+                    this.rxBitCount = 0;
+                    this.rxByteAssembly = 0;
+                    // Sanity check length
+                    if (this.rxPacketLen > 64 || this.rxPacketLen === 0) {
+                        this.log('SYS', `BAD LEN (${this.rxPacketLen})`);
+                        this.resetRx();
+                    }
+                }
+                break;
+
+            case 'DATA':
+                this.rxByteAssembly = (this.rxByteAssembly << 1) | bit;
+                this.rxBitCount++;
+                if (this.rxBitCount === 8) {
+                    this.rxDataBytes.push(this.rxByteAssembly);
+                    this.rxBitCount = 0;
+                    this.rxByteAssembly = 0;
+
+                    if (this.rxDataBytes.length === this.rxPacketLen + 1) { // Payload + CRC
+                        this.finalizePacket();
+                    }
+                }
+                break;
+        }
+    }
+
+    finalizePacket() {
+        const crcReceived = this.rxDataBytes.pop(); // Remove last byte
+        const payload = this.rxDataBytes;
+        
+        // Calc CRC
+        const crcCalc = this.crc8(payload);
+        
+        if (crcCalc === crcReceived) {
+            const text = new TextDecoder().decode(new Uint8Array(payload));
+            this.log('RX', text);
+        } else {
+            this.log('SYS', 'CRC ERROR');
+        }
+        
+        this.resetRx();
+    }
+
+    resetRx(reason) {
+        this.rxState = 'IDLE';
+        this.rxBuffer = [];
+        this.rxBitCount = 0;
+        this.rxByteAssembly = 0;
+    }
+
+    // --- TX LOGIC ---
+
+    queueMessage() {
+        const text = this.dom.input.value.trim().toUpperCase();
+        if (!text) return;
+        
+        this.dom.input.disabled = true;
+        this.dom.btn.disabled = true;
+        this.dom.btn.innerText = "TX...";
+        this.dom.btn.classList.add('transmitting');
+        this.dom.led.className = 'status-led busy';
+        
+        // 1. Packet Construction
+        // Preamble (16 bits of 10101010)
+        // Sync (0x3C)
+        // Len
+        // Payload
+        // CRC
+        
+        const payload = new TextEncoder().encode(text);
+        const len = payload.length;
+        const crc = this.crc8(Array.from(payload));
+        
+        const packetBytes = [
+            CONFIG.preambleByte, CONFIG.preambleByte, // Preamble (Wake up)
+            CONFIG.syncByte, // Sync
+            len,
+            ...payload,
+            crc
+        ];
+
+        // 2. Bit Conversion
+        const freqs = [];
+        const bandKey = this.dom.band.value;
+        const band = CONFIG.bands[bandKey];
+
+        packetBytes.forEach(byte => {
+            for (let i = 7; i >= 0; i--) {
+                const bit = (byte >> i) & 1;
+                freqs.push(bit ? band.mark : band.space);
+            }
+        });
+
+        // Add tail silence/carrier
+        freqs.push(band.space, band.space);
+
+        // 3. Send to Worklet
+        this.worklet.port.postMessage({
+            type: 'TX_DATA',
+            freqs: freqs
+        });
+
+        this.dom.input.value = '';
+    }
+
+    endTx() {
+        this.dom.input.disabled = false;
+        this.dom.btn.disabled = false;
+        this.dom.btn.innerText = "TRANSMIT";
+        this.dom.btn.classList.remove('transmitting');
+        this.dom.led.className = 'status-led on';
+        this.log('TX', this.lastTxText || "MESSAGE SENT"); // Simplify log
+    }
+
+    // --- UTILS ---
+
+    crc8(bytes) {
+        let crc = 0;
+        for (let j = 0; j < bytes.length; j++) {
+            crc ^= bytes[j];
+            for (let i = 0; i < 8; i++) {
+                if ((crc & 0x80) !== 0) crc = ((crc << 1) ^ 0x07);
+                else crc <<= 1;
+            }
+        }
+        return crc & 0xFF;
+    }
+
+    log(type, text, skipAnim) {
+        if(type === 'TX') this.lastTxText = text; // Cache for endTx
+
+        const div = document.createElement('div');
+        div.className = `msg ${type.toLowerCase()}`;
+        
+        const time = new Date().toLocaleTimeString([], { hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        div.innerHTML = `
+            <div>${text}</div>
+            <span class="meta">${type} • ${time}</span>
+        `;
+        
+        this.dom.log.appendChild(div);
+        this.dom.log.scrollTop = this.dom.log.scrollHeight;
+    }
+
+    // --- VISUALIZATION ---
+    renderLoop() {
+        requestAnimationFrame(() => this.renderLoop());
+        if (!this.analyser) return;
+
+        const bufferLength = this.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        this.analyser.getByteFrequencyData(dataArray);
+
+        const ctx = this.canvasCtx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, w, h);
+
+        const barWidth = (w / bufferLength) * 2.5;
+        let barHeight;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            barHeight = dataArray[i] / 2;
+            
+            // Color mapping based on intensity
+            const g = barHeight + (25 * (i/bufferLength));
+            ctx.fillStyle = `rgb(0, ${g*2}, 0)`;
+            
+            // Highlight target frequencies
+            // (Rough approximation of bin index)
+            // const freq = i * CONFIG.sampleRate / (2048 * 2);
+            
+            ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+        }
+    }
+}
+
+// Init
+window.app = new EchoModem();
+
+</script>
+</body>
+</html>
