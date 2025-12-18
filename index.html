@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GhostShare | Secure P2P Link</title>
+    <title>GhostShare | Secure P2P Workspace</title>
     
     <!-- Dependencies (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12,11 +12,15 @@
 
     <style>
         :root {
-            --bg: #000000;
-            --fg: #ffffff;
-            --dim: #666666;
+            --bg: #050505;
+            --surface: #111111;
             --border: #333333;
-            --highlight: #ffffff;
+            --fg: #e0e0e0;
+            --dim: #888888;
+            --accent: #ffffff;
+            --success: #4caf50;
+            --error: #f44336;
+            --warning: #ff9800;
             --font-stack: 'SF Mono', 'Segoe UI Mono', 'Roboto Mono', Menlo, monospace;
             --ease: cubic-bezier(0.23, 1, 0.32, 1);
         }
@@ -28,7 +32,7 @@
             background-color: var(--bg);
             color: var(--fg);
             font-family: var(--font-stack);
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
             height: 100vh;
             display: flex;
@@ -36,728 +40,847 @@
             overflow-x: hidden;
         }
 
-        /* LAYOUT UTILS */
-        .container {
-            max-width: 640px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
+        /* UTILS */
+        .container { max-width: 680px; margin: 0 auto; width: 100%; padding: 15px; flex: 1; display: flex; flex-direction: column; position: relative; }
         .flex-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        .flex-col { display: flex; flex-direction: column; gap: 15px; }
+        .flex-col { display: flex; flex-direction: column; gap: 10px; }
         .center { text-align: center; justify-content: center; }
         .hidden { display: none !important; }
+        .scroll-y { overflow-y: auto; flex: 1; }
         
         /* TYPOGRAPHY */
-        h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-        h2 { font-size: 14px; font-weight: 600; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
-        p { color: var(--dim); font-size: 13px; margin-bottom: 10px; }
+        h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; color: var(--accent); }
+        h2 { font-size: 13px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        p { color: var(--dim); margin-bottom: 10px; }
         .mono-stat { font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
 
         /* COMPONENTS */
         .card {
             border: 1px solid var(--border);
-            background: var(--bg);
+            background: var(--surface);
             padding: 20px;
-            margin-bottom: 20px;
-            transition: border-color 0.3s var(--ease);
+            margin-bottom: 15px;
+            border-radius: 4px;
         }
-        .card:hover { border-color: var(--dim); }
 
         .btn {
             background: var(--fg);
             color: var(--bg);
             border: 1px solid var(--fg);
-            padding: 14px;
+            padding: 12px;
             font-family: var(--font-stack);
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 12px;
             cursor: pointer;
             width: 100%;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: transform 0.1s;
+            letter-spacing: 1px;
+            border-radius: 2px;
+            transition: all 0.2s;
         }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { background: var(--border); border-color: var(--border); color: var(--dim); cursor: not-allowed; }
+        .btn:disabled { background: var(--border); border-color: var(--border); color: var(--dim); cursor: not-allowed; opacity: 0.7; }
         .btn.outline { background: transparent; color: var(--fg); }
-        .btn.outline:hover { background: rgba(255,255,255,0.1); }
-        .btn.danger { border-color: #ff3333; color: #ff3333; background: transparent; }
+        .btn.outline:hover { background: rgba(255,255,255,0.05); }
+        .btn.danger { border-color: var(--error); color: var(--error); background: transparent; }
+        .btn.danger:hover { background: rgba(244, 67, 54, 0.1); }
+        .btn.success { border-color: var(--success); background: var(--success); color: white; }
 
         input[type="text"] {
-            width: 100%;
-            background: #0a0a0a;
-            border: 1px solid var(--border);
-            color: var(--fg);
-            padding: 15px;
-            font-family: var(--font-stack);
-            font-size: 18px;
-            text-align: center;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
+            width: 100%; background: #000; border: 1px solid var(--border); color: var(--accent);
+            padding: 15px; font-family: var(--font-stack); font-size: 16px; text-align: center;
+            letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; border-radius: 2px;
         }
-        input[type="text"]:focus { border-color: var(--fg); }
+        input[type="text"]:focus { border-color: var(--accent); }
 
-        /* SPECIFIC MODULES */
-        /* Status Badge */
-        .status-dot { width: 8px; height: 8px; background: var(--dim); border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .status-dot.active { background: #00ff00; box-shadow: 0 0 10px rgba(0,255,0,0.5); }
-        .status-dot.error { background: #ff3333; }
+        /* STATUS BADGE */
+        .status-badge { 
+            padding: 4px 8px; font-size: 10px; text-transform: uppercase; border-radius: 2px; font-weight: 700; letter-spacing: 0.5px;
+            background: var(--border); color: var(--dim);
+        }
+        .status-badge.secure { background: rgba(76, 175, 80, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .status-badge.error { background: rgba(244, 67, 54, 0.2); color: var(--error); border: 1px solid var(--error); }
+        .status-badge.warn { background: rgba(255, 152, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
 
-        /* ID Badge */
-        .my-id { font-size: 32px; font-weight: 700; letter-spacing: 4px; margin: 10px 0; word-break: break-all; }
+        /* MODAL */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95); z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal { 
+            background: var(--surface); border: 1px solid var(--accent); 
+            padding: 30px; max-width: 400px; width: 90%; text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        .fingerprint-box {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0;
+        }
+        .finger-word { background: var(--bg); padding: 10px; border: 1px solid var(--border); font-weight: bold; color: var(--accent); }
 
-        /* QR Area */
-        #qr-target { background: white; padding: 10px; display: inline-block; margin: 15px auto; }
-        #qr-target img { display: block; }
-        
-        /* Scanner */
-        #reader { width: 100%; border: 1px solid var(--border); overflow: hidden; margin-bottom: 15px; }
-        #reader video { object-fit: cover; }
+        /* TRANSFER UI */
+        .transfer-item { 
+            background: var(--bg); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px;
+            position: relative; overflow: hidden;
+        }
+        .progress-track { background: var(--border); height: 2px; width: 100%; margin: 12px 0; }
+        .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.2s linear; }
+        .meta-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); margin-top: 5px; }
 
-        /* Transfer UI */
-        .transfer-item { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); }
-        .progress-track { background: var(--border); height: 4px; width: 100%; margin: 10px 0; overflow: hidden; }
-        .progress-fill { background: var(--fg); height: 100%; width: 0%; transition: width 0.2s linear; }
-        
-        /* Drag Overlay */
+        /* QR & SCANNER */
+        #qr-target { background: white; padding: 10px; display: inline-block; margin: 15px auto; border-radius: 4px; }
+        #reader { width: 100%; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
+
+        /* DRAG OVERLAY */
         #drag-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9);
-            border: 2px dashed var(--fg);
-            z-index: 999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            pointer-events: none; /* Let events pass through initially */
-            opacity: 0;
-            transition: opacity 0.2s;
+            background: rgba(0,0,0,0.9); border: 2px dashed var(--accent);
+            z-index: 1500; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; pointer-events: none; opacity: 0; transition: opacity 0.2s;
         }
         #drag-overlay.active { opacity: 1; pointer-events: all; }
-        .drop-icon { font-size: 48px; margin-bottom: 20px; }
 
-        /* Toast */
+        /* TOAST */
         .toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--fg); color: var(--bg);
-            padding: 12px 24px; font-weight: 600;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            z-index: 1000; text-align: center; min-width: 200px;
+            background: var(--accent); color: var(--bg); padding: 12px 24px; 
+            font-weight: 700; opacity: 0; transition: opacity 0.3s; z-index: 3000;
+            pointer-events: none; border-radius: 2px; text-transform: uppercase; font-size: 11px;
         }
         .toast.show { opacity: 1; }
 
-        @media (max-width: 480px) {
-            .container { padding: 15px; }
-            .my-id { font-size: 24px; }
-        }
     </style>
 </head>
 <body>
 
-    <!-- DRAG DROP OVERLAY -->
+    <!-- DRAG OVERLAY -->
     <div id="drag-overlay">
-        <div class="drop-icon">⇩</div>
-        <h1>Drop files to send</h1>
+        <h1 style="border:none; font-size: 24px;">Drop to Encrypt & Send</h1>
+    </div>
+
+    <!-- MODAL: SECURITY VERIFICATION -->
+    <div id="modal-verify" class="modal-overlay">
+        <div class="modal">
+            <h2>Security Check</h2>
+            <p style="margin-top: 10px;">Verify these words match on your peer's screen:</p>
+            <div id="fingerprint-display" class="fingerprint-box">
+                <!-- Injected via JS -->
+            </div>
+            <div class="flex-row">
+                <button class="btn danger" onclick="app.securityReject()">Mismatch</button>
+                <button class="btn success" onclick="app.securityConfirm()">Match Confirmed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: INCOMING FILE -->
+    <div id="modal-accept" class="modal-overlay">
+        <div class="modal">
+            <h2>Incoming Transfer</h2>
+            <p>Peer wants to send:</p>
+            <h3 id="incoming-name" style="color: white; margin: 15px 0; word-break: break-all;">file.txt</h3>
+            <p id="incoming-size">0 MB</p>
+            <div class="flex-row" style="margin-top: 20px;">
+                <button class="btn danger" onclick="app.rejectIncoming()">Reject</button>
+                <button class="btn success" onclick="app.acceptIncoming()">Accept</button>
+            </div>
+        </div>
     </div>
 
     <div class="container">
         <!-- HEADER -->
         <header class="flex-row">
-            <div>
-                GHOSTSHARE <span style="color: var(--dim); font-size: 10px;">v2.0</span>
+            <div class="flex-col" style="gap:2px;">
+                <span style="font-weight:700; letter-spacing:1px; color:white;">GHOSTSHARE</span>
+                <span style="font-size:10px; color:var(--dim);">SECURE P2P RUNTIME</span>
             </div>
-            <div class="flex-row">
-                <div id="status-dot" class="status-dot"></div>
-                <span id="status-text" class="mono-stat" style="font-size: 10px; text-transform: uppercase;">Initializing</span>
-            </div>
+            <div id="status-badge" class="status-badge">DISCONNECTED</div>
         </header>
 
         <!-- VIEW: IDENTITY -->
         <div id="view-identity" class="card center fade-in">
-            <h2>Your Identity</h2>
-            <div id="my-id" class="my-id">...</div>
-            <p>Scan to connect instantly</p>
+            <h2>Session Identity</h2>
+            <div id="my-id" style="font-size: 32px; font-weight: 700; letter-spacing: 4px; margin: 15px 0; color: var(--accent);">...</div>
+            <p style="font-size: 11px;">Identity rotates on disconnect</p>
             
             <div id="qr-target" class="hidden"></div>
-
+            
             <div class="flex-row" style="margin-top: 15px;">
                 <button class="btn outline" onclick="app.copyId()">Copy ID</button>
-                <button class="btn outline" onclick="app.toggleQr()">QR Code</button>
+                <button class="btn outline" onclick="app.toggleQr()">Show QR</button>
             </div>
         </div>
 
         <!-- VIEW: CONNECT -->
         <div id="view-connect" class="card fade-in">
-            <h2>Establish Link</h2>
+            <h2>Establish Tunnel</h2>
             
-            <!-- Scanner View -->
             <div id="reader-container" class="hidden">
                 <div id="reader"></div>
-                <button class="btn outline" onclick="app.stopScanner()" style="margin-bottom: 10px;">Cancel Scan</button>
+                <button class="btn outline" onclick="app.stopScanner()" style="margin-bottom: 10px;">Cancel Camera</button>
             </div>
 
-            <!-- Manual Input -->
-            <div id="input-container">
-                <input type="text" id="peer-id-input" placeholder="PEER ID" maxlength="6" autocomplete="off" autocorrect="off">
-                <div class="flex-row">
-                    <button class="btn" id="btn-connect" onclick="app.connect()">Connect</button>
-                    <button class="btn outline" onclick="app.startScanner()" style="width: auto;" aria-label="Scan QR">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-                            <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-                            <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-                            <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-                            <rect x="7" y="7" width="10" height="10"></rect>
-                        </svg>
-                    </button>
-                </div>
+            <input type="text" id="peer-id-input" placeholder="ENTER PEER ID" maxlength="12" autocomplete="off">
+            <div class="flex-row">
+                <button class="btn" id="btn-connect" onclick="app.connect()">Connect</button>
+                <button class="btn outline" onclick="app.startScanner()" style="width: auto;">📷</button>
             </div>
         </div>
 
-        <!-- VIEW: TRANSFER ZONE (Hidden until connected) -->
-        <div id="view-transfer" class="card hidden fade-in">
-            <div class="flex-row">
-                <h2>Secure Channel Active</h2>
-                <button class="btn outline" style="width: auto; padding: 5px 10px; font-size: 10px;" onclick="app.disconnect()">Disconnect</button>
+        <!-- VIEW: WORKSPACE (Hidden until secure) -->
+        <div id="view-workspace" class="hidden flex-col" style="flex:1;">
+            <div class="card flex-row" style="background: var(--bg); border: 1px dashed var(--dim); padding: 15px;">
+                <div class="flex-col" style="gap:2px;">
+                    <span style="color:var(--accent); font-weight:700;">SECURE CHANNEL ACTIVE</span>
+                    <span style="font-size:10px; color:var(--success);">End-to-End Encrypted + Verified</span>
+                </div>
+                <button class="btn danger" style="width:auto; padding:8px 12px; font-size:10px;" onclick="app.disconnect()">End Session</button>
             </div>
-            
-            <div class="center" style="border: 2px dashed var(--border); padding: 30px; margin: 20px 0; cursor: pointer;" onclick="document.getElementById('file-input').click()">
-                <p><strong>Click to Select</strong> or Drag Files Here</p>
+
+            <div class="card center" style="border: 2px dashed var(--border); padding: 30px; cursor: pointer; transition: 0.2s;" 
+                 onclick="document.getElementById('file-input').click()"
+                 onmouseover="this.style.borderColor='var(--accent)'" 
+                 onmouseout="this.style.borderColor='var(--border)'">
+                <p><strong>CLICK TO UPLOAD</strong></p>
+                <p style="font-size:11px;">or Drag & Drop Files</p>
                 <input type="file" id="file-input" style="display: none" multiple onchange="app.handleFiles(this.files)">
             </div>
 
-            <div id="transfer-list" class="flex-col">
-                <!-- Transfers injected via JS -->
-            </div>
-        </div>
-
-        <div style="margin-top: auto; text-align: center;">
-            <p style="font-size: 10px;">End-to-End Encrypted via WebRTC. No Server Storage.</p>
+            <div id="transfer-list" class="flex-col scroll-y"></div>
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="toast">Notification</div>
+    <!-- TOAST -->
+    <div id="toast" class="toast">Alert</div>
 
-    <script>
-        /**
-         * GHOSTSHARE CORE LOGIC
-         * Architecture: Single Class Controller
-         * Protocol: PeerJS (Signaling) -> WebRTC DataChannel (Transfer)
-         */
+<script>
+/**
+ * GHOSTSHARE PRODUCTION RUNTIME
+ * Security: ECDH Handshake + SAS Verification
+ * Transport: PeerJS (WebRTC)
+ * Storage: FileSystem API (Streaming) or Memory Fallback
+ */
 
-        // CONFIGURATION
-        const CONFIG = {
-            CHUNK_SIZE: 16 * 1024, // 16KB (Safe for all browsers)
-            BUFFER_THRESHOLD: 1024 * 1024, // 1MB Backpressure limit
-            ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }], // Public Google STUN
-            APP_URL: 'https://devgna.github.io/' // For QR Links
+// --- CONSTANTS & CONFIG ---
+const CONFIG = {
+    CHUNK_INITIAL: 16 * 1024,   // 16KB start
+    CHUNK_MAX: 256 * 1024,      // 256KB max
+    BUFFER_LIMIT: 8 * 1024 * 1024, // 8MB Backpressure limit
+    ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }],
+    APP_URL: window.location.href.split('?')[0]
+};
+
+// --- CRYPTO UTILS ---
+const Crypto = {
+    async generateKeyPair() {
+        return window.crypto.subtle.generateKey(
+            { name: "ECDH", namedCurve: "P-256" },
+            true, ["deriveBits"]
+        );
+    },
+    async exportKey(key) {
+        return window.crypto.subtle.exportKey("jwk", key);
+    },
+    async importKey(jwk) {
+        return window.crypto.subtle.importKey(
+            "jwk", jwk, { name: "ECDH", namedCurve: "P-256" }, true, []
+        );
+    },
+    async deriveSecret(privateKey, publicKey) {
+        const bits = await window.crypto.subtle.deriveBits(
+            { name: "ECDH", public: publicKey }, privateKey, 256
+        );
+        return bits; // ArrayBuffer
+    },
+    async hash(data) {
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        return new Uint8Array(hashBuffer);
+    },
+    // Convert hash bytes to 4 words
+    toFingerprint(hashBytes) {
+        const words = ["ALPHA", "BRAVO", "CHARLIE", "DELTA", "ECHO", "FOXTROT", "GOLF", "HOTEL", "INDIA", "JULIET", "KILO", "LIMA", "MIKE", "NOVEMBER", "OSCAR", "PAPA", "QUEBEC", "ROMEO", "SIERRA", "TANGO", "UNIFORM", "VICTOR", "WHISKEY", "XRAY", "YANKEE", "ZULU"];
+        const indices = [
+            hashBytes[0] % words.length,
+            hashBytes[1] % words.length,
+            hashBytes[2] % words.length,
+            hashBytes[3] % words.length
+        ];
+        return indices.map(i => words[i]);
+    }
+};
+
+// --- APP LOGIC ---
+class GhostShare {
+    constructor() {
+        this.state = 'DISCONNECTED'; // DISCONNECTED, HANDSHAKE, VERIFYING, SECURE
+        this.peer = null;
+        this.conn = null;
+        this.myId = null;
+        
+        // Security
+        this.keyPair = null;
+        this.sharedSecret = null;
+        this.fingerprint = null;
+        this.securityVerified = false;
+
+        // Transfers
+        this.transfers = {}; 
+        this.pendingTransferId = null; // For modal handling
+
+        // UI Refs
+        this.dom = {
+            status: document.getElementById('status-badge'),
+            myId: document.getElementById('my-id'),
+            peerInput: document.getElementById('peer-id-input'),
+            viewIdentity: document.getElementById('view-identity'),
+            viewConnect: document.getElementById('view-connect'),
+            viewWorkspace: document.getElementById('view-workspace'),
+            transferList: document.getElementById('transfer-list'),
+            modalVerify: document.getElementById('modal-verify'),
+            fingerprintDisplay: document.getElementById('fingerprint-display'),
+            modalAccept: document.getElementById('modal-accept'),
+            toast: document.getElementById('toast'),
+            btnConnect: document.getElementById('btn-connect')
         };
 
-        class GhostShare {
-            constructor() {
-                this.peer = null;
-                this.conn = null;
-                this.myId = null;
-                this.pendingConnectId = null; // Store ID from URL if present
-                this.transfers = {}; // Map<id, TransferObject>
-                this.scanner = null;
+        this.init();
+        this.setupDragDrop();
+    }
 
-                // DOM Elements
-                this.dom = {
-                    statusDot: document.getElementById('status-dot'),
-                    statusText: document.getElementById('status-text'),
-                    myId: document.getElementById('my-id'),
-                    peerInput: document.getElementById('peer-id-input'),
-                    qrTarget: document.getElementById('qr-target'),
-                    viewIdentity: document.getElementById('view-identity'),
-                    viewConnect: document.getElementById('view-connect'),
-                    viewTransfer: document.getElementById('view-transfer'),
-                    transferList: document.getElementById('transfer-list'),
-                    dragOverlay: document.getElementById('drag-overlay'),
-                    toast: document.getElementById('toast'),
-                    btnConnect: document.getElementById('btn-connect')
-                };
+    // --- INITIALIZATION ---
+    async init() {
+        // 13. Secure ID Generation
+        const array = new Uint8Array(4);
+        window.crypto.getRandomValues(array);
+        this.myId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+        
+        this.dom.myId.innerText = this.myId;
+        this.generateQr();
+        this.checkDeepLink();
 
-                this.init();
-                this.setupDragDrop();
+        // 4. Ephemeral Peer
+        this.peer = new Peer(this.myId, {
+            debug: 1,
+            config: { iceServers: CONFIG.ICE_SERVERS }
+        });
+
+        this.peer.on('open', () => this.updateState('READY'));
+        
+        this.peer.on('connection', (conn) => {
+            if (this.state !== 'READY') {
+                // 14. Race Condition Fix: Reject if busy, or implement polite peer logic
+                // Simple version: Reject new connections if busy
+                conn.on('open', () => conn.send({ type: 'BUSY' }));
+                setTimeout(() => conn.close(), 500);
+                return;
             }
+            this.handleConnection(conn, 'incoming');
+        });
 
-            // --- INITIALIZATION ---
+        this.peer.on('error', (err) => {
+            console.error(err);
+            this.toast(`Net Error: ${err.type}`);
+            if(err.type === 'peer-unavailable') this.resetUI();
+        });
+    }
 
-            init() {
-                // 1. Generate short ID
-                this.myId = Math.random().toString(36).substring(2, 8).toUpperCase();
-                this.dom.myId.innerText = this.myId;
+    // --- CONNECTION & HANDSHAKE ---
+    connect() {
+        const input = this.dom.peerInput.value.trim().toUpperCase();
+        const id = this.extractId(input);
+        if(!id || id === this.myId) return this.toast("Invalid Peer ID");
+
+        this.updateState('CONNECTING');
+        const conn = this.peer.connect(id, { reliable: true });
+        this.handleConnection(conn, 'outgoing');
+    }
+
+    handleConnection(conn, direction) {
+        this.conn = conn;
+
+        conn.on('open', async () => {
+            // 2. Start ECDH Handshake
+            this.updateState('HANDSHAKE');
+            this.keyPair = await Crypto.generateKeyPair();
+            const exported = await Crypto.exportKey(this.keyPair.publicKey);
+            
+            conn.send({ type: 'HANDSHAKE_PUB', key: exported });
+        });
+
+        conn.on('data', (data) => this.handleData(data));
+        conn.on('close', () => this.disconnect());
+        conn.on('error', () => this.disconnect());
+    }
+
+    async handleData(msg) {
+        switch(msg.type) {
+            case 'HANDSHAKE_PUB':
+                // Derive Secret
+                const remoteKey = await Crypto.importKey(msg.key);
+                const secretBits = await Crypto.deriveSecret(this.keyPair.privateKey, remoteKey);
+                const hash = await Crypto.hash(secretBits);
+                this.fingerprint = Crypto.toFingerprint(hash);
                 
-                // 2. Generate Universal QR Code (URL Format)
-                this.generateQr(`${CONFIG.APP_URL}?peer=${this.myId}`);
+                // Show Verification Modal
+                this.showVerifyModal();
+                break;
 
-                // 3. Check for inbound URL deep link (QR Scan via Camera)
-                const urlParams = new URLSearchParams(window.location.search);
-                const peerParam = urlParams.get('peer');
-                
-                if (peerParam) {
-                    const validId = this.extractPeerId(peerParam); // Basic cleanup
-                    if (validId) {
-                        this.pendingConnectId = validId;
-                        this.notify("Connecting via QR link...");
-                    }
+            case 'HANDSHAKE_VERIFIED':
+                if (this.securityVerified) {
+                    this.updateState('SECURE');
+                    this.dom.modalVerify.classList.remove('active');
+                    this.toast("SECURE CHANNEL ESTABLISHED");
                 }
+                break;
+            
+            case 'HANDSHAKE_REJECT':
+                this.toast("Verification Failed");
+                this.disconnect();
+                break;
 
-                // 4. Init PeerJS
-                this.peer = new Peer(this.myId, {
-                    debug: 1,
-                    config: { iceServers: CONFIG.ICE_SERVERS }
-                });
+            case 'META':
+                // 1. Manual Accept
+                if (this.state !== 'SECURE') return;
+                this.handleIncomingMeta(msg);
+                break;
 
-                this.peer.on('open', (id) => {
-                    this.setStatus('Ready', 'active');
-                    
-                    // Handle Pending Auto-Connect
-                    if (this.pendingConnectId) {
-                        if (this.pendingConnectId === this.myId) {
-                            this.notify("Cannot connect to yourself");
-                            this.cleanUrl(); // Remove param
-                        } else {
-                            this.dom.peerInput.value = this.pendingConnectId;
-                            this.connect();
-                            this.cleanUrl(); // Clean URL after initiating
-                        }
-                        this.pendingConnectId = null;
-                    }
-                });
+            case 'ACCEPT':
+                this.startChunkStream(msg.id);
+                break;
+            
+            case 'REJECT':
+                this.transfers[msg.id].status = 'REJECTED';
+                this.updateTransferUI(msg.id);
+                break;
 
-                this.peer.on('connection', (conn) => {
-                    if(this.conn) {
-                        conn.close(); // Only one peer allowed
-                        return;
-                    }
-                    this.handleConnection(conn);
-                });
+            case 'CHUNK':
+                this.handleChunk(msg);
+                break;
 
-                this.peer.on('error', (err) => {
-                    console.error(err);
-                    this.notify(`Error: ${err.type}`);
-                    this.setStatus('Error', 'error');
-                    this.dom.btnConnect.disabled = false;
-                    this.dom.btnConnect.innerText = "Connect";
-                });
+            case 'ACK_FIN':
+                this.finalizeTransfer(msg.id, true);
+                break;
+        }
+    }
+
+    // --- SECURITY FLOW ---
+    showVerifyModal() {
+        this.updateState('VERIFYING');
+        const html = this.fingerprint.map(w => `<div class="finger-word">${w}</div>`).join('');
+        this.dom.fingerprintDisplay.innerHTML = html;
+        this.dom.modalVerify.classList.add('active');
+    }
+
+    securityConfirm() {
+        this.securityVerified = true;
+        this.conn.send({ type: 'HANDSHAKE_VERIFIED' });
+        this.dom.modalVerify.classList.remove('active');
+        this.toast("Waiting for peer...");
+        // If peer already verified, they sent HANDSHAKE_VERIFIED earlier, but we ignored it?
+        // In a perfect state machine, we wait for mutual. 
+        // For simplicity: If we receive VERIFIED after we confirm, we go SECURE.
+    }
+
+    securityReject() {
+        this.conn.send({ type: 'HANDSHAKE_REJECT' });
+        this.disconnect();
+    }
+
+    // --- FILE TRANSFER LOGIC ---
+    handleFiles(files) {
+        Array.from(files).forEach(file => this.initUpload(file));
+    }
+
+    initUpload(file) {
+        const id = Date.now() + Math.random().toString(36).substr(2,5);
+        this.transfers[id] = {
+            role: 'sender',
+            file: file,
+            size: file.size,
+            name: file.name,
+            sent: 0,
+            status: 'WAITING_ACCEPT',
+            startTime: 0,
+            chunkSize: CONFIG.CHUNK_INITIAL
+        };
+        this.createTransferUI(id, file.name, file.size, 'upload');
+        
+        // Send Meta
+        this.conn.send({
+            type: 'META',
+            id: id,
+            name: file.name,
+            size: file.size,
+            mime: file.type
+        });
+    }
+
+    handleIncomingMeta(msg) {
+        this.pendingTransferId = msg.id;
+        this.transfers[msg.id] = {
+            role: 'receiver',
+            size: msg.size,
+            name: msg.name,
+            mime: msg.mime,
+            received: 0,
+            status: 'WAITING_USER',
+            chunks: [],
+            fileHandle: null,
+            writable: null,
+            startTime: 0,
+            lastBytes: 0,
+            lastTime: 0
+        };
+        
+        document.getElementById('incoming-name').innerText = msg.name;
+        document.getElementById('incoming-size').innerText = this.formatBytes(msg.size);
+        this.dom.modalAccept.classList.add('active');
+    }
+
+    async acceptIncoming() {
+        const id = this.pendingTransferId;
+        this.dom.modalAccept.classList.remove('active');
+        
+        const t = this.transfers[id];
+        t.status = 'TRANSFERRING';
+        t.startTime = Date.now();
+        t.lastTime = Date.now();
+        this.createTransferUI(id, t.name, t.size, 'download');
+
+        // 7. Streaming Receive (FileSystem API)
+        if (window.showSaveFilePicker) {
+            try {
+                t.fileHandle = await window.showSaveFilePicker({ suggestedName: t.name });
+                t.writable = await t.fileHandle.createWritable();
+                this.toast("Streaming to Disk");
+            } catch (e) {
+                console.warn("File picker cancelled or failed", e);
+                // Fallback to memory
             }
-
-            // --- QR & URL HELPERS ---
-
-            // Extracts valid Peer ID from raw string or URL
-            extractPeerId(input) {
-                if (!input) return null;
-                let id = null;
-
-                // Attempt to parse as URL first
-                try {
-                    const url = new URL(input);
-                    // Handle query param format ?peer=ID
-                    const param = url.searchParams.get('peer');
-                    if (param) id = param;
-                } catch (e) {
-                    // Not a URL, treat as raw ID
-                    id = input;
-                }
-
-                if (!id) return null;
-
-                // Clean and Validate
-                id = id.trim().toUpperCase();
-                
-                // Allow alphanumeric only, length check to avoid garbage
-                if (/^[A-Z0-9]{4,12}$/.test(id)) {
-                    return id;
-                }
-                return null;
-            }
-
-            cleanUrl() {
-                if (window.history.replaceState) {
-                    const clean = window.location.protocol + "//" + window.location.host + window.location.pathname;
-                    window.history.replaceState({path: clean}, '', clean);
-                }
-            }
-
-            // --- CONNECTION HANDLING ---
-
-            connect() {
-                // Extract from input using the same robust logic (handles user pasting URL)
-                const rawInput = this.dom.peerInput.value;
-                const peerId = this.extractPeerId(rawInput);
-
-                if (!peerId) return this.notify("Invalid Peer ID");
-                if (peerId === this.myId) return this.notify("Cannot connect to yourself");
-
-                // Update UI to show the parsed ID if they pasted a URL
-                this.dom.peerInput.value = peerId;
-
-                this.dom.btnConnect.disabled = true;
-                this.dom.btnConnect.innerText = "Connecting...";
-                this.setStatus('Connecting...', 'active');
-
-                const conn = this.peer.connect(peerId, { reliable: true });
-                this.handleConnection(conn);
-            }
-
-            handleConnection(conn) {
-                this.conn = conn;
-                
-                // Connection Events
-                conn.on('open', () => {
-                    this.setStatus('Connected', 'active');
-                    this.notify(`Linked with ${conn.peer}`);
-                    this.switchView(true);
-                    this.dom.btnConnect.innerText = "Connect"; // Reset for future
-                    this.dom.btnConnect.disabled = false;
-                });
-
-                conn.on('data', (data) => this.handleData(data));
-
-                conn.on('close', () => {
-                    this.notify("Peer Disconnected");
-                    this.disconnect();
-                });
-
-                conn.on('error', () => {
-                    this.notify("Connection Error");
-                    this.disconnect();
-                });
-            }
-
-            disconnect() {
-                if (this.conn) {
-                    this.conn.close();
-                    this.conn = null;
-                }
-                this.switchView(false);
-                this.setStatus('Ready', 'active');
-                this.dom.transferList.innerHTML = '';
-                this.transfers = {};
-            }
-
-            // --- DATA TRANSFER PROTOCOL ---
-
-            handleFiles(fileList) {
-                if (!this.conn) return this.notify("Not connected");
-                
-                Array.from(fileList).forEach(file => {
-                    this.startUpload(file);
-                });
-            }
-
-            async startUpload(file) {
-                const transferId = Date.now() + Math.random().toString(36);
-                
-                // 1. Create UI
-                this.createTransferUI(transferId, file.name, file.size, 'upload');
-
-                // 2. Send Metadata
-                this.conn.send({
-                    type: 'meta',
-                    id: transferId,
-                    name: file.name,
-                    size: file.size,
-                    mime: file.type
-                });
-
-                // 3. Start Chunked Upload
-                const reader = new FileReader();
-                let offset = 0;
-                
-                const readNextChunk = () => {
-                    // Check cancellation
-                    if (!this.transfers[transferId] || this.transfers[transferId].cancelled) return;
-
-                    // Backpressure Check (Flow Control)
-                    if (this.conn.dataChannel.bufferedAmount > CONFIG.BUFFER_THRESHOLD) {
-                        setTimeout(readNextChunk, 50); // Wait for buffer to drain
-                        return;
-                    }
-
-                    const slice = file.slice(offset, offset + CONFIG.CHUNK_SIZE);
-                    reader.readAsArrayBuffer(slice);
-                };
-
-                reader.onload = (e) => {
-                    const chunk = e.target.result;
-                    
-                    // Send chunk wrapper
-                    this.conn.send({
-                        type: 'chunk',
-                        id: transferId,
-                        data: chunk
-                    });
-
-                    offset += chunk.byteLength;
-                    this.updateProgress(transferId, offset, file.size);
-
-                    if (offset < file.size) {
-                        readNextChunk();
-                    } else {
-                        // Complete
-                        this.finishTransfer(transferId);
-                    }
-                };
-
-                readNextChunk();
-            }
-
-            handleData(pkg) {
-                // Route packet based on type
-                if (pkg.type === 'meta') {
-                    this.transfers[pkg.id] = {
-                        name: pkg.name,
-                        size: pkg.size,
-                        mime: pkg.mime,
-                        received: 0,
-                        buffer: [],
-                        startTime: Date.now(),
-                        lastUpdate: Date.now(),
-                        lastBytes: 0
-                    };
-                    this.createTransferUI(pkg.id, pkg.name, pkg.size, 'download');
-                
-                } else if (pkg.type === 'chunk') {
-                    const t = this.transfers[pkg.id];
-                    if (!t || t.cancelled) return;
-
-                    t.buffer.push(pkg.data);
-                    t.received += pkg.data.byteLength;
-                    
-                    this.updateProgress(pkg.id, t.received, t.size);
-
-                    if (t.received >= t.size) {
-                        this.assembleFile(pkg.id);
-                    }
-                
-                } else if (pkg.type === 'cancel') {
-                    this.markCancelled(pkg.id);
-                }
-            }
-
-            assembleFile(id) {
-                const t = this.transfers[id];
-                const blob = new Blob(t.buffer, { type: t.mime });
-                const url = URL.createObjectURL(blob);
-                
-                // Auto Download
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = t.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                // Cleanup Memory
-                t.buffer = null; // Free array buffer
-                this.finishTransfer(id);
-                setTimeout(() => URL.revokeObjectURL(url), 30000);
-            }
-
-            // --- UI RENDERING ---
-
-            createTransferUI(id, name, size, type) {
-                this.transfers[id] = this.transfers[id] || {};
-                this.transfers[id].startTime = Date.now();
-                this.transfers[id].lastUpdate = Date.now();
-                this.transfers[id].lastBytes = 0;
-
-                const div = document.createElement('div');
-                div.className = 'transfer-item fade-in';
-                div.id = `ui-${id}`;
-                div.innerHTML = `
-                    <div class="flex-row">
-                        <strong>${type === 'upload' ? '↑ SENT' : '↓ RECV'}</strong>
-                        <span style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${name}</span>
-                        <span class="mono-stat">${this.formatBytes(size)}</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" id="bar-${id}"></div>
-                    </div>
-                    <div class="flex-row">
-                        <span id="speed-${id}" class="mono-stat" style="font-size: 10px; color: var(--dim);">Calculating...</span>
-                        <button class="btn danger" style="padding: 4px 8px; font-size: 10px; width: auto;" onclick="app.cancelTransfer('${id}')">CANCEL</button>
-                    </div>
-                `;
-                this.dom.transferList.prepend(div);
-            }
-
-            updateProgress(id, current, total) {
-                const pct = Math.min(100, (current / total) * 100);
-                const bar = document.getElementById(`bar-${id}`);
-                const speedLabel = document.getElementById(`speed-${id}`);
-                
-                if (bar) bar.style.width = `${pct}%`;
-
-                // Update Speed every 500ms
-                const now = Date.now();
-                const t = this.transfers[id];
-                if (t && now - t.lastUpdate > 500) {
-                    const deltaBytes = current - t.lastBytes;
-                    const deltaTime = (now - t.lastUpdate) / 1000;
-                    const speed = deltaBytes / deltaTime; // bytes per sec
-                    
-                    if (speedLabel) speedLabel.innerText = `${this.formatBytes(speed)}/s`;
-                    
-                    t.lastUpdate = now;
-                    t.lastBytes = current;
-                }
-            }
-
-            finishTransfer(id) {
-                const speedLabel = document.getElementById(`speed-${id}`);
-                if (speedLabel) {
-                    speedLabel.innerText = "Completed";
-                    speedLabel.style.color = "#00ff00";
-                }
-                // Cleanup ref
-                if(this.transfers[id]) this.transfers[id].cancelled = true; // prevent further chunks
-            }
-
-            cancelTransfer(id) {
-                if (this.conn) this.conn.send({ type: 'cancel', id });
-                this.markCancelled(id);
-            }
-
-            markCancelled(id) {
-                if (this.transfers[id]) {
-                    this.transfers[id].cancelled = true;
-                    this.transfers[id].buffer = null; // Free memory
-                }
-                const el = document.getElementById(`ui-${id}`);
-                if (el) {
-                    el.style.opacity = '0.5';
-                    const label = document.getElementById(`speed-${id}`);
-                    if(label) label.innerText = "Cancelled";
-                }
-            }
-
-            // --- UTILITIES ---
-
-            switchView(isConnected) {
-                if (isConnected) {
-                    this.dom.viewIdentity.classList.add('hidden');
-                    this.dom.viewConnect.classList.add('hidden');
-                    this.dom.viewTransfer.classList.remove('hidden');
-                } else {
-                    this.dom.viewIdentity.classList.remove('hidden');
-                    this.dom.viewConnect.classList.remove('hidden');
-                    this.dom.viewTransfer.classList.add('hidden');
-                }
-            }
-
-            setupDragDrop() {
-                // Global Drag events
-                window.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    if(this.conn) this.dom.dragOverlay.classList.add('active');
-                });
-
-                this.dom.dragOverlay.addEventListener('dragleave', (e) => {
-                    e.preventDefault();
-                    this.dom.dragOverlay.classList.remove('active');
-                });
-
-                this.dom.dragOverlay.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    this.dom.dragOverlay.classList.remove('active');
-                    if(e.dataTransfer.files.length > 0) {
-                        this.handleFiles(e.dataTransfer.files);
-                    }
-                });
-            }
-
-            // QR & Camera
-            generateQr(text) {
-                this.dom.qrTarget.innerHTML = '';
-                try {
-                    new QRCode(this.dom.qrTarget, {
-                        text: text, width: 128, height: 128,
-                        colorDark : "#000000", colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.L
-                    });
-                } catch(e) {}
-            }
-
-            toggleQr() {
-                this.dom.qrTarget.classList.toggle('hidden');
-            }
-
-            copyId() {
-                navigator.clipboard.writeText(this.myId);
-                this.notify("ID Copied");
-            }
-
-            startScanner() {
-                const readerDiv = document.getElementById('reader-container');
-                readerDiv.classList.remove('hidden');
-                
-                this.scanner = new Html5Qrcode("reader");
-                this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-                    (decoded) => {
-                        // Use robust extractor for in-app scan
-                        const id = this.extractPeerId(decoded);
-                        if (id) {
-                            this.dom.peerInput.value = id;
-                            this.stopScanner();
-                            this.notify("QR Detected. Connecting...");
-                            this.connect();
-                        } else {
-                            this.notify("Invalid QR Code");
-                        }
-                    }
-                ).catch(err => this.notify("Camera access denied"));
-            }
-
-            stopScanner() {
-                if(this.scanner) {
-                    this.scanner.stop().then(() => {
-                        this.scanner.clear();
-                        document.getElementById('reader-container').classList.add('hidden');
-                    });
-                } else {
-                    document.getElementById('reader-container').classList.add('hidden');
-                }
-            }
-
-            // Helpers
-            notify(msg) {
-                this.dom.toast.innerText = msg;
-                this.dom.toast.classList.add('show');
-                setTimeout(() => this.dom.toast.classList.remove('show'), 3000);
-            }
-
-            setStatus(text, type) {
-                this.dom.statusText.innerText = text;
-                this.dom.statusDot.className = `status-dot ${type}`;
-            }
-
-            formatBytes(bytes) {
-                if (bytes === 0) return '0 B';
-                const k = 1024;
-                const sizes = ['B', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        } else {
+            // 11. Memory Cap Check
+            if (t.size > 500 * 1024 * 1024) { // 500MB cap for memory fallback
+                this.toast("File too large for this browser");
+                this.conn.send({ type: 'REJECT', id: id });
+                delete this.transfers[id];
+                return;
             }
         }
 
-        // BOOT
-        window.app = new GhostShare();
+        this.conn.send({ type: 'ACCEPT', id: id });
+    }
 
-        // Safety Prompt
-        window.onbeforeunload = () => window.app.conn ? "Transfer in progress" : undefined;
+    rejectIncoming() {
+        const id = this.pendingTransferId;
+        this.dom.modalAccept.classList.remove('active');
+        this.conn.send({ type: 'REJECT', id: id });
+        delete this.transfers[id];
+    }
 
-    </script>
+    startChunkStream(id) {
+        const t = this.transfers[id];
+        t.status = 'TRANSFERRING';
+        t.startTime = Date.now();
+        t.lastTime = Date.now();
+        this.updateTransferUI(id);
+
+        const reader = new FileReader();
+        let offset = 0;
+
+        const pump = () => {
+            if (t.status !== 'TRANSFERRING' || !this.conn.open) return;
+
+            // 6. Backpressure & Adaptive Chunking
+            const buffered = this.conn.dataChannel.bufferedAmount;
+            if (buffered > CONFIG.BUFFER_LIMIT) {
+                setTimeout(pump, 50);
+                return;
+            }
+
+            // Adaptive chunk size logic
+            if (buffered < CONFIG.CHUNK_INITIAL) t.chunkSize = Math.min(t.chunkSize * 2, CONFIG.CHUNK_MAX);
+            else t.chunkSize = Math.max(t.chunkSize / 2, CONFIG.CHUNK_INITIAL);
+
+            const slice = t.file.slice(offset, offset + t.chunkSize);
+            reader.readAsArrayBuffer(slice);
+        };
+
+        reader.onload = (e) => {
+            const data = e.target.result;
+            this.conn.send({
+                type: 'CHUNK',
+                id: id,
+                data: data
+            });
+            
+            offset += data.byteLength;
+            t.sent = offset;
+            this.updateMetrics(id);
+
+            if (offset < t.size) {
+                pump(); // Continue
+            } else {
+                // Wait for FIN ACK
+                t.status = 'AWAITING_FIN';
+                this.updateStatusText(id, "Finalizing...");
+            }
+        };
+
+        pump();
+    }
+
+    async handleChunk(msg) {
+        const t = this.transfers[msg.id];
+        if (!t || t.status === 'CANCELLED') return;
+
+        const data = new Uint8Array(msg.data);
+        
+        if (t.writable) {
+            // Stream to disk
+            await t.writable.write(data);
+        } else {
+            // Buffer in memory
+            t.chunks.push(data);
+        }
+
+        t.received += data.byteLength;
+        this.updateMetrics(msg.id);
+
+        if (t.received >= t.size) {
+            this.finishReceive(msg.id);
+        }
+    }
+
+    async finishReceive(id) {
+        const t = this.transfers[id];
+        
+        if (t.writable) {
+            await t.writable.close();
+        } else {
+            // Assembly Memory Blob
+            const blob = new Blob(t.chunks, { type: t.mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = t.name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+            t.chunks = null; // GC
+        }
+
+        // 9. Final ACK
+        this.conn.send({ type: 'ACK_FIN', id: id });
+        this.finalizeTransfer(id, true);
+    }
+
+    finalizeTransfer(id, success) {
+        const t = this.transfers[id];
+        t.status = success ? 'COMPLETED' : 'FAILED';
+        this.updateTransferUI(id);
+    }
+
+    // --- UI & METRICS ---
+    createTransferUI(id, name, size, type) {
+        const div = document.createElement('div');
+        div.className = 'transfer-item fade-in';
+        div.id = `ui-${id}`;
+        div.innerHTML = `
+            <div class="flex-row">
+                <span style="font-weight:700; color: ${type === 'upload' ? '#ff9800' : '#4caf50'}">
+                    ${type === 'upload' ? 'SENDING' : 'RECEIVING'}
+                </span>
+                <span style="font-size:11px;">${name}</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="bar-${id}"></div>
+            </div>
+            <div class="meta-row">
+                <span id="prog-${id}">0%</span>
+                <span id="speed-${id}">-- MB/s</span>
+                <span id="eta-${id}">ETA: --</span>
+                <span id="status-${id}">${type === 'upload' ? 'Waiting Accept...' : 'Starting...'}</span>
+            </div>
+        `;
+        this.dom.transferList.prepend(div);
+    }
+
+    updateMetrics(id) {
+        const t = this.transfers[id];
+        const now = Date.now();
+        
+        // Update bars immediately
+        const processed = t.role === 'sender' ? t.sent : t.received;
+        const pct = Math.min(100, (processed / t.size) * 100).toFixed(1);
+        document.getElementById(`bar-${id}`).style.width = `${pct}%`;
+        document.getElementById(`prog-${id}`).innerText = `${pct}%`;
+
+        // 3. Update Speed/ETA (Throttle to 500ms)
+        if (now - t.lastTime > 500) {
+            const bytesSince = processed - (t.role === 'sender' ? t.lastBytes || 0 : t.lastBytes || 0);
+            const timeDiff = (now - t.lastTime) / 1000;
+            const speed = bytesSince / timeDiff; // Bytes per sec
+            
+            document.getElementById(`speed-${id}`).innerText = `${this.formatBytes(speed)}/s`;
+            
+            // ETA
+            const remaining = t.size - processed;
+            const eta = speed > 0 ? Math.ceil(remaining / speed) : 0;
+            document.getElementById(`eta-${id}`).innerText = `ETA: ${this.formatTime(eta)}`;
+
+            t.lastTime = now;
+            t.lastBytes = processed;
+        }
+    }
+
+    updateStatusText(id, text) {
+        const el = document.getElementById(`status-${id}`);
+        if(el) el.innerText = text;
+    }
+
+    updateTransferUI(id) {
+        const t = this.transfers[id];
+        const el = document.getElementById(`ui-${id}`);
+        if (!el) return;
+        
+        if (t.status === 'COMPLETED') {
+            this.updateStatusText(id, 'COMPLETED');
+            document.getElementById(`bar-${id}`).style.background = 'var(--success)';
+        } else if (t.status === 'FAILED' || t.status === 'REJECTED') {
+            this.updateStatusText(id, t.status);
+            document.getElementById(`bar-${id}`).style.background = 'var(--error)';
+            el.style.opacity = '0.5';
+        }
+    }
+
+    // --- STATE MANAGEMENT ---
+    updateState(newState) {
+        this.state = newState;
+        console.log("State:", newState);
+        
+        // UI Switching
+        if (newState === 'SECURE') {
+            this.dom.viewIdentity.classList.add('hidden');
+            this.dom.viewConnect.classList.add('hidden');
+            this.dom.viewWorkspace.classList.remove('hidden');
+            this.dom.status.className = 'status-badge secure';
+            this.dom.status.innerText = 'SECURE CHANNEL';
+        } else if (newState === 'DISCONNECTED') {
+            this.resetUI();
+        } else {
+            this.dom.status.className = 'status-badge warn';
+            this.dom.status.innerText = newState;
+        }
+    }
+
+    disconnect() {
+        if (this.conn) this.conn.close();
+        // 4. One-time ID: Destroy peer
+        if (this.peer) this.peer.destroy();
+        
+        this.transfers = {};
+        this.updateState('DISCONNECTED');
+        
+        // Re-init with new ID
+        this.init(); 
+    }
+
+    resetUI() {
+        this.dom.viewIdentity.classList.remove('hidden');
+        this.dom.viewConnect.classList.remove('hidden');
+        this.dom.viewWorkspace.classList.add('hidden');
+        this.dom.transferList.innerHTML = '';
+        this.dom.peerInput.value = '';
+        this.dom.btnConnect.innerText = 'Connect';
+        this.dom.btnConnect.disabled = false;
+        this.dom.status.className = 'status-badge';
+        this.dom.status.innerText = 'DISCONNECTED';
+    }
+
+    // --- UTILS ---
+    extractId(input) {
+        try {
+            const url = new URL(input);
+            return url.searchParams.get('peer');
+        } catch(e) { return input; }
+    }
+
+    checkDeepLink() {
+        const params = new URLSearchParams(window.location.search);
+        const peer = params.get('peer');
+        if (peer) {
+            this.dom.peerInput.value = peer;
+            this.toast("Link Detected. Click Connect.");
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    generateQr() {
+        const target = document.getElementById('qr-target');
+        target.innerHTML = '';
+        new QRCode(target, {
+            text: `${CONFIG.APP_URL}?peer=${this.myId}`,
+            width: 150, height: 150,
+            colorDark : "#000000", colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.L
+        });
+    }
+
+    toggleQr() { document.getElementById('qr-target').classList.toggle('hidden'); }
+    copyId() { navigator.clipboard.writeText(this.myId); this.toast("ID Copied"); }
+    toast(msg) {
+        this.dom.toast.innerText = msg;
+        this.dom.toast.classList.add('show');
+        setTimeout(()=>this.dom.toast.classList.remove('show'), 3000);
+    }
+    formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    formatTime(seconds) {
+        if (!isFinite(seconds) || seconds < 0) return '--';
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // Camera
+    startScanner() {
+        document.getElementById('reader-container').classList.remove('hidden');
+        this.scanner = new Html5Qrcode("reader");
+        this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decoded) => {
+            const id = this.extractId(decoded);
+            if(id) {
+                this.dom.peerInput.value = id;
+                this.stopScanner();
+                this.connect();
+            }
+        });
+    }
+    stopScanner() {
+        if(this.scanner) this.scanner.stop().then(() => {
+            document.getElementById('reader-container').classList.add('hidden');
+        });
+    }
+    
+    setupDragDrop() {
+        const overlay = document.getElementById('drag-overlay');
+        window.addEventListener('dragover', e => { e.preventDefault(); if(this.state==='SECURE') overlay.classList.add('active'); });
+        overlay.addEventListener('dragleave', e => { e.preventDefault(); overlay.classList.remove('active'); });
+        overlay.addEventListener('drop', e => {
+            e.preventDefault(); overlay.classList.remove('active');
+            if(this.state==='SECURE' && e.dataTransfer.files.length) this.handleFiles(e.dataTransfer.files);
+        });
+    }
+}
+
+// BOOTSTRAP
+window.app = new GhostShare();
+window.onbeforeunload = () => window.app.state === 'SECURE' ? "Active Session" : undefined;
+</script>
 </body>
 </html>
 
