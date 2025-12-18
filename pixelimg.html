@@ -1,809 +1,742 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { 
-  Upload, Download, Layers, Palette, Settings, Image as ImageIcon, 
-  Menu, X, Share2, ZoomIn, ZoomOut, RefreshCw, Grid, Check, Monitor, Smartphone
-} from 'lucide-react';
-
-/**
- * PIXELFORGE: CLIENT-SIDE IMAGE PROCESSING WORKER
- * * This string contains the entire logic for the Web Worker.
- * It handles downscaling, palette extraction (Median Cut/K-Means),
- * quantization, and dithering off the main thread.
- */
-const WORKER_CODE = `
-self.onmessage = async (e) => {
-  const { imageData, config, id } = e.data;
-  
-  try {
-    const result = processImage(imageData, config);
-    self.postMessage({ id, success: true, result }, [result.data.buffer]);
-  } catch (err) {
-    self.postMessage({ id, success: false, error: err.message });
-  }
-};
-
-function processImage(original, config) {
-  const { pixelSize, pixelAlgo, colorCount, quantAlgo, ditherAlgo, ditherStrength, paletteMode, customPalette } = config;
-  
-  // 1. Downscale (Pixelation Phase)
-  // We manually downscale to the target resolution
-  const targetW = Math.max(1, Math.floor(original.width / pixelSize));
-  const targetH = Math.max(1, Math.floor(original.height / pixelSize));
-  
-  const downscaled = new ImageData(targetW, targetH);
-  
-  // Sampling: Nearest Neighbor or Bilinear-ish (Average)
-  if (pixelAlgo === 'average') {
-    for (let y = 0; y < targetH; y++) {
-      for (let x = 0; x < targetW; x++) {
-        let r = 0, g = 0, b = 0, a = 0, count = 0;
-        const startX = x * pixelSize;
-        const startY = y * pixelSize;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelForge - Client-Side Pixel Art Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
         
-        for (let py = 0; py < pixelSize; py++) {
-          for (let px = 0; px < pixelSize; px++) {
-            const sx = startX + px;
-            const sy = startY + py;
-            if (sx < original.width && sy < original.height) {
-              const idx = (sy * original.width + sx) * 4;
-              r += original.data[idx];
-              g += original.data[idx+1];
-              b += original.data[idx+2];
-              a += original.data[idx+3];
-              count++;
-            }
-          }
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
         }
         
-        const tidx = (y * targetW + x) * 4;
-        downscaled.data[tidx] = r / count;
-        downscaled.data[tidx+1] = g / count;
-        downscaled.data[tidx+2] = b / count;
-        downscaled.data[tidx+3] = a / count;
-      }
-    }
-  } else {
-    // Center sampling (Nearest Neighbor approximation)
-    for (let y = 0; y < targetH; y++) {
-      for (let x = 0; x < targetW; x++) {
-        const sx = Math.floor((x * pixelSize) + (pixelSize / 2));
-        const sy = Math.floor((y * pixelSize) + (pixelSize / 2));
-        const safeX = Math.min(sx, original.width - 1);
-        const safeY = Math.min(sy, original.height - 1);
-        const sidx = (safeY * original.width + safeX) * 4;
-        const tidx = (y * targetW + x) * 4;
-        
-        downscaled.data[tidx] = original.data[sidx];
-        downscaled.data[tidx+1] = original.data[sidx+1];
-        downscaled.data[tidx+2] = original.data[sidx+2];
-        downscaled.data[tidx+3] = original.data[sidx+3];
-      }
-    }
-  }
-
-  // 2. Palette Generation
-  let palette = [];
-  if (paletteMode === 'custom' && customPalette && customPalette.length > 0) {
-    palette = customPalette.map(hexToRgb);
-  } else {
-    // Extract palette from downscaled image
-    const pixels = [];
-    for (let i = 0; i < downscaled.data.length; i += 4) {
-      if (downscaled.data[i+3] > 128) { // Ignore transparent for palette
-        pixels.push({ r: downscaled.data[i], g: downscaled.data[i+1], b: downscaled.data[i+2] });
-      }
-    }
-    
-    if (quantAlgo === 'kmeans') {
-      palette = kMeans(pixels, colorCount);
-    } else {
-      // Median Cut (Default)
-      palette = medianCut(pixels, colorCount);
-    }
-  }
-
-  // 3. Quantization & Dithering
-  // Apply changes directly to 'downscaled'
-  const width = downscaled.width;
-  const height = downscaled.height;
-  const data = downscaled.data;
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const idx = (y * width + x) * 4;
-      
-      const oldR = data[idx];
-      const oldG = data[idx+1];
-      const oldB = data[idx+2];
-      const oldA = data[idx+3];
-
-      // Simple transparency threshold
-      if (oldA < 128) {
-        data[idx+3] = 0;
-        continue;
-      }
-
-      // Bayer Dithering Pre-check
-      let threshold = 0;
-      if (ditherAlgo === 'bayer') {
-        const bayerMatrix = [
-          [0, 8, 2, 10],
-          [12, 4, 14, 6],
-          [3, 11, 1, 9],
-          [15, 7, 13, 5]
-        ];
-        // Scale strength to 0-64 range roughly
-        const strength = ditherStrength * 32; 
-        const mapVal = bayerMatrix[y % 4][x % 4];
-        threshold = (mapVal / 16 - 0.5) * strength;
-      }
-
-      // Find closest color
-      const closest = findClosest(
-        oldR + threshold, 
-        oldG + threshold, 
-        oldB + threshold, 
-        palette
-      );
-
-      data[idx] = closest.r;
-      data[idx+1] = closest.g;
-      data[idx+2] = closest.b;
-      data[idx+3] = 255;
-
-      // Floyd-Steinberg Dithering
-      if (ditherAlgo === 'floyd' && ditherStrength > 0) {
-        const errR = (oldR - closest.r) * ditherStrength;
-        const errG = (oldG - closest.g) * ditherStrength;
-        const errB = (oldB - closest.b) * ditherStrength;
-
-        distributeError(data, x, y, width, height, errR, errG, errB);
-      }
-    }
-  }
-
-  return {
-    pixels: downscaled,
-    palette: palette
-  };
-}
-
-// --- Algorithm Helpers ---
-
-function hexToRgb(hex) {
-  const bigint = parseInt(hex.replace('#', ''), 16);
-  return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
-}
-
-function findClosest(r, g, b, palette) {
-  let minDist = Infinity;
-  let closest = palette[0] || {r:0, g:0, b:0};
-  
-  for (let i = 0; i < palette.length; i++) {
-    const p = palette[i];
-    // Simple Euclidean distance
-    const dist = (r - p.r) ** 2 + (g - p.g) ** 2 + (b - p.b) ** 2;
-    if (dist < minDist) {
-      minDist = dist;
-      closest = p;
-    }
-  }
-  return closest;
-}
-
-function distributeError(data, x, y, w, h, er, eg, eb) {
-  const addErr = (dx, dy, factor) => {
-    if (x + dx >= 0 && x + dx < w && y + dy >= 0 && y + dy < h) {
-      const idx = ((y + dy) * w + (x + dx)) * 4;
-      data[idx] = Math.min(255, Math.max(0, data[idx] + er * factor));
-      data[idx+1] = Math.min(255, Math.max(0, data[idx+1] + eg * factor));
-      data[idx+2] = Math.min(255, Math.max(0, data[idx+2] + eb * factor));
-    }
-  };
-
-  addErr(1, 0, 7/16);
-  addErr(-1, 1, 3/16);
-  addErr(0, 1, 5/16);
-  addErr(1, 1, 1/16);
-}
-
-// --- Quantization Implementations ---
-
-function medianCut(pixels, count) {
-  if (pixels.length === 0) return [];
-  
-  // Recursive function to split buckets
-  const split = (buckets) => {
-    if (buckets.length >= count) return buckets;
-    
-    // Find bucket with largest range
-    let bestBucketIdx = -1;
-    let maxRange = -1;
-    let bestChannel = 'r';
-
-    buckets.forEach((bucket, idx) => {
-      if (bucket.length === 0) return;
-      
-      let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
-      bucket.forEach(p => {
-        minR = Math.min(minR, p.r); maxR = Math.max(maxR, p.r);
-        minG = Math.min(minG, p.g); maxG = Math.max(maxG, p.g);
-        minB = Math.min(minB, p.b); maxB = Math.max(maxB, p.b);
-      });
-      
-      const rangeR = maxR - minR;
-      const rangeG = maxG - minG;
-      const rangeB = maxB - minB;
-      const max = Math.max(rangeR, rangeG, rangeB);
-      
-      if (max > maxRange) {
-        maxRange = max;
-        bestBucketIdx = idx;
-        if (max === rangeR) bestChannel = 'r';
-        else if (max === rangeG) bestChannel = 'g';
-        else bestChannel = 'b';
-      }
-    });
-
-    if (bestBucketIdx === -1) return buckets;
-
-    const bucketToSplit = buckets[bestBucketIdx];
-    // Sort bucket by best channel
-    bucketToSplit.sort((a, b) => a[bestChannel] - b[bestChannel]);
-    
-    const mid = Math.floor(bucketToSplit.length / 2);
-    const splitA = bucketToSplit.slice(0, mid);
-    const splitB = bucketToSplit.slice(mid);
-    
-    buckets.splice(bestBucketIdx, 1, splitA, splitB);
-    return split(buckets);
-  };
-
-  const initialBuckets = split([pixels]);
-  
-  // Average colors in final buckets
-  return initialBuckets.map(bucket => {
-    if (bucket.length === 0) return {r:0, g:0, b:0};
-    let r=0, g=0, b=0;
-    bucket.forEach(p => { r+=p.r; g+=p.g; b+=p.b; });
-    return {
-      r: Math.round(r / bucket.length),
-      g: Math.round(g / bucket.length),
-      b: Math.round(b / bucket.length)
-    };
-  });
-}
-
-function kMeans(pixels, k) {
-  if (pixels.length <= k) return pixels;
-  
-  // 1. Initialize centroids (randomly from pixels)
-  let centroids = [];
-  for(let i=0; i<k; i++) {
-    centroids.push(pixels[Math.floor(Math.random() * pixels.length)]);
-  }
-  
-  // Run fewer iterations for performance
-  for(let iter=0; iter<5; iter++) {
-    const assignments = new Array(k).fill(0).map(() => ({r:0, g:0, b:0, count:0}));
-    
-    // 2. Assign pixels
-    for(let i=0; i<pixels.length; i++) {
-      const p = pixels[i];
-      let minDist = Infinity;
-      let idx = 0;
-      for(let j=0; j<k; j++) {
-        const c = centroids[j];
-        const dist = (p.r-c.r)**2 + (p.g-c.g)**2 + (p.b-c.b)**2;
-        if(dist < minDist) { minDist = dist; idx = j; }
-      }
-      assignments[idx].r += p.r;
-      assignments[idx].g += p.g;
-      assignments[idx].b += p.b;
-      assignments[idx].count++;
-    }
-    
-    // 3. Update centroids
-    let changed = false;
-    for(let j=0; j<k; j++) {
-      if(assignments[j].count > 0) {
-        const newR = Math.round(assignments[j].r / assignments[j].count);
-        const newG = Math.round(assignments[j].g / assignments[j].count);
-        const newB = Math.round(assignments[j].b / assignments[j].count);
-        // optimization: check convergence, simplified here
-        centroids[j] = {r: newR, g: newG, b: newB};
-      }
-    }
-  }
-  return centroids;
-}
-`;
-
-// --- Utility Functions ---
-
-const rgbToHex = (r: number, g: number, b: number) => 
-  "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join("");
-
-// --- Components ---
-
-const Button = ({ children, onClick, variant = 'primary', className = '', ...props }: any) => {
-  const base = "px-4 py-2 rounded-lg font-medium transition-all transform active:scale-95 flex items-center justify-center gap-2";
-  const styles = {
-    primary: "bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20",
-    secondary: "bg-slate-700 text-slate-100 hover:bg-slate-600",
-    outline: "border-2 border-slate-600 text-slate-300 hover:border-slate-400 hover:text-white",
-    icon: "p-2 aspect-square"
-  };
-  return (
-    <button onClick={onClick} className={`${base} ${styles[variant as keyof typeof styles]} ${className}`} {...props}>
-      {children}
-    </button>
-  );
-};
-
-const Slider = ({ label, value, min, max, onChange, unit = '' }: any) => (
-  <div className="mb-4">
-    <div className="flex justify-between mb-1">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
-      <span className="text-xs text-indigo-400 font-mono">{value}{unit}</span>
-    </div>
-    <input
-      type="range"
-      min={min}
-      max={max}
-      value={value}
-      onChange={(e) => onChange(parseInt(e.target.value))}
-      className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-    />
-  </div>
-);
-
-const Select = ({ label, value, options, onChange }: any) => (
-  <div className="mb-4">
-    <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-slate-700 text-white text-sm rounded-lg p-2.5 border border-slate-600 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
-      >
-        {options.map((opt: any) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-      </div>
-    </div>
-  </div>
-);
-
-export default function PixelForge() {
-  // State
-  const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [currentPalette, setCurrentPalette] = useState<{r:number, g:number, b:number}[]>([]);
-  const [showGrid, setShowGrid] = useState(false);
-  const [activeTab, setActiveTab] = useState('process'); // process, palette, export
-  
-  // Configuration
-  const [config, setConfig] = useState({
-    pixelSize: 8,
-    pixelAlgo: 'center', // center, average
-    colorCount: 16,
-    quantAlgo: 'median', // median, kmeans
-    ditherAlgo: 'none', // none, bayer, floyd
-    ditherStrength: 0.5,
-    paletteMode: 'auto', // auto, custom
-    customPalette: [] as string[]
-  });
-
-  // Refs
-  const workerRef = useRef<Worker | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Initialize Worker
-  useEffect(() => {
-    const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
-    const worker = new Worker(URL.createObjectURL(blob));
-    workerRef.current = worker;
-
-    worker.onmessage = (e) => {
-      const { success, result, error } = e.data;
-      if (success) {
-        renderResult(result);
-      } else {
-        console.error("Worker Error:", error);
-      }
-      setIsProcessing(false);
-    };
-
-    return () => worker.terminate();
-  }, []);
-
-  // Debounced Processing Trigger
-  useEffect(() => {
-    if (!originalImage || !workerRef.current) return;
-    
-    const timeout = setTimeout(() => {
-      setIsProcessing(true);
-      
-      // Create an offscreen canvas to extract ImageData safely
-      const offscreen = document.createElement('canvas');
-      offscreen.width = originalImage.width;
-      offscreen.height = originalImage.height;
-      const ctx = offscreen.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(originalImage, 0, 0);
-        const imageData = ctx.getImageData(0, 0, originalImage.width, originalImage.height);
-        
-        // Send to worker
-        workerRef.current?.postMessage({
-          imageData,
-          config,
-          id: Date.now()
-        }, [imageData.data.buffer]);
-      }
-    }, 100); // 100ms debounce
-
-    return () => clearTimeout(timeout);
-  }, [config, originalImage]);
-
-  const renderResult = (result: { pixels: ImageData, palette: any[] }) => {
-    const cvs = canvasRef.current;
-    if (!cvs) return;
-
-    // The result is the tiny pixelated version. We scale it up for preview.
-    // However, to keep it crisp, we render the tiny version then use CSS or scale draw.
-    // For download quality, we want to store the tiny data.
-    
-    cvs.width = result.pixels.width;
-    cvs.height = result.pixels.height;
-    
-    const ctx = cvs.getContext('2d');
-    if (ctx) {
-      ctx.putImageData(result.pixels, 0, 0);
-      setPreviewUrl(cvs.toDataURL('image/png'));
-      setCurrentPalette(result.palette);
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => setOriginalImage(img);
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // --- Export Logic ---
-  const handleDownload = (format: 'png' | 'tiles') => {
-    if (!canvasRef.current || !previewUrl) return;
-
-    const link = document.createElement('a');
-    
-    if (format === 'png') {
-      // Create a high-res scaled version
-      const scale = 16; // Export scale
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = canvasRef.current.width * scale;
-      exportCanvas.height = canvasRef.current.height * scale;
-      const ctx = exportCanvas.getContext('2d');
-      if (ctx) {
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(canvasRef.current, 0, 0, exportCanvas.width, exportCanvas.height);
-        
-        // Grid Overlay
-        if (showGrid) {
-          ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-          ctx.lineWidth = 1;
-          for (let x = 0; x <= exportCanvas.width; x+=scale) {
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, exportCanvas.height); ctx.stroke();
-          }
-          for (let y = 0; y <= exportCanvas.height; y+=scale) {
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(exportCanvas.width, y); ctx.stroke();
-          }
+        /* Pixelated Rendering Class */
+        .pixelated {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
         }
-        
-        link.download = `pixelforge_${Date.now()}.png`;
-        link.href = exportCanvas.toDataURL('image/png');
-        link.click();
-      }
-    } else {
-        // Tile export would go here (requires JSZip or similar, simulated here)
-        alert("Tile export requires external ZIP library (omitted for single-file compliance). PNG exported instead.");
-        handleDownload('png');
-    }
-  };
 
-  // --- UI Layout ---
+        /* Hide/Show logic */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white overflow-hidden h-screen flex flex-col md:flex-row">
 
-  return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-indigo-500 selection:text-white overflow-hidden flex flex-col md:flex-row">
-      
-      {/* HEADER (Mobile Only) */}
-      <div className="md:hidden bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded flex items-center justify-center font-bold text-white">P</div>
-          <h1 className="font-bold tracking-tight">PixelForge</h1>
+    <!-- MOBILE HEADER -->
+    <div class="md:hidden bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700 z-10 shrink-0">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded flex items-center justify-center font-bold text-white">P</div>
+            <h1 class="font-bold tracking-tight">PixelForge</h1>
         </div>
-        <button className="p-2 text-slate-400 hover:text-white">
-          <Menu size={24} />
+        <button id="reset-mobile" class="text-slate-400 hover:text-white">
+            <i data-lucide="refresh-cw"></i>
         </button>
-      </div>
-
-      {/* LEFT COLUMN: PREVIEW */}
-      <div className="flex-1 relative bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] bg-slate-950 flex flex-col justify-center items-center overflow-hidden">
-        
-        {/* Canvas Area */}
-        <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8">
-          {!originalImage ? (
-            <div className="text-center p-8 border-2 border-dashed border-slate-700 rounded-2xl bg-slate-900/50 max-w-sm w-full">
-              <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-400">
-                <Upload size={32} />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Upload Image</h3>
-              <p className="text-slate-400 mb-6 text-sm">Drag & drop or tap to select</p>
-              <label className="block">
-                <Button variant="primary" className="w-full">
-                  <ImageIcon size={18} /> Select Photo
-                </Button>
-                <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
-              </label>
-            </div>
-          ) : (
-            <div className="relative shadow-2xl shadow-black/50 group">
-              {/* The Actual Canvas (Hidden source of truth) */}
-              <canvas 
-                ref={canvasRef} 
-                className="hidden"
-                style={{ imageRendering: 'pixelated' }}
-              />
-              
-              {/* Display Image (Scaled CSS) */}
-              {previewUrl && (
-                <>
-                  <img 
-                    src={previewUrl} 
-                    alt="Pixel Art Preview" 
-                    className="max-w-full max-h-[70vh] object-contain border-4 border-slate-800 bg-slate-800"
-                    style={{ 
-                      imageRendering: 'pixelated',
-                      boxShadow: '0 0 0 1px rgba(255,255,255,0.1)' 
-                    }}
-                  />
-                  {showGrid && (
-                    <div 
-                      className="absolute inset-0 pointer-events-none opacity-30"
-                      style={{
-                        backgroundSize: `${100 / canvasRef.current!.width}% ${100 / canvasRef.current!.height}%`,
-                        backgroundImage: `
-                          linear-gradient(to right, #fff 1px, transparent 1px),
-                          linear-gradient(to bottom, #fff 1px, transparent 1px)
-                        `
-                      }}
-                    />
-                  )}
-                </>
-              )}
-
-              {/* Loading Overlay */}
-              {isProcessing && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm transition-opacity">
-                  <RefreshCw className="animate-spin text-indigo-400" size={32} />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Toolbar Floating (Zoom/Grid) */}
-        {originalImage && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur border border-slate-700 rounded-full px-4 py-2 flex items-center gap-4 shadow-xl z-20">
-            <button onClick={() => setShowGrid(!showGrid)} className={`p-2 rounded-full transition-colors ${showGrid ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-              <Grid size={20} />
-            </button>
-            <div className="w-px h-6 bg-slate-600"></div>
-            <button onClick={() => setOriginalImage(null)} className="p-2 text-red-400 hover:bg-red-900/30 rounded-full">
-              <X size={20} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* RIGHT COLUMN: CONTROLS */}
-      <div className={`
-        bg-slate-900 border-t md:border-t-0 md:border-l border-slate-700 
-        w-full md:w-[360px] lg:w-[400px] flex flex-col z-20 shadow-2xl
-        transition-all duration-300 ease-in-out
-        ${originalImage ? 'h-[50vh] md:h-screen' : 'h-0 md:h-screen overflow-hidden opacity-0 md:opacity-100'}
-      `}>
-        
-        {/* Tabs */}
-        <div className="flex border-b border-slate-700">
-          <button 
-            onClick={() => setActiveTab('process')}
-            className={`flex-1 py-4 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2
-              ${activeTab === 'process' ? 'border-indigo-500 text-white bg-slate-800' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
-          >
-            <Settings size={16} /> Edit
-          </button>
-          <button 
-            onClick={() => setActiveTab('palette')}
-            className={`flex-1 py-4 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2
-              ${activeTab === 'palette' ? 'border-indigo-500 text-white bg-slate-800' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
-          >
-            <Palette size={16} /> Colors
-          </button>
-          <button 
-            onClick={() => setActiveTab('export')}
-            className={`flex-1 py-4 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2
-              ${activeTab === 'export' ? 'border-indigo-500 text-white bg-slate-800' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
-          >
-            <Download size={16} /> Export
-          </button>
-        </div>
-
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-          
-          {/* TAB: PROCESS */}
-          {activeTab === 'process' && (
-            <div className="space-y-6">
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Monitor size={18} className="text-indigo-400" />
-                  <h3 className="font-bold text-white">Resolution</h3>
-                </div>
-                <Slider 
-                  label="Pixel Size" 
-                  value={config.pixelSize} 
-                  min={1} max={32} 
-                  onChange={(v: number) => setConfig({...config, pixelSize: v})} 
-                  unit="px"
-                />
-                <Select 
-                  label="Sampling Method"
-                  value={config.pixelAlgo}
-                  options={[
-                    { value: 'center', label: 'Crisp (Nearest Neighbor)' },
-                    { value: 'average', label: 'Smooth (Block Average)' }
-                  ]}
-                  onChange={(v: string) => setConfig({...config, pixelAlgo: v})}
-                />
-              </section>
-
-              <hr className="border-slate-800" />
-
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Layers size={18} className="text-indigo-400" />
-                  <h3 className="font-bold text-white">Dithering</h3>
-                </div>
-                <Select 
-                  label="Algorithm"
-                  value={config.ditherAlgo}
-                  options={[
-                    { value: 'none', label: 'None (Solid Colors)' },
-                    { value: 'bayer', label: 'Bayer (Ordered Pattern)' },
-                    { value: 'floyd', label: 'Floyd-Steinberg (Diffusion)' }
-                  ]}
-                  onChange={(v: string) => setConfig({...config, ditherAlgo: v})}
-                />
-                {config.ditherAlgo !== 'none' && (
-                  <Slider 
-                    label="Intensity" 
-                    value={Math.round(config.ditherStrength * 100)} 
-                    min={0} max={100} 
-                    onChange={(v: number) => setConfig({...config, ditherStrength: v/100})} 
-                    unit="%"
-                  />
-                )}
-              </section>
-            </div>
-          )}
-
-          {/* TAB: PALETTE */}
-          {activeTab === 'palette' && (
-            <div className="space-y-6">
-              <section>
-                <Select 
-                  label="Palette Mode"
-                  value={config.paletteMode}
-                  options={[
-                    { value: 'auto', label: 'Auto Extract' },
-                    { value: 'custom', label: 'Custom / Preset' } // Simplified for this demo
-                  ]}
-                  onChange={(v: string) => setConfig({...config, paletteMode: v})}
-                />
-              </section>
-
-              {config.paletteMode === 'auto' && (
-                <>
-                  <Slider 
-                    label="Color Count" 
-                    value={config.colorCount} 
-                    min={2} max={64} 
-                    onChange={(v: number) => setConfig({...config, colorCount: v})} 
-                  />
-                   <Select 
-                    label="Reduction Engine"
-                    value={config.quantAlgo}
-                    options={[
-                      { value: 'median', label: 'Median Cut (Balanced)' },
-                      { value: 'kmeans', label: 'K-Means (Precise, Slower)' }
-                    ]}
-                    onChange={(v: string) => setConfig({...config, quantAlgo: v})}
-                  />
-                </>
-              )}
-
-              <div className="bg-slate-800 rounded-lg p-4">
-                <h4 className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-3">Active Colors ({currentPalette.length})</h4>
-                <div className="grid grid-cols-8 gap-1">
-                  {currentPalette.map((col, i) => {
-                    const hex = rgbToHex(col.r, col.g, col.b);
-                    return (
-                      <div 
-                        key={i} 
-                        className="aspect-square rounded-sm shadow-sm cursor-pointer hover:scale-110 transition-transform relative group"
-                        style={{ backgroundColor: hex }}
-                        title={hex}
-                      >
-                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                            {hex}
-                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: EXPORT */}
-          {activeTab === 'export' && (
-            <div className="space-y-6">
-              <div className="bg-slate-800 p-6 rounded-xl text-center space-y-4">
-                <div className="w-full aspect-square bg-slate-900 rounded-lg flex items-center justify-center border border-slate-700 overflow-hidden relative">
-                   {previewUrl && (
-                      <img 
-                        src={previewUrl} 
-                        className="w-full h-full object-contain" 
-                        style={{ imageRendering: 'pixelated' }}
-                      />
-                   )}
-                </div>
-                <div className="flex gap-2 justify-center text-sm text-slate-400 font-mono">
-                  <span>{canvasRef.current?.width}px</span>
-                  <span>×</span>
-                  <span>{canvasRef.current?.height}px</span>
-                </div>
-              </div>
-
-              <Button onClick={() => handleDownload('png')} className="w-full py-4 text-lg">
-                <Download size={20} /> Download PNG
-              </Button>
-              
-              <Button onClick={() => handleDownload('tiles')} variant="secondary" className="w-full">
-                <Layers size={18} /> Export as Tileset (ZIP)
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        {/* Footer info */}
-        <div className="p-4 border-t border-slate-800 text-xs text-slate-600 text-center">
-           Client-side processing. No data leaves your device.
-        </div>
-      </div>
     </div>
-  );
-}
+
+    <!-- LEFT COLUMN: PREVIEW AREA -->
+    <div class="flex-1 relative bg-slate-950 flex flex-col justify-center items-center overflow-hidden" style="background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36zwjjgzhhYWGMYAEYB8RmROaABADeOQ8CXl/xfgAAAABJRU5ErkJggg==');">
+        
+        <!-- Upload State -->
+        <div id="upload-container" class="text-center p-8 border-2 border-dashed border-slate-700 rounded-2xl bg-slate-900/80 max-w-sm w-full transition-all">
+            <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-400">
+                <i data-lucide="upload" size="32"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Upload Image</h3>
+            <p class="text-slate-400 mb-6 text-sm">Drag & drop or click to select</p>
+            <input type="file" id="file-input" class="hidden" accept="image/*">
+            <button onclick="document.getElementById('file-input').click()" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2">
+                <i data-lucide="image"></i> Select Photo
+            </button>
+        </div>
+
+        <!-- Canvas Container -->
+        <div id="canvas-container" class="relative hidden shadow-2xl shadow-black/50 group max-w-full max-h-[70vh] p-4">
+            <!-- Offscreen source canvas (hidden) -->
+            <canvas id="source-canvas" class="hidden"></canvas>
+            <!-- Preview Image (Source for visual) -->
+            <img id="preview-image" class="pixelated max-w-full max-h-[60vh] md:max-h-[80vh] object-contain border-4 border-slate-800 bg-slate-800 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]" />
+            
+            <!-- Grid Overlay -->
+            <div id="grid-overlay" class="absolute inset-0 pointer-events-none opacity-30 hidden" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+            
+            <!-- Loading Spinner -->
+            <div id="loading-overlay" class="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm hidden z-50 rounded">
+                <i data-lucide="loader-2" class="animate-spin text-indigo-400 w-8 h-8"></i>
+            </div>
+        </div>
+
+        <!-- Floating Toolbar -->
+        <div id="floating-toolbar" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur border border-slate-700 rounded-full px-4 py-2 flex items-center gap-4 shadow-xl z-20 hidden">
+            <button id="btn-grid" class="p-2 text-slate-400 hover:text-white rounded-full transition-colors" title="Toggle Grid">
+                <i data-lucide="grid"></i>
+            </button>
+            <div class="w-px h-6 bg-slate-600"></div>
+            <button id="btn-close" class="p-2 text-red-400 hover:bg-red-900/30 rounded-full transition-colors" title="Close Image">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: CONTROLS -->
+    <div id="controls-panel" class="bg-slate-900 border-t md:border-t-0 md:border-l border-slate-700 w-full md:w-[360px] lg:w-[400px] flex flex-col z-20 shadow-2xl transition-all duration-300 h-0 md:h-screen overflow-hidden opacity-0 md:opacity-100">
+        
+        <!-- Tabs -->
+        <div class="flex border-b border-slate-700 shrink-0">
+            <button class="tab-btn flex-1 py-4 text-sm font-medium border-b-2 border-indigo-500 text-white bg-slate-800 transition-colors flex items-center justify-center gap-2" data-tab="process">
+                <i data-lucide="settings" width="16"></i> Edit
+            </button>
+            <button class="tab-btn flex-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors flex items-center justify-center gap-2" data-tab="palette">
+                <i data-lucide="palette" width="16"></i> Colors
+            </button>
+            <button class="tab-btn flex-1 py-4 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors flex items-center justify-center gap-2" data-tab="export">
+                <i data-lucide="download" width="16"></i> Export
+            </button>
+        </div>
+
+        <!-- Tab Content Wrapper -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+            
+            <!-- TAB: PROCESS -->
+            <div id="tab-process" class="tab-content space-y-6">
+                <section>
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="monitor" class="text-indigo-400 w-5"></i>
+                        <h3 class="font-bold text-white">Resolution</h3>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-1">
+                            <label class="text-sm font-medium text-slate-300">Pixel Size</label>
+                            <span id="val-pixelSize" class="text-xs text-indigo-400 font-mono">8px</span>
+                        </div>
+                        <input type="range" id="inp-pixelSize" min="1" max="32" value="8" class="accent-indigo-500">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Sampling Method</label>
+                        <select id="inp-pixelAlgo" class="w-full bg-slate-700 text-white text-sm rounded-lg p-2.5 border border-slate-600 focus:ring-indigo-500">
+                            <option value="center">Crisp (Nearest Neighbor)</option>
+                            <option value="average">Smooth (Block Average)</option>
+                        </select>
+                    </div>
+                </section>
+
+                <hr class="border-slate-800" />
+
+                <section>
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="layers" class="text-indigo-400 w-5"></i>
+                        <h3 class="font-bold text-white">Dithering</h3>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Algorithm</label>
+                        <select id="inp-ditherAlgo" class="w-full bg-slate-700 text-white text-sm rounded-lg p-2.5 border border-slate-600 focus:ring-indigo-500">
+                            <option value="none">None (Solid Colors)</option>
+                            <option value="bayer">Bayer (Ordered Pattern)</option>
+                            <option value="floyd">Floyd-Steinberg (Diffusion)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4 hidden" id="group-ditherStrength">
+                        <div class="flex justify-between mb-1">
+                            <label class="text-sm font-medium text-slate-300">Intensity</label>
+                            <span id="val-ditherStrength" class="text-xs text-indigo-400 font-mono">50%</span>
+                        </div>
+                        <input type="range" id="inp-ditherStrength" min="0" max="100" value="50" class="accent-indigo-500">
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB: PALETTE -->
+            <div id="tab-palette" class="tab-content space-y-6 hidden">
+                <section>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Palette Mode</label>
+                        <select id="inp-paletteMode" class="w-full bg-slate-700 text-white text-sm rounded-lg p-2.5 border border-slate-600 focus:ring-indigo-500">
+                            <option value="auto">Auto Extract</option>
+                            <option value="custom" disabled>Custom (Coming Soon)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-1">
+                            <label class="text-sm font-medium text-slate-300">Color Count</label>
+                            <span id="val-colorCount" class="text-xs text-indigo-400 font-mono">16</span>
+                        </div>
+                        <input type="range" id="inp-colorCount" min="2" max="64" value="16" class="accent-indigo-500">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Reduction Engine</label>
+                        <select id="inp-quantAlgo" class="w-full bg-slate-700 text-white text-sm rounded-lg p-2.5 border border-slate-600 focus:ring-indigo-500">
+                            <option value="median">Median Cut (Balanced)</option>
+                            <option value="kmeans">K-Means (Precise)</option>
+                        </select>
+                    </div>
+                </section>
+
+                <div class="bg-slate-800 rounded-lg p-4">
+                    <h4 class="text-xs uppercase tracking-wider text-slate-500 font-bold mb-3">Active Colors</h4>
+                    <div id="palette-grid" class="grid grid-cols-8 gap-1">
+                        <!-- Colors injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: EXPORT -->
+            <div id="tab-export" class="tab-content space-y-6 hidden">
+                <div class="bg-slate-800 p-6 rounded-xl text-center space-y-4">
+                    <div class="text-slate-400 text-sm">Output Dimensions</div>
+                    <div class="flex gap-2 justify-center text-lg text-white font-mono font-bold">
+                        <span id="export-dim-w">0</span>
+                        <span class="text-slate-600">×</span>
+                        <span id="export-dim-h">0</span>
+                    </div>
+                </div>
+
+                <button id="btn-download-png" class="w-full px-4 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition-all shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="download"></i> Download PNG
+                </button>
+                
+                <button id="btn-download-tiles" class="w-full px-4 py-4 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg font-medium transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="layers"></i> Export Tileset (ZIP)
+                </button>
+
+                <p class="text-xs text-slate-500 text-center mt-2">Tileset export creates a placeholder in this demo.</p>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-600 text-center shrink-0">
+            Client-side processing. No data leaves your device.
+        </div>
+    </div>
+
+
+    <!-- WORKER SCRIPT (EMBEDDED) -->
+    <script id="worker-code" type="javascript/worker">
+        self.onmessage = async (e) => {
+            const { imageData, config, id } = e.data;
+            try {
+                const result = processImage(imageData, config);
+                self.postMessage({ id, success: true, result }, [result.pixels.data.buffer]);
+            } catch (err) {
+                self.postMessage({ id, success: false, error: err.message });
+            }
+        };
+
+        function processImage(original, config) {
+            const { pixelSize, pixelAlgo, colorCount, quantAlgo, ditherAlgo, ditherStrength, paletteMode } = config;
+            
+            // 1. Downscale
+            const targetW = Math.max(1, Math.floor(original.width / pixelSize));
+            const targetH = Math.max(1, Math.floor(original.height / pixelSize));
+            const downscaled = new ImageData(targetW, targetH);
+            
+            // Sampling
+            if (pixelAlgo === 'average') {
+                for (let y = 0; y < targetH; y++) {
+                    for (let x = 0; x < targetW; x++) {
+                        let r = 0, g = 0, b = 0, a = 0, count = 0;
+                        const startX = x * pixelSize;
+                        const startY = y * pixelSize;
+                        for (let py = 0; py < pixelSize; py++) {
+                            for (let px = 0; px < pixelSize; px++) {
+                                const sx = startX + px;
+                                const sy = startY + py;
+                                if (sx < original.width && sy < original.height) {
+                                    const idx = (sy * original.width + sx) * 4;
+                                    r += original.data[idx];
+                                    g += original.data[idx+1];
+                                    b += original.data[idx+2];
+                                    a += original.data[idx+3];
+                                    count++;
+                                }
+                            }
+                        }
+                        const tidx = (y * targetW + x) * 4;
+                        downscaled.data[tidx] = r / count;
+                        downscaled.data[tidx+1] = g / count;
+                        downscaled.data[tidx+2] = b / count;
+                        downscaled.data[tidx+3] = a / count;
+                    }
+                }
+            } else {
+                for (let y = 0; y < targetH; y++) {
+                    for (let x = 0; x < targetW; x++) {
+                        const sx = Math.floor((x * pixelSize) + (pixelSize / 2));
+                        const sy = Math.floor((y * pixelSize) + (pixelSize / 2));
+                        const safeX = Math.min(sx, original.width - 1);
+                        const safeY = Math.min(sy, original.height - 1);
+                        const sidx = (safeY * original.width + safeX) * 4;
+                        const tidx = (y * targetW + x) * 4;
+                        downscaled.data[tidx] = original.data[sidx];
+                        downscaled.data[tidx+1] = original.data[sidx+1];
+                        downscaled.data[tidx+2] = original.data[sidx+2];
+                        downscaled.data[tidx+3] = original.data[sidx+3];
+                    }
+                }
+            }
+
+            // 2. Palette
+            let palette = [];
+            const pixels = [];
+            for (let i = 0; i < downscaled.data.length; i += 4) {
+                if (downscaled.data[i+3] > 128) {
+                    pixels.push({ r: downscaled.data[i], g: downscaled.data[i+1], b: downscaled.data[i+2] });
+                }
+            }
+            
+            if (quantAlgo === 'kmeans') {
+                palette = kMeans(pixels, colorCount);
+            } else {
+                palette = medianCut(pixels, colorCount);
+            }
+
+            // 3. Quantization & Dither
+            const width = downscaled.width;
+            const height = downscaled.height;
+            const data = downscaled.data;
+
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const idx = (y * width + x) * 4;
+                    const oldR = data[idx];
+                    const oldG = data[idx+1];
+                    const oldB = data[idx+2];
+                    const oldA = data[idx+3];
+
+                    if (oldA < 128) { data[idx+3] = 0; continue; }
+
+                    let threshold = 0;
+                    if (ditherAlgo === 'bayer') {
+                        const bayerMatrix = [[0, 8, 2, 10],[12, 4, 14, 6],[3, 11, 1, 9],[15, 7, 13, 5]];
+                        const strength = ditherStrength * 32; 
+                        const mapVal = bayerMatrix[y % 4][x % 4];
+                        threshold = (mapVal / 16 - 0.5) * strength;
+                    }
+
+                    const closest = findClosest(oldR + threshold, oldG + threshold, oldB + threshold, palette);
+
+                    data[idx] = closest.r;
+                    data[idx+1] = closest.g;
+                    data[idx+2] = closest.b;
+                    data[idx+3] = 255;
+
+                    if (ditherAlgo === 'floyd' && ditherStrength > 0) {
+                        const errR = (oldR - closest.r) * ditherStrength;
+                        const errG = (oldG - closest.g) * ditherStrength;
+                        const errB = (oldB - closest.b) * ditherStrength;
+                        distributeError(data, x, y, width, height, errR, errG, errB);
+                    }
+                }
+            }
+
+            return { pixels: downscaled, palette: palette };
+        }
+
+        // --- Helpers ---
+        function findClosest(r, g, b, palette) {
+            let minDist = Infinity;
+            let closest = palette[0] || {r:0, g:0, b:0};
+            for (let i = 0; i < palette.length; i++) {
+                const p = palette[i];
+                const dist = (r - p.r) ** 2 + (g - p.g) ** 2 + (b - p.b) ** 2;
+                if (dist < minDist) { minDist = dist; closest = p; }
+            }
+            return closest;
+        }
+
+        function distributeError(data, x, y, w, h, er, eg, eb) {
+            const addErr = (dx, dy, factor) => {
+                if (x + dx >= 0 && x + dx < w && y + dy >= 0 && y + dy < h) {
+                    const idx = ((y + dy) * w + (x + dx)) * 4;
+                    data[idx] = Math.min(255, Math.max(0, data[idx] + er * factor));
+                    data[idx+1] = Math.min(255, Math.max(0, data[idx+1] + eg * factor));
+                    data[idx+2] = Math.min(255, Math.max(0, data[idx+2] + eb * factor));
+                }
+            };
+            addErr(1, 0, 7/16); addErr(-1, 1, 3/16); addErr(0, 1, 5/16); addErr(1, 1, 1/16);
+        }
+
+        function medianCut(pixels, count) {
+            if (pixels.length === 0) return [];
+            const split = (buckets) => {
+                if (buckets.length >= count) return buckets;
+                let bestBucketIdx = -1, maxRange = -1, bestChannel = 'r';
+                buckets.forEach((bucket, idx) => {
+                    if (bucket.length === 0) return;
+                    let minR=255, maxR=0, minG=255, maxG=0, minB=255, maxB=0;
+                    bucket.forEach(p => {
+                        minR = Math.min(minR, p.r); maxR = Math.max(maxR, p.r);
+                        minG = Math.min(minG, p.g); maxG = Math.max(maxG, p.g);
+                        minB = Math.min(minB, p.b); maxB = Math.max(maxB, p.b);
+                    });
+                    const rR=maxR-minR, rG=maxG-minG, rB=maxB-minB;
+                    const max = Math.max(rR, rG, rB);
+                    if (max > maxRange) { maxRange=max; bestBucketIdx=idx; bestChannel = max===rR?'r':max===rG?'g':'b'; }
+                });
+                if (bestBucketIdx === -1) return buckets;
+                const bucket = buckets[bestBucketIdx];
+                bucket.sort((a,b) => a[bestChannel]-b[bestChannel]);
+                const mid = Math.floor(bucket.length/2);
+                buckets.splice(bestBucketIdx, 1, bucket.slice(0,mid), bucket.slice(mid));
+                return split(buckets);
+            };
+            const buckets = split([pixels]);
+            return buckets.map(b => {
+                if (b.length===0) return {r:0,g:0,b:0};
+                let r=0,g=0,b=0; b.forEach(p=>{r+=p.r; g+=p.g; b+=p.b});
+                return {r:Math.round(r/b.length), g:Math.round(g/b.length), b:Math.round(b/b.length)};
+            });
+        }
+
+        function kMeans(pixels, k) {
+            if (pixels.length <= k) return pixels;
+            let centroids = [];
+            for(let i=0; i<k; i++) centroids.push(pixels[Math.floor(Math.random()*pixels.length)]);
+            for(let iter=0; iter<5; iter++) {
+                const assignments = new Array(k).fill(0).map(()=>({r:0,g:0,b:0,count:0}));
+                for(let i=0; i<pixels.length; i++) {
+                    const p = pixels[i];
+                    let minDist=Infinity, idx=0;
+                    for(let j=0; j<k; j++) {
+                        const c = centroids[j];
+                        const dist = (p.r-c.r)**2 + (p.g-c.g)**2 + (p.b-c.b)**2;
+                        if(dist < minDist) { minDist=dist; idx=j; }
+                    }
+                    assignments[idx].r+=p.r; assignments[idx].g+=p.g; assignments[idx].b+=p.b; assignments[idx].count++;
+                }
+                for(let j=0; j<k; j++) {
+                    if(assignments[j].count>0) {
+                        centroids[j] = {
+                            r: Math.round(assignments[j].r/assignments[j].count),
+                            g: Math.round(assignments[j].g/assignments[j].count),
+                            b: Math.round(assignments[j].b/assignments[j].count)
+                        };
+                    }
+                }
+            }
+            return centroids;
+        }
+    </script>
+
+    <!-- MAIN APP SCRIPT -->
+    <script>
+        // --- Globals & State ---
+        const state = {
+            config: {
+                pixelSize: 8,
+                pixelAlgo: 'center',
+                colorCount: 16,
+                quantAlgo: 'median',
+                ditherAlgo: 'none',
+                ditherStrength: 0.5,
+                paletteMode: 'auto'
+            },
+            originalImage: null, // Image Object
+            processedData: null // { pixels: ImageData, palette: [] }
+        };
+
+        const els = {}; // Cache DOM elements
+        let worker = null;
+        let debounceTimer = null;
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initElements();
+            initWorker();
+            initEventListeners();
+        });
+
+        function initElements() {
+            const id = (i) => document.getElementById(i);
+            els.uploadContainer = id('upload-container');
+            els.canvasContainer = id('canvas-container');
+            els.fileInput = id('file-input');
+            els.previewImage = id('preview-image');
+            els.sourceCanvas = id('source-canvas');
+            els.gridOverlay = id('grid-overlay');
+            els.loadingOverlay = id('loading-overlay');
+            els.controlsPanel = id('controls-panel');
+            els.paletteGrid = id('palette-grid');
+            els.floatingToolbar = id('floating-toolbar');
+            
+            // Value Labels
+            els.valPixelSize = id('val-pixelSize');
+            els.valColorCount = id('val-colorCount');
+            els.valDitherStrength = id('val-ditherStrength');
+
+            // Inputs
+            els.inpPixelSize = id('inp-pixelSize');
+            els.inpPixelAlgo = id('inp-pixelAlgo');
+            els.inpColorCount = id('inp-colorCount');
+            els.inpQuantAlgo = id('inp-quantAlgo');
+            els.inpDitherAlgo = id('inp-ditherAlgo');
+            els.inpDitherStrength = id('inp-ditherStrength');
+            els.inpPaletteMode = id('inp-paletteMode');
+        }
+
+        function initWorker() {
+            const blob = new Blob([document.getElementById('worker-code').textContent], { type: "text/javascript" });
+            worker = new Worker(window.URL.createObjectURL(blob));
+            
+            worker.onmessage = (e) => {
+                const { success, result, error } = e.data;
+                els.loadingOverlay.classList.add('hidden');
+                
+                if (success) {
+                    state.processedData = result;
+                    renderPreview();
+                    updatePaletteUI(result.palette);
+                    updateExportUI();
+                } else {
+                    console.error(error);
+                    alert("Error processing image.");
+                }
+            };
+        }
+
+        function initEventListeners() {
+            // Upload
+            els.fileInput.addEventListener('change', handleFileSelect);
+            document.body.addEventListener('dragover', e => e.preventDefault());
+            document.body.addEventListener('drop', e => {
+                e.preventDefault();
+                if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+            });
+
+            // Controls
+            const bind = (el, key, type='int', cb) => {
+                el.addEventListener('input', (e) => {
+                    let val = e.target.value;
+                    if(type==='int') val = parseInt(val);
+                    if(type==='float') val = parseInt(val) / 100;
+                    state.config[key] = val;
+                    if(cb) cb(val);
+                    triggerProcess();
+                });
+            };
+
+            bind(els.inpPixelSize, 'pixelSize', 'int', v => els.valPixelSize.innerText = v + 'px');
+            bind(els.inpColorCount, 'colorCount', 'int', v => els.valColorCount.innerText = v);
+            bind(els.inpPixelAlgo, 'pixelAlgo', 'str');
+            bind(els.inpQuantAlgo, 'quantAlgo', 'str');
+            bind(els.inpPaletteMode, 'paletteMode', 'str');
+            
+            els.inpDitherAlgo.addEventListener('change', (e) => {
+                state.config.ditherAlgo = e.target.value;
+                const strengthGroup = document.getElementById('group-ditherStrength');
+                if (e.target.value === 'none') strengthGroup.classList.add('hidden');
+                else strengthGroup.classList.remove('hidden');
+                triggerProcess();
+            });
+
+            bind(els.inpDitherStrength, 'ditherStrength', 'float', v => els.valDitherStrength.innerText = Math.round(v*100) + '%');
+
+            // Toolbar
+            document.getElementById('btn-grid').addEventListener('click', toggleGrid);
+            document.getElementById('btn-close').addEventListener('click', resetApp);
+            document.getElementById('reset-mobile').addEventListener('click', resetApp);
+
+            // Tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('border-indigo-500', 'text-white', 'bg-slate-800');
+                        b.classList.add('border-transparent', 'text-slate-400');
+                    });
+                    btn.classList.remove('border-transparent', 'text-slate-400');
+                    btn.classList.add('border-indigo-500', 'text-white', 'bg-slate-800');
+                    
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                    document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+                });
+            });
+
+            // Download
+            document.getElementById('btn-download-png').addEventListener('click', () => downloadImage('png'));
+            document.getElementById('btn-download-tiles').addEventListener('click', () => alert("Tileset generation requires external libraries. Use PNG for now!"));
+        }
+
+        // --- Core Logic ---
+
+        function handleFileSelect(e) {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        }
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    state.originalImage = img;
+                    els.uploadContainer.classList.add('hidden');
+                    els.canvasContainer.classList.remove('hidden');
+                    els.floatingToolbar.classList.remove('hidden');
+                    els.controlsPanel.classList.remove('h-0', 'opacity-0');
+                    els.controlsPanel.classList.add('h-[50vh]', 'md:h-screen', 'opacity-100');
+                    triggerProcess();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function triggerProcess() {
+            if (!state.originalImage) return;
+            
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                els.loadingOverlay.classList.remove('hidden');
+                
+                // Draw original to hidden canvas to get ImageData
+                els.sourceCanvas.width = state.originalImage.width;
+                els.sourceCanvas.height = state.originalImage.height;
+                const ctx = els.sourceCanvas.getContext('2d');
+                ctx.drawImage(state.originalImage, 0, 0);
+                const imageData = ctx.getImageData(0, 0, state.originalImage.width, state.originalImage.height);
+
+                worker.postMessage({
+                    imageData: imageData,
+                    config: state.config,
+                    id: Date.now()
+                });
+            }, 100);
+        }
+
+        function renderPreview() {
+            if (!state.processedData) return;
+            
+            // Draw tiny pixelated data to source canvas
+            const { pixels } = state.processedData;
+            els.sourceCanvas.width = pixels.width;
+            els.sourceCanvas.height = pixels.height;
+            const ctx = els.sourceCanvas.getContext('2d');
+            ctx.putImageData(pixels, 0, 0);
+
+            // Use data URL for the image element (let CSS scale it up)
+            els.previewImage.src = els.sourceCanvas.toDataURL();
+
+            // Update Grid logic
+            updateGrid();
+        }
+
+        function updateGrid() {
+            if (!state.processedData) return;
+            const w = state.processedData.pixels.width;
+            const h = state.processedData.pixels.height;
+            
+            // We can't easily draw lines on the <img>, so we use background size on overlay
+            // Ideally we'd calculate aspect ratio, but CSS cover/contain makes it tricky.
+            // Simplified: Just update background size assuming 100% fill for now.
+            els.gridOverlay.style.backgroundSize = `${100/w}% ${100/h}%`;
+            els.gridOverlay.style.backgroundImage = `
+                linear-gradient(to right, rgba(255,255,255,0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.3) 1px, transparent 1px)
+            `;
+        }
+
+        function toggleGrid() {
+            els.gridOverlay.classList.toggle('hidden');
+            const btn = document.getElementById('btn-grid');
+            btn.classList.toggle('text-slate-400');
+            btn.classList.toggle('text-indigo-400');
+        }
+
+        function updatePaletteUI(palette) {
+            els.paletteGrid.innerHTML = '';
+            palette.forEach(c => {
+                const hex = `#${[c.r,c.g,c.b].map(x=>x.toString(16).padStart(2,'0')).join('')}`;
+                const div = document.createElement('div');
+                div.className = "aspect-square rounded-sm shadow-sm cursor-pointer hover:scale-110 transition-transform relative group bg-slate-700";
+                div.style.backgroundColor = hex;
+                div.title = hex;
+                els.paletteGrid.appendChild(div);
+            });
+        }
+
+        function updateExportUI() {
+            if(!state.processedData) return;
+            const scale = 16; // Export scale
+            document.getElementById('export-dim-w').innerText = state.processedData.pixels.width * scale;
+            document.getElementById('export-dim-h').innerText = state.processedData.pixels.height * scale;
+        }
+
+        function downloadImage(format) {
+            if (!state.processedData) return;
+            
+            const scale = 16;
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = state.processedData.pixels.width * scale;
+            exportCanvas.height = state.processedData.pixels.height * scale;
+            const ctx = exportCanvas.getContext('2d');
+            
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(els.sourceCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
+
+            // Draw Grid if active
+            if (!els.gridOverlay.classList.contains('hidden')) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 1;
+                for (let x=0; x<=exportCanvas.width; x+=scale) {
+                    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,exportCanvas.height); ctx.stroke();
+                }
+                for (let y=0; y<=exportCanvas.height; y+=scale) {
+                    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(exportCanvas.width,y); ctx.stroke();
+                }
+            }
+
+            const link = document.createElement('a');
+            link.download = `pixelforge-${Date.now()}.png`;
+            link.href = exportCanvas.toDataURL();
+            link.click();
+        }
+
+        function resetApp() {
+            state.originalImage = null;
+            state.processedData = null;
+            els.fileInput.value = '';
+            els.previewImage.src = '';
+            
+            els.uploadContainer.classList.remove('hidden');
+            els.canvasContainer.classList.add('hidden');
+            els.floatingToolbar.classList.add('hidden');
+            els.controlsPanel.classList.remove('h-[50vh]', 'md:h-screen', 'opacity-100');
+            els.controlsPanel.classList.add('h-0', 'opacity-0');
+        }
+
+    </script>
+</body>
+</html>
 
