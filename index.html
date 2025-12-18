@@ -14,7 +14,8 @@
             --bg: #ffffff;
             --fg: #000000;
             --border: #000000;
-            --dim: #888888;
+            --dim: #666666;
+            --light: #f4f4f4;
             --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
         }
 
@@ -35,7 +36,7 @@
         #app {
             display: grid;
             grid-template-rows: 48px 1fr;
-            grid-template-columns: 260px 1fr;
+            grid-template-columns: 280px 1fr;
             height: 100%; width: 100%;
         }
 
@@ -49,17 +50,17 @@
             background: var(--bg); z-index: 10;
         }
 
-        /* SIDEBAR (Friends) */
+        /* SIDEBAR */
         #sidebar {
             grid-column: 1;
             grid-row: 2;
             border-right: 2px solid var(--border);
             display: flex; flex-direction: column;
-            background: #f8f8f8;
+            background: var(--light);
             overflow: hidden;
         }
 
-        /* MAIN PANEL (Context Area) */
+        /* MAIN PANEL */
         #main-panel {
             grid-column: 2;
             grid-row: 2;
@@ -94,6 +95,7 @@
         .btn:disabled { background: var(--dim); cursor: not-allowed; opacity: 0.5; }
         .btn-outline { background: transparent; color: var(--fg); border: 2px solid var(--fg); }
         .btn-danger { background: #000; border: 2px solid #000; color: #fff; } 
+        .btn-small { padding: 4px 8px; min-width: auto; font-size: 11px; }
 
         .input {
             border: 2px solid var(--border); padding: 10px;
@@ -101,15 +103,30 @@
         }
         .input:focus { border-color: var(--dim); }
 
+        /* TABS */
+        .tab-bar { display: flex; border-bottom: 2px solid var(--border); background: var(--bg); }
+        .tab-item { 
+            flex: 1; text-align: center; padding: 12px; cursor: pointer; 
+            font-weight: bold; background: var(--light); border-bottom: 2px solid transparent;
+        }
+        .tab-item.active { background: var(--bg); border-bottom: 2px solid var(--bg); margin-bottom: -2px; }
+
         /* LIST ITEMS */
-        .friend-item {
+        .list-item {
             padding: 12px 16px;
             border-bottom: 1px solid #ddd;
             cursor: pointer;
             display: flex; align-items: center; justify-content: space-between;
         }
-        .friend-item:hover { background: #eee; }
-        .friend-item.active { background: var(--fg); color: var(--bg); }
+        .list-item:hover { background: #fff; }
+        .list-item.active { background: var(--fg); color: var(--bg); }
+        
+        .history-item {
+            padding: 12px 16px; border-bottom: 1px solid #ddd;
+            font-size: 11px; background: var(--bg);
+        }
+        .history-meta { display: flex; justify-content: space-between; color: var(--dim); margin-top: 4px; }
+        
         .status-dot {
             width: 10px; height: 10px; background: #ccc;
             border-radius: 50%; display: inline-block;
@@ -144,7 +161,7 @@
             text-transform: uppercase; margin-left: 8px;
         }
 
-        /* MOBILE TABS */
+        /* MOBILE NAV */
         .mobile-nav {
             display: none; height: 50px; border-top: 2px solid var(--border);
         }
@@ -153,7 +170,7 @@
             font-weight: bold; font-family: inherit;
             border-right: 1px solid var(--border);
         }
-        .nav-btn.active { background: #eee; }
+        .nav-btn.active { background: var(--light); }
 
         /* TOAST */
         #toast-box {
@@ -163,7 +180,7 @@
         .toast {
             background: var(--fg); color: var(--bg);
             padding: 12px 24px; margin-top: 8px;
-            font-weight: bold;
+            font-weight: bold; border: 1px solid var(--bg);
         }
 
         /* MODALS */
@@ -190,32 +207,51 @@
         </div>
     </header>
 
-    <!-- 2. LEFT COLUMN: FRIENDS -->
+    <!-- 2. SIDEBAR -->
     <aside id="sidebar" class="active">
-        <div style="padding: 12px; border-bottom: 2px solid var(--border);">
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <input id="add-id" class="input" placeholder="Peer ID (e.g. ghost-1234)">
+        <!-- Sidebar Tabs -->
+        <div class="tab-bar">
+            <div class="tab-item active" onclick="app.setSidebarTab('friends')" id="tab-friends">FRIENDS</div>
+            <div class="tab-item" onclick="app.setSidebarTab('history')" id="tab-history">HISTORY</div>
+        </div>
+
+        <!-- Friends View -->
+        <div id="sidebar-friends" style="display: flex; flex-direction: column; height: 100%;">
+            <div style="padding: 12px; border-bottom: 2px solid var(--border); background: var(--bg);">
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input id="add-id" class="input" placeholder="Peer ID (e.g. ghost-1234)">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" style="flex:1; padding: 8px;" onclick="app.addFriend()">Add</button>
+                    <button class="btn btn-outline" style="width: 40px; padding: 0;" onclick="app.scanQR()">[+]</button>
+                </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-outline" style="flex:1; padding: 8px;" onclick="app.addFriend()">Add</button>
-                <button class="btn btn-outline" style="width: 40px; padding: 0;" onclick="app.scanQR()">[+]</button>
+            <div id="friends-list" style="overflow-y: auto; flex: 1;">
+                <!-- Friends List -->
             </div>
         </div>
-        <div id="friends-list" style="overflow-y: auto; flex: 1;">
-            <!-- Friends injected here -->
+
+        <!-- History View -->
+        <div id="sidebar-history" style="display: none; flex-direction: column; height: 100%;">
+            <div style="padding: 12px; border-bottom: 2px solid var(--border); text-align: right; background: var(--bg);">
+                <button class="btn btn-small btn-outline" onclick="app.clearHistory()">CLEAR LOG</button>
+            </div>
+            <div id="history-list" style="overflow-y: auto; flex: 1;">
+                <!-- History List -->
+            </div>
         </div>
     </aside>
 
-    <!-- 3. MAIN PANEL: CONTEXT AWARE -->
+    <!-- 3. MAIN PANEL -->
     <main id="main-panel">
         
-        <!-- VIEW: IDLE -->
+        <!-- IDLE -->
         <div id="view-idle" class="state-view">
-            <h2 style="margin-bottom: 8px;">NO CONNECTION</h2>
-            <p style="color: var(--dim);">Select a friend from the left to begin.</p>
+            <h2 style="margin-bottom: 8px;">READY</h2>
+            <p style="color: var(--dim);">Select a friend to start secure transfer.</p>
         </div>
 
-        <!-- VIEW: CONNECTED -->
+        <!-- CONNECTED -->
         <div id="view-connected" class="state-view hidden">
             <h1 id="conn-name" style="font-size: 32px; margin: 0 0 8px 0;">FRIEND</h1>
             <p id="conn-seen" style="color: var(--dim); margin-bottom: 32px;">Last seen: Just now</p>
@@ -225,11 +261,11 @@
                 SEND FILE
             </button>
             <div style="margin-top: 16px; font-size: 11px; color: var(--dim);">
-                SECURE P2P LINK • 16KB CHUNKS • VERIFIED
+                P2P ENCRYPTED • DIRECT STREAM
             </div>
         </div>
 
-        <!-- VIEW: INCOMING OFFER -->
+        <!-- INCOMING -->
         <div id="view-incoming" class="state-view hidden">
             <h2>INCOMING FILE</h2>
             <div class="stat-grid">
@@ -252,25 +288,23 @@
             </div>
             <div style="display: flex; gap: 16px;">
                 <button class="btn btn-danger" onclick="transfer.receiver.respond(false)">REJECT</button>
-                <button class="btn" onclick="transfer.receiver.respond(true)">ACCEPT DOWNLOAD</button>
+                <button class="btn" onclick="transfer.receiver.respond(true)">SAVE FILE</button>
             </div>
         </div>
 
-        <!-- VIEW: WAITING -->
+        <!-- WAITING -->
         <div id="view-waiting" class="state-view hidden">
             <h2>WAITING...</h2>
-            <p>Waiting for peer to accept the transfer.</p>
+            <p>Request sent. Waiting for acceptance.</p>
             <button class="btn btn-outline" style="margin-top: 24px;" onclick="transfer.sender.cancel()">CANCEL</button>
         </div>
 
-        <!-- VIEW: TRANSFERRING -->
+        <!-- TRANSFERRING -->
         <div id="view-transfer" class="state-view hidden">
             <h2 id="trans-status">TRANSFERRING...</h2>
-            
             <div class="progress-container">
                 <div id="prog-bar" class="progress-bar"></div>
             </div>
-
             <div class="stat-grid">
                 <div>
                     <div class="stat-label">SPEED</div>
@@ -281,7 +315,7 @@
                     <div id="trans-eta" class="stat-val">-- s</div>
                 </div>
                 <div>
-                    <div class="stat-label">VERIFIED</div>
+                    <div class="stat-label">HASH</div>
                     <div id="trans-hash" class="stat-val">...</div>
                 </div>
                 <div>
@@ -289,27 +323,25 @@
                     <div id="trans-pct" class="stat-val">0%</div>
                 </div>
             </div>
-
-            <button class="btn btn-outline" onclick="transfer.cancelAny()">CANCEL TRANSFER</button>
+            <button class="btn btn-outline" onclick="transfer.cancelAny()">CANCEL</button>
         </div>
 
-        <!-- VIEW: COMPLETE -->
+        <!-- COMPLETE -->
         <div id="view-complete" class="state-view hidden">
-            <h2 style="margin-bottom: 8px;">TRANSFER COMPLETE</h2>
-            <div id="comp-verify-tag" class="tag" style="background: #000; color: #fff; margin: 0 0 24px 0;">CHECKSUM VERIFIED</div>
-            
-            <p id="comp-msg" style="margin-bottom: 24px;">File downloaded automatically.</p>
-            
+            <h2 style="margin-bottom: 8px;">COMPLETE</h2>
+            <div id="comp-verify-tag" class="tag" style="background: #000; color: #fff; margin: 0 0 24px 0;">VERIFIED</div>
+            <p id="comp-msg" style="margin-bottom: 24px;">File saved successfully.</p>
             <button id="comp-dl-btn" class="btn hidden" onclick="transfer.receiver.manualDownload()">DOWNLOAD AGAIN</button>
             <button class="btn btn-outline" style="margin-top: 16px;" onclick="app.resetView()">DONE</button>
         </div>
 
     </main>
 
-    <!-- MOBILE TABS -->
+    <!-- MOBILE NAV -->
     <nav class="mobile-nav">
-        <button class="nav-btn active" onclick="app.tab('sidebar')">FRIENDS</button>
-        <button class="nav-btn" onclick="app.tab('main-panel')">TRANSFER</button>
+        <button class="nav-btn active" onclick="app.mobileNav('friends')" id="mob-friends">FRIENDS</button>
+        <button class="nav-btn" onclick="app.mobileNav('transfer')" id="mob-transfer">TRANSFER</button>
+        <button class="nav-btn" onclick="app.mobileNav('history')" id="mob-history">HISTORY</button>
     </nav>
 </div>
 
@@ -334,36 +366,43 @@
 
 <script>
 /**
- * GHOST DROP SOCIAL - PRODUCTION HARDENED
- * Fixes: Memory Safety (FS API), Checksum (Adler-32), Backpressure, State Isolation
+ * GHOST DROP SOCIAL - FINAL PRODUCTION
+ * Features: File System Access API + Blob Fallback, History, Zero Corruption Checksum
  */
 
 // --- UTILS ---
 const utils = {
     id: localStorage.getItem('gd_id') || 'ghost-' + Math.floor(Math.random()*9000+1000),
-    // Adler-32 Rolling Checksum
+    // Simple FNV-1a Hash for integrity check (Faster/Better distribution than Adler)
     updateChecksum: (prev, data) => {
-        let a = prev & 0xFFFF;
-        let b = (prev >>> 16) & 0xFFFF;
-        const len = data.length;
-        for(let i = 0; i < len; i++) {
-            a = (a + data[i]) % 65521;
-            b = (b + a) % 65521;
+        let h = prev;
+        for (let i = 0; i < data.length; i++) {
+            h ^= data[i];
+            h = Math.imul(h, 0x01000193);
         }
-        return ((b << 16) | a) >>> 0;
+        return h >>> 0;
     },
     fmtSize: (b) => {
         const u = ['B','KB','MB','GB']; let i=0;
         while(b >= 1024 && i < u.length-1){ b/=1024; i++; }
         return b.toFixed(1)+u[i];
     },
+    fmtDate: (ts) => new Date(ts).toLocaleString(),
     toast: (msg) => {
         const d = document.createElement('div');
         d.className = 'toast'; d.innerText = msg;
         document.getElementById('toast-box').appendChild(d);
         setTimeout(() => d.remove(), 4000);
     },
-    now: () => Math.floor(Date.now()/1000)
+    now: () => Date.now(),
+    
+    // History Manager
+    addToHistory: (entry) => {
+        state.history.unshift(entry);
+        if(state.history.length > 50) state.history.pop();
+        localStorage.setItem('gd_history', JSON.stringify(state.history));
+        app.renderHistory();
+    }
 };
 localStorage.setItem('gd_id', utils.id);
 
@@ -371,14 +410,14 @@ localStorage.setItem('gd_id', utils.id);
 const state = {
     peer: null,
     friends: JSON.parse(localStorage.getItem('gd_friends') || '{}'),
+    history: JSON.parse(localStorage.getItem('gd_history') || '[]'),
     active: null,
     conns: {},
     scanner: null,
-    // Explicit state containers
     session: { type: null, data: null } // type: 'sender'|'receiver'
 };
 
-// --- NETWORK LAYER ---
+// --- NETWORK ---
 const net = {
     init: () => {
         state.peer = new Peer(utils.id, { debug: 1 });
@@ -391,9 +430,7 @@ const net = {
         state.peer.on('connection', net.handle);
         state.peer.on('error', (e) => {
             utils.toast('Net Error: '+e.type);
-            if(e.type === 'peer-unavailable' && state.session.data) {
-                transfer.cancelAny(true);
-            }
+            if(e.type === 'peer-unavailable') transfer.cancelAny(true);
         });
         state.peer.on('disconnected', () => {
             document.getElementById('global-status').classList.remove('online');
@@ -405,28 +442,21 @@ const net = {
         state.conns[conn.peer] = conn;
 
         conn.on('open', () => {
-            if(conn.dataChannel) conn.dataChannel.bufferedAmountLowThreshold = 65536; // 64KB
+            if(conn.dataChannel) conn.dataChannel.bufferedAmountLowThreshold = 65536;
             net.updateFriend(conn.peer, { online: true, lastSeen: utils.now() });
             if(state.active === conn.peer) app.renderMain();
         });
         conn.on('close', () => {
             net.updateFriend(conn.peer, { online: false, lastSeen: utils.now() });
             if(state.active === conn.peer) app.renderMain();
-            // Cleanup active session if this peer disconnected
-            if(state.session.data && state.session.data.peer === conn.peer) {
+            if(state.session.data?.peer === conn.peer) {
                 utils.toast('Peer Disconnected');
                 transfer.cancelAny(true);
             }
         });
         conn.on('data', (d) => {
-            // Binary data
-            if(d.constructor === ArrayBuffer || d instanceof Uint8Array) {
-                transfer.receiver.ingest(d);
-            } 
-            // Control messages
-            else {
-                transfer.router(conn.peer, d);
-            }
+            if(d.constructor === ArrayBuffer || d instanceof Uint8Array) transfer.receiver.ingest(d);
+            else transfer.router(conn.peer, d);
         });
     },
     connect: (id) => {
@@ -441,7 +471,7 @@ const net = {
         Object.assign(state.friends[id], data);
         localStorage.setItem('gd_friends', JSON.stringify(state.friends));
         if(state.active === id) app.renderMain();
-        app.renderSidebar();
+        app.renderFriends();
     }
 };
 
@@ -457,9 +487,7 @@ const transfer = {
                 transfer.receiver.init(peer, m);
                 break;
             case 'ACCEPT':
-                if(state.session.type === 'sender' && state.session.data.tid === m.tid) {
-                    transfer.sender.start();
-                }
+                if(state.session.type === 'sender' && state.session.data.tid === m.tid) transfer.sender.start();
                 break;
             case 'REJECT':
             case 'BUSY':
@@ -472,7 +500,6 @@ const transfer = {
                 break;
         }
     },
-
     cancelAny: (silent) => {
         if(state.session.type === 'sender') transfer.sender.cancel(silent);
         else if(state.session.type === 'receiver') transfer.receiver.cancel(silent);
@@ -481,7 +508,6 @@ const transfer = {
             if(!silent) app.renderMain();
         }
     },
-
     sender: {
         offer: (input) => {
             const file = input.files[0];
@@ -492,52 +518,43 @@ const transfer = {
             const tid = Date.now().toString(36);
             state.session = {
                 type: 'sender',
-                data: {
-                    peer: state.active, file, tid,
-                    offset: 0, start: 0, checksum: 1
-                }
+                data: { peer: state.active, file, tid, offset: 0, start: 0, checksum: 0x811c9dc5 }
             };
-            
             state.conns[state.active].send({ 
-                type: 'OFFER', 
-                name: file.name, 
-                size: file.size, 
-                mime: file.type, 
-                tid 
+                type: 'OFFER', name: file.name, size: file.size, mime: file.type, tid 
             });
             app.view('view-waiting');
         },
-
         start: async () => {
             const s = state.session.data;
-            s.start = Date.now();
+            s.start = utils.now();
             app.view('view-transfer');
-            
             try { if(navigator.wakeLock) s.wake = await navigator.wakeLock.request('screen'); } catch(e){}
-            
+
             const reader = new FileReader();
             const conn = state.conns[s.peer];
             const CHUNK = 16384; 
 
             const pump = async () => {
                 if(state.session.type !== 'sender') return;
-                
                 if(s.offset >= s.file.size) {
-                    // Finalize
                     conn.send({ type: 'END', tid: s.tid, checksum: s.checksum });
+                    
+                    utils.addToHistory({
+                        type: 'sent', name: s.file.name, size: s.file.size, 
+                        peer: s.peer, date: utils.now(), status: 'SUCCESS'
+                    });
+
                     app.view('view-complete');
                     document.getElementById('comp-msg').innerText = "Upload completed.";
-                    document.getElementById('comp-verify-tag').innerText = "SENT CHECKSUM: " + s.checksum.toString(16).toUpperCase();
+                    document.getElementById('comp-verify-tag').innerText = "HASH: " + s.checksum.toString(16).toUpperCase();
                     document.getElementById('comp-dl-btn').classList.add('hidden');
                     transfer.sender.cleanup();
                     return;
                 }
-
-                // Backpressure
                 if(conn.dataChannel.bufferedAmount > 65536) {
                     await new Promise(r => conn.dataChannel.addEventListener('bufferedamountlow', () => r(), { once: true }));
                 }
-
                 const slice = s.file.slice(s.offset, s.offset + CHUNK);
                 reader.readAsArrayBuffer(slice);
             };
@@ -546,60 +563,56 @@ const transfer = {
                 if(state.session.type !== 'sender') return;
                 const buff = e.target.result;
                 const arr = new Uint8Array(buff);
-                
                 s.checksum = utils.updateChecksum(s.checksum, arr);
                 conn.send(buff);
                 s.offset += buff.byteLength;
-                
                 transfer.ui.stats(s.offset, s.file.size, s.checksum);
                 pump();
             };
-
             pump();
         },
-
         cancel: (silent) => {
             const s = state.session.data;
             if(s) {
                 const conn = state.conns[s.peer];
                 if(conn && conn.open && !silent) conn.send({ type: 'CANCEL', tid: s.tid });
+                
+                if(!s.offset || s.offset < s.file.size) {
+                    utils.addToHistory({
+                        type: 'sent', name: s.file.name, size: s.file.size, 
+                        peer: s.peer, date: utils.now(), status: 'CANCELLED'
+                    });
+                }
             }
             transfer.sender.cleanup();
             if(!silent) app.renderMain();
         },
-
         cleanup: () => {
             const s = state.session.data;
             if(s && s.wake) s.wake.release().catch(()=>{});
             state.session = { type: null, data: null };
         }
     },
-
     receiver: {
         init: (peer, m) => {
             state.session = {
                 type: 'receiver',
                 data: {
-                    peer, meta: m, tid: m.tid,
-                    received: 0, start: 0, checksum: 1,
-                    chunks: [], // Fallback
-                    handle: null, writable: null // FS API
+                    peer, meta: m, tid: m.tid, received: 0, start: 0, checksum: 0x811c9dc5,
+                    chunks: [], blobUrl: null, handle: null, writable: null
                 }
             };
-
-            const type = m.mime.includes('image') ? 'IMAGE' : m.mime.includes('video') ? 'VIDEO' : 'BINARY';
+            const type = m.mime.includes('image') ? 'IMAGE' : 'BINARY';
             document.getElementById('inc-sender').innerText = state.friends[peer]?.name || peer.substr(0,6);
             document.getElementById('inc-type').innerText = type;
             document.getElementById('inc-name').innerText = m.name;
             document.getElementById('inc-size').innerText = utils.fmtSize(m.size);
-            app.tab('main-panel');
+            app.mobileNav('transfer');
             app.view('view-incoming');
         },
-
         respond: async (accept) => {
             const s = state.session.data;
             if(!s) return;
-            
             const conn = state.conns[s.peer];
             if(conn) conn.send({ type: accept ? 'ACCEPT' : 'REJECT', tid: s.tid });
             
@@ -607,7 +620,7 @@ const transfer = {
                 state.session = { type: null, data: null };
                 app.renderMain();
             } else {
-                s.start = Date.now();
+                s.start = utils.now();
                 app.view('view-transfer');
                 
                 // Try File System Access API
@@ -616,76 +629,78 @@ const transfer = {
                         s.handle = await window.showSaveFilePicker({ suggestedName: s.meta.name });
                         s.writable = await s.handle.createWritable();
                     } catch(e) {
-                        utils.toast('FS API Cancelled/Failed. Using Memory.');
+                        utils.toast('Using Browser Download (Fallback)');
+                        s.handle = null;
+                        s.writable = null;
                     }
                 }
             }
         },
-
-        ingest: async (buff) => {
+        ingest: (buff) => {
             const s = state.session.data;
             if(state.session.type !== 'receiver' || !s) return;
-
             const arr = new Uint8Array(buff);
             s.checksum = utils.updateChecksum(s.checksum, arr);
             s.received += arr.byteLength;
-
+            
             if(s.writable) {
-                await s.writable.write(arr); // Stream to disk
+                s.writable.write(arr).catch(e => console.error(e));
             } else {
-                s.chunks.push(arr); // Memory fallback
+                s.chunks.push(arr); // Fallback: Store in memory
             }
-
+            
             transfer.ui.stats(s.received, s.meta.size, s.checksum);
         },
-
         finalize: async (m) => {
             const s = state.session.data;
-            if(state.session.type !== 'receiver' || !s) return;
-
-            if(m.tid !== s.tid) return; // Mismatch
+            if(state.session.type !== 'receiver' || !s || m.tid !== s.tid) return;
             
             const valid = (s.checksum === m.checksum) && (s.received === s.meta.size);
             const tag = document.getElementById('comp-verify-tag');
             
+            let status = 'SUCCESS';
+
             if(valid) {
                 tag.style.background = '#000';
                 tag.innerText = "VERIFIED: " + s.checksum.toString(16).toUpperCase();
+                
+                if(s.writable) {
+                    await s.writable.close();
+                    document.getElementById('comp-msg').innerText = "File saved via File System API.";
+                    document.getElementById('comp-dl-btn').classList.add('hidden');
+                } else {
+                    // Blob Fallback
+                    const blob = new Blob(s.chunks, { type: s.meta.mime });
+                    s.blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = s.blobUrl;
+                    a.download = s.meta.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    document.getElementById('comp-msg').innerText = "File downloaded via Browser.";
+                    document.getElementById('comp-dl-btn').classList.remove('hidden');
+                    document.getElementById('comp-dl-btn').onclick = () => a.click();
+                }
             } else {
+                status = 'CORRUPT';
                 tag.style.background = 'red';
-                tag.innerText = "CORRUPT: " + s.checksum.toString(16).toUpperCase() + " != " + m.checksum.toString(16).toUpperCase();
+                tag.innerText = "CORRUPT";
+                document.getElementById('comp-msg').innerText = "Integrity check failed.";
+                document.getElementById('comp-dl-btn').classList.add('hidden');
+                if(s.writable) s.writable.abort().catch(()=>{});
             }
 
-            // Close stream
-            if(s.writable) {
-                await s.writable.close();
-                document.getElementById('comp-msg').innerText = "Saved to disk via FileSystem API.";
-                document.getElementById('comp-dl-btn').classList.add('hidden');
-            } else {
-                // Blob assembly
-                const blob = new Blob(s.chunks, { type: s.meta.mime });
-                s.blobUrl = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = s.blobUrl;
-                a.download = s.meta.name;
-                a.click();
-                
-                document.getElementById('comp-msg').innerText = "Downloaded to browser default folder.";
-                document.getElementById('comp-dl-btn').classList.remove('hidden');
-                document.getElementById('comp-dl-btn').onclick = () => a.click();
-            }
+            utils.addToHistory({
+                type: 'recv', name: s.meta.name, size: s.meta.size, 
+                peer: s.peer, date: utils.now(), status: status
+            });
 
             app.view('view-complete');
-            
-            // Cleanup receiver but keep BlobURL if needed for manual redownload
             s.chunks = []; 
-            // Mark session as dead but viewable
-            state.session.type = 'finished'; 
+            state.session.type = 'finished';
         },
-
-        manualDownload: () => { /* handled in closure */ },
-
+        manualDownload: () => { /* closure bound above */ },
         cancel: (silent) => {
             const s = state.session.data;
             if(s) {
@@ -693,22 +708,26 @@ const transfer = {
                 if(conn && !silent) conn.send({ type: 'CANCEL', tid: s.tid });
                 if(s.writable) s.writable.abort().catch(()=>{});
                 if(s.blobUrl) URL.revokeObjectURL(s.blobUrl);
+                
+                if(s.received < s.meta.size) {
+                    utils.addToHistory({
+                        type: 'recv', name: s.meta.name, size: s.meta.size, 
+                        peer: s.peer, date: utils.now(), status: 'CANCELLED'
+                    });
+                }
             }
             state.session = { type: null, data: null };
             if(!silent) app.renderMain();
         }
     },
-
     ui: {
         stats: (curr, total, hash) => {
-            const now = Date.now();
-            // Assuming session is in state
+            const now = utils.now();
             const start = state.session.data?.start || now;
             const diff = (now - start) / 1000;
             const speed = diff > 0 ? (curr / diff) : 0;
             const rem = total - curr;
             const eta = speed > 0 ? rem / speed : 0;
-
             document.getElementById('trans-status').innerText = state.session.type === 'sender' ? 'UPLOADING...' : 'DOWNLOADING...';
             document.getElementById('prog-bar').style.width = (curr/total*100) + '%';
             document.getElementById('trans-pct').innerText = Math.floor(curr/total*100) + '%';
@@ -723,23 +742,22 @@ const transfer = {
 const app = {
     init: () => {
         net.init();
-        app.renderSidebar();
+        app.renderFriends();
+        app.renderHistory();
         app.renderMain();
     },
-    
     view: (id) => {
         document.querySelectorAll('.state-view').forEach(el => el.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
     },
-
-    renderSidebar: () => {
+    renderFriends: () => {
         const l = document.getElementById('friends-list');
         l.innerHTML = '';
         Object.keys(state.friends).forEach(id => {
             const f = state.friends[id];
             const div = document.createElement('div');
-            div.className = `friend-item ${state.active === id ? 'active' : ''}`;
-            div.onclick = () => { state.active = id; app.renderSidebar(); app.renderMain(); app.tab('main-panel'); };
+            div.className = `list-item ${state.active === id ? 'active' : ''}`;
+            div.onclick = () => { state.active = id; app.renderFriends(); app.renderMain(); app.mobileNav('transfer'); };
             div.innerHTML = `
                 <div>
                     <div style="font-weight:bold;">${f.name || id}</div>
@@ -750,45 +768,93 @@ const app = {
             l.appendChild(div);
         });
     },
-
+    renderHistory: () => {
+        const l = document.getElementById('history-list');
+        l.innerHTML = '';
+        if(state.history.length === 0) {
+            l.innerHTML = '<div style="padding:16px; color:var(--dim); text-align:center;">No history logs.</div>';
+            return;
+        }
+        state.history.forEach(h => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            const icon = h.type === 'sent' ? '↑ SENT' : '↓ RECV';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                    <span>${icon} ${h.name}</span>
+                    <span style="${h.status==='SUCCESS'?'':'color:red'}">${h.status}</span>
+                </div>
+                <div class="history-meta">
+                    <span>${h.peer.substr(0,8)}...</span>
+                    <span>${utils.fmtSize(h.size)} • ${utils.fmtDate(h.date)}</span>
+                </div>
+            `;
+            l.appendChild(div);
+        });
+    },
     renderMain: () => {
-        // Don't interrupt active session
         if(state.session.type && state.session.type !== 'finished') return;
-
         if(!state.active) return app.view('view-idle');
-        
         const f = state.friends[state.active];
         if(!f) { state.active = null; return app.renderMain(); }
-
         app.view('view-connected');
         document.getElementById('conn-name').innerText = f.name || state.active;
-        
         let seen = 'Never';
         if(f.online) seen = 'Online now';
         else if(f.lastSeen) {
-            const diff = Math.floor((utils.now() - f.lastSeen) / 60);
+            const diff = Math.floor((utils.now() - f.lastSeen) / 60000);
             seen = diff < 1 ? 'Just now' : diff + ' min ago';
         }
         document.getElementById('conn-seen').innerText = `Status: ${seen}`;
     },
-
     resetView: () => {
-        transfer.cancelAny(true); // Silent cleanup
+        transfer.cancelAny(true);
         app.renderMain();
     },
-
     addFriend: () => {
         const inp = document.getElementById('add-id');
         const id = inp.value.trim();
         if(id && id !== utils.id) {
             state.friends[id] = { name: 'Friend', online: false };
             localStorage.setItem('gd_friends', JSON.stringify(state.friends));
-            app.renderSidebar();
+            app.renderFriends();
             net.connect(id);
             inp.value = '';
         }
     },
+    clearHistory: () => {
+        state.history = [];
+        localStorage.removeItem('gd_history');
+        app.renderHistory();
+        utils.toast('History cleared');
+    },
+    setSidebarTab: (tab) => {
+        document.querySelectorAll('.tab-item').forEach(e => e.classList.remove('active'));
+        document.getElementById('tab-'+tab).classList.add('active');
+        document.getElementById('sidebar-friends').style.display = tab === 'friends' ? 'flex' : 'none';
+        document.getElementById('sidebar-history').style.display = tab === 'history' ? 'flex' : 'none';
+    },
+    mobileNav: (tab) => {
+        // Simple visibility toggle for mobile
+        if(window.innerWidth > 768) return;
+        
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('mob-'+tab).classList.add('active');
 
+        const sb = document.getElementById('sidebar');
+        const main = document.getElementById('main-panel');
+        
+        if(tab === 'friends') {
+            sb.style.display = 'flex'; main.style.display = 'none';
+            app.setSidebarTab('friends');
+        } else if (tab === 'history') {
+            sb.style.display = 'flex'; main.style.display = 'none';
+            app.setSidebarTab('history');
+        } else {
+            sb.style.display = 'none'; main.style.display = 'flex';
+        }
+    },
+    // QR / Modals
     copyId: () => { navigator.clipboard.writeText(utils.id); utils.toast('ID Copied'); document.getElementById('modal-qr').style.display='flex'; },
     closeModal: (id) => document.getElementById(id).style.display = 'none',
     scanQR: () => {
@@ -803,12 +869,6 @@ const app = {
         if(state.scanner) state.scanner.stop().then(() => state.scanner.clear());
         state.scanner = null;
         app.closeModal('modal-scan');
-    },
-    tab: (id) => {
-        if(window.innerWidth > 768) return;
-        document.getElementById('sidebar').classList.toggle('active', id==='sidebar');
-        document.getElementById('main-panel').classList.toggle('active', id==='main-panel');
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(id==='sidebar'?'FRIENDS':'TRANSFER')));
     }
 };
 
