@@ -281,7 +281,7 @@
     
     <div id="app">
         <header>
-            <div class="logo glow">OPTILINK <span style="font-size:0.5em; color:var(--term-cyan)">v1.1</span></div>
+            <div class="logo glow">OPTILINK <span style="font-size:0.5em; color:var(--term-cyan)">v1.2</span></div>
             <div id="connection-status" class="status-badge">SYSTEM INIT</div>
         </header>
 
@@ -298,7 +298,7 @@
                     <div class="or-divider">-- REMOTE TARGET --</div>
 
                     <input type="text" id="target-token" placeholder="ENTER TOKEN" maxlength="5">
-                    <button id="btn-connect">ESTABLISH LINK</button>
+                    <button id="btn-connect" disabled>ESTABLISH LINK</button>
                     <div id="connect-msg" style="text-align: center; font-size: 0.7rem; color: var(--term-amber); height: 1em;"></div>
                 </div>
             </div>
@@ -382,23 +382,24 @@
 
     <script>
         /**
-         * OPTILINK v1.1 - ROBUST OPTICAL TRANSPORT
-         * Features: Sliding Window, NACKs, Adaptive FPS, Connection Hardening
+         * OPTILINK v1.2 - ROBUST OPTICAL TRANSPORT
+         * Improvements: Connection Timeout, Input Sanitization, Simpler Peer IDs
          */
 
         // --- CONFIGURATION ---
         const CONFIG = {
-            APP_PREFIX: 'optilink-v1.1-',
-            CHUNK_SIZE: 700,         // Reduced slightly for better QR density/readability
-            QR_CORRECTION: 'L',      // Low EC (rely on app layer CRC)
+            // FIX: Shortened prefix to minimize PeerJS broker issues
+            APP_PREFIX: 'ol-v1-',
+            CHUNK_SIZE: 700,         
+            QR_CORRECTION: 'L',      
             MIN_FPS: 5,
             MAX_FPS: 30,
             DEFAULT_FPS: 15,
             MIN_WINDOW: 5,
-            MAX_WINDOW: 50,          // Max packets in flight
-            NACK_INTERVAL_MS: 500,   // How often receiver checks for gaps
-            RTT_ALPHA: 0.125,        // For RTT smoothing
-            TIMEOUT_FACTOR: 2.0      // Retransmit after RTT * Factor
+            MAX_WINDOW: 50,          
+            NACK_INTERVAL_MS: 500,   
+            RTT_ALPHA: 0.125,        
+            TIMEOUT_FACTOR: 2.0      
         };
 
         const STATES = {
@@ -542,6 +543,7 @@
             state.myToken = generateToken();
             ui.myToken.innerText = state.myToken;
 
+            // Connect to PeerJS Public Cloud
             state.peer = new Peer(CONFIG.APP_PREFIX + state.myToken, { debug: 1 });
 
             state.peer.on('open', () => {
@@ -550,30 +552,61 @@
             });
 
             state.peer.on('connection', (conn) => {
+                // Incoming connection
                 if (state.conn) { conn.close(); return; } // Single peer only
                 handleConnection(conn, 'RECEIVER');
             });
 
             state.peer.on('error', (err) => {
-                console.error(err);
+                console.error("PEER ERROR:", err);
+                // Handle duplicate ID or network issues
+                if (err.type === 'unavailable-id') {
+                    // Regenerate on collision (rare)
+                    initNetwork(); 
+                    return;
+                }
                 ui.connectMsg.innerText = "NET ERROR: " + err.type;
                 ui.status.className = 'status-badge error';
+                ui.btnConnect.disabled = false;
             });
         }
 
         function connectToPeer(target) {
             if (!target) return;
+            const cleanTarget = target.trim().toUpperCase();
+            
+            if (cleanTarget.length !== 5) {
+                alert("TOKEN MUST BE 5 CHARACTERS");
+                return;
+            }
+
             ui.btnConnect.disabled = true;
             ui.connectMsg.innerText = "SEARCHING...";
-            const conn = state.peer.connect(CONFIG.APP_PREFIX + target.toUpperCase(), { reliable: true });
-            handleConnection(conn, 'SENDER');
+            
+            console.log("Attempting connect to:", CONFIG.APP_PREFIX + cleanTarget);
+            
+            const conn = state.peer.connect(CONFIG.APP_PREFIX + cleanTarget, { reliable: true });
+            
+            // Connection Timeout Watchdog
+            const timeoutTimer = setTimeout(() => {
+                if (state.current !== STATES.CONNECTED) {
+                    console.warn("Connection timeout");
+                    ui.connectMsg.innerText = "TIMEOUT - RETRY?";
+                    ui.btnConnect.disabled = false;
+                    conn.close();
+                }
+            }, 5000); // 5 Seconds timeout
+
+            handleConnection(conn, 'SENDER', timeoutTimer);
         }
 
-        function handleConnection(conn, role) {
+        function handleConnection(conn, role, timeoutTimer = null) {
             state.conn = conn;
             state.role = role;
 
             conn.on('open', () => {
+                if(timeoutTimer) clearTimeout(timeoutTimer);
+                console.log("Connection Established");
                 setState(STATES.CONNECTED);
                 ui.connectMsg.innerText = "";
                 if (role === 'RECEIVER') startReceiverLoop();
@@ -582,9 +615,17 @@
             conn.on('data', (data) => handleControlMsg(data));
 
             conn.on('close', () => {
+                if(timeoutTimer) clearTimeout(timeoutTimer);
                 setState(STATES.ERROR, "LINK LOST");
                 alert("Peer Connection Lost. Check Network.");
                 location.reload();
+            });
+
+            conn.on('error', (err) => {
+                if(timeoutTimer) clearTimeout(timeoutTimer);
+                console.error("CONN ERROR:", err);
+                ui.connectMsg.innerText = "LINK FAILED";
+                ui.btnConnect.disabled = false;
             });
         }
 
