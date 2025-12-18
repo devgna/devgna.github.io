@@ -12,8 +12,15 @@
 
     <style>
         :root {
-            --bg: #050505; --surface: #111111; --border: #333333; --fg: #e0e0e0; --dim: #888888;
-            --accent: #ffffff; --success: #4caf50; --error: #f44336; --warning: #ff9800; --info: #2979ff;
+            --bg: #050505;
+            --surface: #111111;
+            --border: #333333;
+            --fg: #e0e0e0;
+            --dim: #888888;
+            --accent: #ffffff;
+            --success: #4caf50;
+            --error: #f44336;
+            --warning: #ff9800;
             --font-stack: 'SF Mono', 'Segoe UI Mono', 'Roboto Mono', Menlo, monospace;
             --ease: cubic-bezier(0.23, 1, 0.32, 1);
         }
@@ -22,8 +29,16 @@
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
         
         body {
-            background-color: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-size: 13px; line-height: 1.5; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-stack);
+            font-size: 13px;
+            line-height: 1.5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            user-select: none;
         }
 
         /* UTILS */
@@ -35,23 +50,49 @@
         .scroll-y { overflow-y: auto; flex: 1; }
         
         /* TYPOGRAPHY */
-        h1 { font-family: var(--font-stack); font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
-        .mono { font-family: var(--font-stack); font-variant-numeric: tabular-nums; }
-        .label { font-size: 11px; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+        h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; color: var(--accent); }
+        h2 { font-size: 13px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        p { color: var(--dim); margin-bottom: 10px; }
+        .mono-stat { font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
 
         /* COMPONENTS */
-        .card { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 6px; }
+        .card {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
 
         .btn {
-            background: var(--fg); color: var(--bg); border: 1px solid var(--fg); padding: 12px; font-family: var(--font-stack);
-            font-weight: 700; font-size: 12px; cursor: pointer; width: 100%; text-transform: uppercase; border-radius: 2px; transition: all 0.2s;
+            background: var(--fg);
+            color: var(--bg);
+            border: 1px solid var(--fg);
+            padding: 12px;
+            font-family: var(--font-stack);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 2px;
+            transition: all 0.2s;
         }
         .btn:disabled { background: var(--border); border-color: var(--border); color: var(--dim); cursor: not-allowed; opacity: 0.7; }
         .btn.outline { background: transparent; color: var(--fg); }
         .btn.outline:hover { background: rgba(255,255,255,0.05); }
         .btn.danger { border-color: var(--error); color: var(--error); background: transparent; }
-        .btn.info { border-color: var(--info); color: var(--info); background: transparent; }
+        .btn.danger:hover { background: rgba(244, 67, 54, 0.1); }
         .btn.success { border-color: var(--success); background: var(--success); color: white; }
+
+        /* PULSING ANIMATION FOR LISTENER */
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); border-color: var(--success); color: var(--success); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); border-color: var(--success); color: var(--success); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); border-color: var(--success); color: var(--success); }
+        }
+        .btn.listening { animation: pulse-border 1.5s infinite; background: rgba(76, 175, 80, 0.1); }
 
         input[type="text"] {
             width: 100%; background: #000; border: 1px solid var(--border); color: var(--accent);
@@ -61,378 +102,515 @@
         input[type="text"]:focus { border-color: var(--accent); }
 
         /* STATUS BADGE */
-        .status-pill { padding: 4px 8px; font-size: 10px; text-transform: uppercase; border-radius: 2px; font-weight: 700; background: var(--border); color: var(--dim); display: flex; align-items: center; gap: 5px; }
-        .status-pill.secure { background: rgba(76, 175, 80, 0.2); color: var(--success); border: 1px solid var(--success); }
-        .status-pill.warn { background: rgba(255, 152, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
-        .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-
-        /* AUDIO VIZ */
-        canvas.viz { width: 100%; height: 60px; background: #000; border-radius: 4px; border: 1px solid var(--border); margin: 10px 0; }
+        .status-badge { 
+            padding: 4px 8px; font-size: 10px; text-transform: uppercase; border-radius: 2px; font-weight: 700; letter-spacing: 0.5px;
+            background: var(--border); color: var(--dim);
+        }
+        .status-badge.secure { background: rgba(76, 175, 80, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .status-badge.error { background: rgba(244, 67, 54, 0.2); color: var(--error); border: 1px solid var(--error); }
+        .status-badge.warn { background: rgba(255, 152, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+        .status-badge.handshake { background: rgba(33, 150, 243, 0.2); color: #2196F3; border: 1px solid #2196F3; }
 
         /* MODAL */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-        .modal { background: var(--surface); border: 1px solid var(--accent); padding: 30px; width: 90%; max-width: 450px; border-radius: 4px; text-align: center; }
-        
-        .file-list-preview { max-height: 150px; overflow-y: auto; text-align: left; background: var(--bg); border: 1px solid var(--border); padding: 10px; margin: 15px 0; font-size: 11px; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95); z-index: 2000;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal { 
+            background: var(--surface); border: 1px solid var(--accent); 
+            padding: 30px; max-width: 450px; width: 95%; text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        .file-list-preview {
+            max-height: 150px; overflow-y: auto; text-align: left; background: var(--bg);
+            border: 1px solid var(--border); padding: 10px; margin: 15px 0; font-size: 11px;
+        }
         .file-entry { padding: 4px 0; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        .file-entry:last-child { border-bottom: none; }
 
         /* TRANSFER UI */
-        .transfer-row { background: var(--bg); border: 1px solid var(--border); padding: 10px; margin-bottom: 8px; border-radius: 2px; }
-        .progress-bg { background: var(--border); height: 4px; width: 100%; margin: 8px 0; }
-        .progress-fill { background: var(--success); height: 100%; width: 0%; transition: width 0.2s linear; }
+        .transfer-item { 
+            background: var(--bg); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px;
+            position: relative; overflow: hidden;
+        }
+        .progress-track { background: var(--border); height: 2px; width: 100%; margin: 12px 0; }
+        .progress-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.2s linear; }
+        .meta-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); margin-top: 5px; }
 
-        /* TABS */
-        .tab-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 10px; background: transparent; border: 1px solid var(--border); color: var(--dim); cursor: pointer; font-family: var(--font-stack); font-weight: 700; font-size: 11px; }
-        .tab-btn.active { border-color: var(--accent); color: var(--accent); background: #1a1a1a; }
+        /* QR & SCANNER */
+        #qr-target { background: white; padding: 10px; display: inline-block; margin: 15px auto; border-radius: 4px; }
+        #reader { width: 100%; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
 
-        #drag-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); border: 2px dashed var(--accent); z-index: 1500; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.2s; }
+        /* DRAG OVERLAY */
+        #drag-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); border: 2px dashed var(--accent);
+            z-index: 1500; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+        }
         #drag-overlay.active { opacity: 1; pointer-events: all; }
 
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--bg); padding: 12px 24px; font-weight: 700; opacity: 0; transition: opacity 0.3s; z-index: 3000; pointer-events: none; border-radius: 2px; font-size: 11px; }
-        #toast.show { opacity: 1; }
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--accent); color: var(--bg); padding: 12px 24px; 
+            font-weight: 700; opacity: 0; transition: opacity 0.3s; z-index: 3000;
+            pointer-events: none; border-radius: 2px; text-transform: uppercase; font-size: 11px;
+        }
+        .toast.show { opacity: 1; }
+
     </style>
 </head>
 <body>
 
-    <div id="drag-overlay"><h1 style="border:none">DROP FILES TO SEND</h1></div>
-    <div id="toast">Notification</div>
-
-    <!-- AUDIO MODAL -->
-    <div id="modal-audio" class="overlay hidden">
-        <div class="modal">
-            <h2>AUDIO PAIRING</h2>
-            <canvas id="audio-canvas" class="viz"></canvas>
-            <p id="audio-status" class="mono" style="color: var(--info);">Initializing...</p>
-            <p id="audio-mode-label" class="label" style="margin-bottom: 10px;">Mode: Auto</p>
-            <div class="flex-row">
-                <button class="btn outline" onclick="app.audio.testAudio()">Test Sound</button>
-                <button class="btn outline" onclick="app.audio.forceFallback()">Switch Mode</button>
-            </div>
-            <button class="btn danger" style="margin-top: 10px;" onclick="app.stopAudioPairing()">Cancel</button>
-        </div>
+    <!-- DRAG OVERLAY -->
+    <div id="drag-overlay">
+        <h1 style="border:none; font-size: 24px;">Drop Files to Send</h1>
     </div>
 
-    <!-- BUNDLE MODAL -->
-    <div id="modal-bundle" class="overlay hidden">
+    <!-- MODAL: INCOMING BUNDLE -->
+    <div id="modal-bundle" class="modal-overlay">
         <div class="modal">
-            <h2>INCOMING BUNDLE</h2>
-            <p>Peer sending <span id="bundle-count">0</span> files (<span id="bundle-size">0 MB</span>)</p>
+            <h2>Incoming Bundle</h2>
+            <p>Peer wants to send <span id="bundle-count" style="color:white; font-weight:bold">0</span> files:</p>
+            
             <div id="bundle-preview" class="file-list-preview"></div>
+            
+            <p id="bundle-total-size" style="text-align: right; font-weight: bold; margin-bottom: 15px;">Total: 0 MB</p>
+            
             <div class="flex-col">
-                <button class="btn success" onclick="app.acceptBundle(true)">Download ZIP Archive</button>
-                <button class="btn outline" onclick="app.acceptBundle(false)">Download Individually</button>
-                <button class="btn danger" onclick="app.rejectBundle()">Reject</button>
+                <button class="btn success" onclick="app.acceptBundle('zip')">Download as ZIP Archive</button>
+                <button class="btn outline" onclick="app.acceptBundle('individual')">Download Individually</button>
+                <button class="btn danger" onclick="app.rejectBundle()" style="margin-top:10px;">Reject All</button>
             </div>
-        </div>
-    </div>
-
-    <!-- HEADER -->
-    <div style="padding: 15px; border-bottom: 1px solid var(--border);">
-        <div class="flex-row" style="max-width: 680px; margin: 0 auto;">
-            <div class="flex-col" style="gap:2px;">
-                <h1>GHOSTSHARE</h1>
-                <span class="label">SECURE P2P RUNTIME</span>
-            </div>
-            <div id="status-pill" class="status-pill"><div class="dot"></div> <span id="status-text">INIT</span></div>
         </div>
     </div>
 
     <div class="container">
-        <!-- SETUP VIEW -->
-        <div id="view-setup" class="flex-col">
-            <div class="card center">
-                <span class="label">YOUR SESSION ID</span>
-                <div id="my-id" class="mono" style="font-size: 32px; margin: 15px 0; color: var(--accent); letter-spacing: 4px; font-weight: 700;">...</div>
-                <div class="flex-row">
-                    <button class="btn outline" onclick="app.copyId()">Copy</button>
-                    <button class="btn outline" onclick="document.getElementById('qr-box').classList.toggle('hidden')">QR</button>
-                </div>
-                <div id="qr-box" class="hidden center" style="margin-top: 15px; background: #fff; padding: 10px; border-radius: 4px; display: inline-block;">
-                    <div id="qr-target"></div>
-                </div>
+        <!-- HEADER -->
+        <header class="flex-row">
+            <div class="flex-col" style="gap:2px;">
+                <span style="font-weight:700; letter-spacing:1px; color:white;">GHOSTSHARE</span>
+                <span style="font-size:10px; color:var(--dim);">SECURE P2P RUNTIME</span>
             </div>
+            <div id="status-badge" class="status-badge">INIT</div>
+        </header>
 
-            <div class="card">
-                <div class="tab-group">
-                    <button class="tab-btn active" onclick="app.showTab('audio')">AUDIO PAIRING</button>
-                    <button class="tab-btn" onclick="app.showTab('manual')">MANUAL / QR</button>
-                </div>
-
-                <!-- AUDIO TAB -->
-                <div id="tab-audio" class="center">
-                    <p style="color: var(--dim); margin-bottom: 20px;">Use sound to pair devices nearby.</p>
-                    <div class="flex-col">
-                        <button class="btn info" onclick="app.startBroadcast()">🔊 Broadcast Signal</button>
-                        <button class="btn outline" onclick="app.startListen()">🎤 Listen for Signal</button>
-                    </div>
-                </div>
-
-                <!-- MANUAL TAB -->
-                <div id="tab-manual" class="hidden">
-                    <div id="reader" style="width:100%; display:none; margin-bottom:10px;"></div>
-                    <input type="text" id="peer-input" placeholder="ENTER PEER ID" maxlength="8">
-                    <div class="flex-row">
-                        <button class="btn" onclick="app.connectManual()">Connect</button>
-                        <button class="btn outline" style="width: auto;" onclick="app.toggleScanner()">📷</button>
-                    </div>
-                </div>
+        <!-- VIEW: IDENTITY -->
+        <div id="view-identity" class="card center fade-in">
+            <h2>Session Identity</h2>
+            <div id="my-id" style="font-size: 32px; font-weight: 700; letter-spacing: 4px; margin: 15px 0; color: var(--accent);">...</div>
+            <p style="font-size: 11px;">Identity rotates on disconnect</p>
+            
+            <div id="qr-target" class="hidden"></div>
+            
+            <div class="flex-row" style="margin-top: 15px;">
+                <button class="btn outline" onclick="app.copyId()">Copy ID</button>
+                <button class="btn outline" onmousedown="app.startBroadcast()" onmouseup="app.stopBroadcast()" ontouchstart="app.startBroadcast()" ontouchend="app.stopBroadcast()">🔊 Hold to Air-Drop ID</button>
+                <button class="btn outline" onclick="app.toggleQr()">Show QR</button>
             </div>
         </div>
 
-        <!-- WORKSPACE VIEW -->
-        <div id="view-workspace" class="hidden flex-col">
-            <div class="card flex-row" style="padding: 15px;">
-                <div class="flex-col" style="gap:2px;">
-                    <span class="label" style="color:var(--success);">SECURE CHANNEL</span>
-                    <span style="font-size:10px; color:var(--dim);">ECDH Encrypted • Verified</span>
-                </div>
-                <button class="btn danger" style="width:auto; padding:8px 12px; font-size:10px;" onclick="app.disconnect()">Disconnect</button>
+        <!-- VIEW: CONNECT -->
+        <div id="view-connect" class="card fade-in">
+            <h2>Establish Tunnel</h2>
+            
+            <div id="reader-container" class="hidden">
+                <div id="reader"></div>
+                <button class="btn outline" onclick="app.stopScanner()" style="margin-bottom: 10px;">Cancel Camera</button>
             </div>
 
-            <div class="card center" style="border: 2px dashed var(--border); padding: 30px; cursor: pointer;" onclick="document.getElementById('file-input').click()">
+            <input type="text" id="peer-id-input" placeholder="ENTER PEER ID" maxlength="12" autocomplete="off">
+            <div class="flex-row">
+                <button class="btn" id="btn-connect" onclick="app.connect()">Connect</button>
+                <button class="btn outline" id="btn-listen" onclick="app.toggleListen()">👂 Listen</button>
+                <button class="btn outline" onclick="app.startScanner()" style="width: auto;">📷</button>
+            </div>
+        </div>
+
+        <!-- VIEW: WORKSPACE (Hidden until secure) -->
+        <div id="view-workspace" class="hidden flex-col" style="flex:1;">
+            <div class="card flex-row" style="background: var(--bg); border: 1px dashed var(--dim); padding: 15px;">
+                <div class="flex-col" style="gap:2px;">
+                    <span style="color:var(--accent); font-weight:700;">SECURE CHANNEL VERIFIED</span>
+                    <span style="font-size:10px; color:var(--success);">Mutual Auth • ECDH Key Exchange • HMAC Signed</span>
+                </div>
+                <button class="btn danger" style="width:auto; padding:8px 12px; font-size:10px;" onclick="app.disconnect()">End Session</button>
+            </div>
+
+            <div class="card center" style="border: 2px dashed var(--border); padding: 30px; cursor: pointer; transition: 0.2s;" 
+                 onclick="document.getElementById('file-input').click()"
+                 onmouseover="this.style.borderColor='var(--accent)'" 
+                 onmouseout="this.style.borderColor='var(--border)'">
                 <p><strong>CLICK TO UPLOAD</strong></p>
-                <p style="font-size:11px; color:var(--dim);">or Drag & Drop Files</p>
-                <input type="file" id="file-input" multiple style="display: none;" onchange="app.handleFiles(this.files)">
+                <p style="font-size:11px;">or Drag & Drop Files</p>
+                <input type="file" id="file-input" style="display: none" multiple onchange="app.handleFiles(this.files)">
             </div>
 
             <div id="transfer-list" class="flex-col scroll-y"></div>
         </div>
     </div>
 
+    <!-- TOAST -->
+    <div id="toast" class="toast">Alert</div>
+
 <script>
 /**
- * GHOSTSHARE v6.0 - RESTORED & FUNCTIONAL
- * Includes: PeerJS, Bundle/ZIP, Backpressure, Audio Pairing (FSK)
+ * AUDIO MODEM IMPLEMENTATION (19kHz FSK)
+ * Specs: 19000Hz (0) / 19500Hz (1)
+ * Packet: [0xAA HEADER] + [DATA] + [CHECKSUM]
  */
-
-// --- CONFIG ---
-const CFG = {
-    ICE: [{ urls: 'stun:stun.l.google.com:19302' }],
-    CHUNK: 16384, MAX_BUF: 8 * 1024 * 1024,
-    AUDIO: {
-        MODES: [
-            { name: "Ultra-Quiet", type: 'CSS', min: 17000, max: 20000, rate: 40 },
-            { name: "Quiet",       type: 'CSS', min: 14000, max: 17000, rate: 30 },
-            { name: "Standard",    type: 'DTMF', min: 1000, max: 4000, rate: 10 },
-            { name: "Compatible",  type: 'MORSE', min: 800, max: 1200, rate: 5 }
-        ],
-        GAP: 1.0
-    },
-    APP_URL: window.location.href.split('?')[0]
-};
-
-// --- CRC32 & RS (Restored for Audio Logic) ---
-const CRC32 = {
-    table: new Uint32Array(256),
-    init() { for(let n=0; n<256; n++){ let c=n; for(let k=0; k<8; k++) c=((c&1)?(0xEDB88320^(c>>>1)):(c>>>1)); this.table[n]=c; } },
-    buf(b) { let c=-1; for(let i=0; i<b.length; i++) c=(c>>>8)^this.table[(c^b[i])&0xFF]; return (c^(-1))>>>0; }
-};
-CRC32.init();
-
-const RS = {
-    encode(data) {
-        // Simple Redundancy for demo: Append CRC32
-        const crc = CRC32.buf(data);
-        const res = new Uint8Array(data.length + 4);
-        res.set(data);
-        new DataView(res.buffer).setUint32(data.length, crc);
-        return res;
-    },
-    decode(data) {
-        if (data.length < 5) return null;
-        const payload = data.slice(0, data.length - 4);
-        const crc = new DataView(data.buffer).getUint32(data.length - 4);
-        if (CRC32.buf(payload) !== crc) return null;
-        return payload;
-    }
-};
-
-// --- AUDIO PAIRING CLASS (Restored) ---
-class UltrasonicPairing {
-    constructor(app) {
-        this.app = app;
+class AudioModem {
+    constructor() {
         this.ctx = null;
-        this.modeIdx = 0;
+        this.FREQ_LOW = 19000;
+        this.FREQ_HIGH = 19500;
+        this.BIT_TIME = 0.048; // 48ms per bit (~21 baud) - optimized for robustness
+        this.HEADER = 0xAA; // 10101010
         this.isBroadcasting = false;
         this.isListening = false;
-        this.raf = null;
-        this.vizCanvas = document.getElementById('audio-canvas');
-        this.vizCtx = this.vizCanvas.getContext('2d');
-        const saved = localStorage.getItem('gs_audio_mode');
-        if (saved) this.modeIdx = parseInt(saved);
+        this.osc = null;
     }
 
     async initCtx() {
-        if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
-        if (this.ctx.state === 'suspended') await this.ctx.resume();
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
+        return this.ctx;
     }
 
-    getMode() { return CFG.AUDIO.MODES[this.modeIdx]; }
-
-    async testAudio() {
-        await this.initCtx();
-        const osc = this.ctx.createOscillator();
-        osc.connect(this.ctx.destination);
-        const m = this.getMode();
-        osc.frequency.value = (m.min + m.max) / 2;
-        osc.start(); osc.stop(this.ctx.currentTime + 0.5);
-    }
-
-    forceFallback() {
-        this.modeIdx = (this.modeIdx + 1) % CFG.AUDIO.MODES.length;
-        localStorage.setItem('gs_audio_mode', this.modeIdx);
-        document.getElementById('audio-mode-label').innerText = `Mode: ${this.getMode().name}`;
-        if (this.isBroadcasting) { this.stop(); this.broadcast(); }
-        if (this.isListening) { this.stop(); this.listen(); }
-    }
-
-    async broadcast() {
-        await this.initCtx();
+    // --- TRANSMITTER ---
+    async transmit(text) {
+        if (this.isBroadcasting) return;
         this.isBroadcasting = true;
-        this.updateUI('broadcasting');
-        
-        const encoder = new TextEncoder();
-        const idBytes = encoder.encode(this.app.myId);
-        const packet = RS.encode(idBytes);
-        const mode = this.getMode();
+        const ctx = await this.initCtx();
 
-        const loop = () => {
-            if (!this.isBroadcasting) return;
-            const now = this.ctx.currentTime;
-            // Simulated Transmission Logic for brevity in single file
-            // In real usage, this would schedule FSK chirps
-            this.playSimulatedData(now, mode); 
-            this.drawWaveform();
-            setTimeout(loop, 2000);
+        // 1. Convert Text to Bit Array (Header + Text + Checksum)
+        const bytes = new TextEncoder().encode(text);
+        let checksum = 0;
+        bytes.forEach(b => checksum = (checksum + b) % 255);
+        
+        const packet = [this.HEADER, ...bytes, checksum];
+        const bits = [];
+        packet.forEach(byte => {
+            for (let i = 7; i >= 0; i--) bits.push((byte >> i) & 1);
+        });
+
+        // 2. Setup Oscillator
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        const now = ctx.currentTime;
+        const fade = 0.005;
+
+        // 3. Schedule Frequencies
+        // Lead-in silence
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(1, now + fade);
+
+        bits.forEach((bit, i) => {
+            const time = now + (i * this.BIT_TIME);
+            osc.frequency.setValueAtTime(bit ? this.FREQ_HIGH : this.FREQ_LOW, time);
+        });
+
+        // 4. Cleanup
+        const endTime = now + (bits.length * this.BIT_TIME);
+        gain.gain.setValueAtTime(1, endTime - fade);
+        gain.gain.linearRampToValueAtTime(0, endTime);
+        
+        osc.start(now);
+        osc.stop(endTime);
+        
+        this.osc = osc;
+        
+        // Loop transmission if still holding button
+        osc.onended = () => {
+            this.isBroadcasting = false;
+            if (this.shouldLoop) this.transmit(text);
         };
-        loop();
     }
 
-    playSimulatedData(t, mode) {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.frequency.setValueAtTime(mode.min, t);
-        osc.frequency.linearRampToValueAtTime(mode.max, t + 0.5);
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.5, t+0.1);
-        gain.gain.linearRampToValueAtTime(0, t+0.5);
-        osc.start(t); osc.stop(t+0.5);
+    startLoop(text) {
+        this.shouldLoop = true;
+        this.transmit(text);
     }
 
-    async listen() {
-        try {
-            await this.initCtx();
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.stream = stream;
-            const src = this.ctx.createMediaStreamSource(stream);
-            this.analyser = this.ctx.createAnalyser();
-            this.analyser.fftSize = 2048;
-            src.connect(this.analyser);
-            this.isListening = true;
-            this.updateUI('listening');
-            this.detectLoop();
-        } catch(e) { 
-            alert("Microphone denied."); 
-            this.app.stopAudioPairing(); 
+    stopLoop() {
+        this.shouldLoop = false;
+        if(this.osc) {
+            try { this.osc.stop(); } catch(e){}
+            this.isBroadcasting = false;
         }
     }
 
-    detectLoop() {
-        if (!this.isListening) return;
-        const bins = this.analyser.frequencyBinCount;
-        const data = new Uint8Array(bins);
-        this.analyser.getByteFrequencyData(data);
-        this.drawSpectrum(data);
+    // --- RECEIVER ---
+    async listen(onFound) {
+        if (this.isListening) return;
+        const ctx = await this.initCtx();
+
+        // Mobile Constraint: No echo cancellation to preserve high freq
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        });
+
+        const source = ctx.createMediaStreamSource(stream);
+        const analyzer = ctx.createAnalyser();
+        analyzer.fftSize = 2048; // Resolution ~23Hz per bin
+        source.connect(analyzer);
+
+        const buffer = new Float32Array(analyzer.frequencyBinCount);
+        this.isListening = true;
+
+        // Decoder State
+        let bitBuffer = []; 
+        let lastBit = -1;
+        let sameBitCount = 0;
+        const SAMPLES_PER_BIT = 3; // Approx frames per bit duration
         
-        // Mock detection logic for robustness demo (Real DSP requires >2000 lines)
-        // Checks for energy in the target band
-        const mode = this.getMode();
-        const nyquist = this.ctx.sampleRate / 2;
-        const start = Math.floor(mode.min / nyquist * bins);
-        const end = Math.floor(mode.max / nyquist * bins);
-        let max = 0;
-        for(let i=start; i<end; i++) if(data[i] > max) max = data[i];
+        const process = () => {
+            if (!this.isListening) {
+                stream.getTracks().forEach(t => t.stop());
+                return;
+            }
 
-        if(max > 150) {
-            document.getElementById('audio-status').innerText = "Signal Detected...";
-            // In a real app, we decode bits here.
-            // For this single-file demo, we assume the user might switch to manual if it fails,
-            // or we simulate a successful decode if the signal is strong/clean enough.
+            analyzer.getFloatFrequencyData(buffer);
+
+            // Simple Energy Detection
+            // 48000Hz / 2048 = 23.4Hz per bin
+            // 19000 / 23.4 = ~811
+            // 19500 / 23.4 = ~833
+            const binLow = Math.floor(this.FREQ_LOW / (ctx.sampleRate / analyzer.fftSize));
+            const binHigh = Math.floor(this.FREQ_HIGH / (ctx.sampleRate / analyzer.fftSize));
+            
+            const p0 = buffer[binLow];
+            const p1 = buffer[binHigh];
+            const threshold = -70; // dB
+
+            let currentBit = -1;
+            if (p0 > threshold && p0 > p1 + 5) currentBit = 0;
+            else if (p1 > threshold && p1 > p0 + 5) currentBit = 1;
+
+            // Voting / Debounce
+            if (currentBit !== -1) {
+                if (currentBit === lastBit) sameBitCount++;
+                else { lastBit = currentBit; sameBitCount = 0; }
+            }
+
+            // Sample into bit stream if stable
+            if (sameBitCount > SAMPLES_PER_BIT) {
+                // Determine if we need to shift (simple edge detection logic simplified for stream)
+                // For this lightweight version, we just push stable bits but limit rate
+                // A robust PLL is too large, so we use a sliding window packet scanner
+                bitBuffer.push(currentBit);
+                sameBitCount = 0; // Reset to wait for next stable read
+                
+                // Keep buffer manageable size (Header + 12 chars + Sum = ~110 bits. Buffer 200)
+                if (bitBuffer.length > 200) bitBuffer.shift();
+
+                this.scanBuffer(bitBuffer, onFound);
+            }
+
+            requestAnimationFrame(process);
+        };
+        process();
+    }
+
+    scanBuffer(bits, callback) {
+        // Look for Header (0xAA = 10101010)
+        // We scan from the end backwards or reconstruct bytes
+        // Simple approach: Convert last N bits to bytes and check structure
+        
+        if (bits.length < 100) return;
+
+        // Try to frame from every possible start position in the buffer
+        for (let i = 0; i < bits.length - 80; i++) {
+            // Check Header
+            let header = 0;
+            for(let b=0; b<8; b++) header = (header << 1) | bits[i+b];
+            
+            if (header === this.HEADER) {
+                // Header found, try decode next 13 bytes (12 ID + 1 Sum)
+                const bytes = [];
+                let ptr = i + 8;
+                
+                for (let c=0; c<13; c++) {
+                    let val = 0;
+                    for (let b=0; b<8; b++) {
+                        if (ptr >= bits.length) return;
+                        val = (val << 1) | bits[ptr++];
+                    }
+                    bytes.push(val);
+                }
+
+                // Verify Checksum
+                const receivedSum = bytes.pop();
+                const payload = bytes;
+                let calcSum = 0;
+                payload.forEach(b => calcSum = (calcSum + b) % 255);
+
+                if (calcSum === receivedSum) {
+                    const id = new TextDecoder().decode(new Uint8Array(payload));
+                    // Basic sanity check for PeerID format
+                    if (id.match(/^[A-Z0-9]{12}$/)) {
+                        this.stopListen();
+                        callback(id);
+                        return;
+                    }
+                }
+            }
         }
-        this.raf = requestAnimationFrame(() => this.detectLoop());
     }
 
-    stop() {
-        this.isBroadcasting = false; this.isListening = false;
-        if(this.stream) this.stream.getTracks().forEach(t=>t.stop());
-        cancelAnimationFrame(this.raf);
-    }
-
-    updateUI(state) {
-        const lbl = document.getElementById('audio-status');
-        const mode = this.getMode();
-        document.getElementById('audio-mode-label').innerText = `Mode: ${mode.name}`;
-        document.getElementById('modal-audio').classList.remove('hidden');
-        lbl.innerText = state === 'broadcasting' ? "Broadcasting..." : "Listening...";
-        lbl.style.color = state === 'broadcasting' ? 'var(--info)' : 'var(--success)';
-    }
-
-    drawWaveform() {
-        const w = this.vizCanvas.width = this.vizCanvas.offsetWidth;
-        const h = this.vizCanvas.height = this.vizCanvas.offsetHeight;
-        const cx = this.vizCtx; cx.clearRect(0,0,w,h);
-        cx.strokeStyle='#2979ff'; cx.lineWidth=2; cx.beginPath();
-        const now = Date.now()/100;
-        for(let x=0;x<w;x+=5) { const y = h/2 + Math.sin(x*0.05-now)*15; x===0?cx.moveTo(x,y):cx.lineTo(x,y); }
-        cx.stroke();
-    }
-
-    drawSpectrum(data) {
-        const w = this.vizCanvas.width = this.vizCanvas.offsetWidth;
-        const h = this.vizCanvas.height = this.vizCanvas.offsetHeight;
-        const cx = this.vizCtx; cx.clearRect(0,0,w,h);
-        const barW = (w/data.length)*2.5; let x=0;
-        for(let i=0;i<data.length;i++) {
-            const H = data[i]/255*h; cx.fillStyle=`rgb(${data[i]+50},255,100)`;
-            cx.fillRect(x,h-H,barW,H); x+=barW+1;
-        }
+    stopListen() {
+        this.isListening = false;
     }
 }
 
-// --- ZIP WRITER ---
+/**
+ * GHOSTSHARE PRODUCTION RUNTIME v4.0
+ * Features: Multi-file Bundles, ZIP Archiving, Serial Queueing, Audio Pairing
+ */
+
+// --- CONSTANTS ---
+const CONFIG = {
+    CHUNK_INITIAL: 16 * 1024,
+    CHUNK_MAX: 256 * 1024,
+    BUFFER_LIMIT: 8 * 1024 * 1024,
+    ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }],
+    APP_URL: window.location.href.split('?')[0]
+};
+
+const STATES = {
+    INIT: 'INIT',
+    CONNECTING: 'CONNECTING',
+    HANDSHAKING: 'HANDSHAKING',
+    VERIFIED: 'VERIFIED',
+    FAILED: 'FAILED'
+};
+
+// --- ZIP WRITER (VANILLA JS) ---
 class ZipWriter {
-    constructor() { this.files = []; this.crcT = new Uint32Array(256); for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=((c&1)?(0xEDB88320^(c>>>1)):(c>>>1));this.crcT[n]=c;} }
-    crc32(d) { let c=0^(-1); for(let i=0;i<d.length;i++) c=(c>>>8)^this.crcT[(c^d[i])&0xFF]; return (c^(-1))>>>0; }
-    add(n, d) { this.files.push({n, d}); }
+    constructor() {
+        this.files = [];
+        this.crcTable = this.makeCrcTable();
+    }
+
+    makeCrcTable() {
+        let c;
+        const crcTable = [];
+        for (let n = 0; n < 256; n++) {
+            c = n;
+            for (let k = 0; k < 8; k++) c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+            crcTable[n] = c;
+        }
+        return crcTable;
+    }
+
+    crc32(buf) {
+        let crc = 0 ^ (-1);
+        for (let i = 0; i < buf.length; i++) {
+            crc = (crc >>> 8) ^ this.crcTable[(crc ^ buf[i]) & 0xFF];
+        }
+        return (crc ^ (-1)) >>> 0;
+    }
+
+    add(name, data) {
+        this.files.push({ name, data });
+    }
+
     generate() {
-        const parts=[]; let off=0; const cd=[];
-        for(const f of this.files) {
-            const nb=new TextEncoder().encode(f.n); const d=new Uint8Array(f.d); const crc=this.crc32(d); const sz=d.length;
-            const h=new Uint8Array(30+nb.length); const v=new DataView(h.buffer);
-            v.setUint32(0,0x04034b50,true); v.setUint16(4,10,true); v.setUint32(14,crc,true); v.setUint32(18,sz,true); v.setUint32(22,sz,true); v.setUint16(26,nb.length,true);
-            h.set(nb,30); parts.push(h); parts.push(d);
-            cd.push({nb,crc,sz,off}); off+=h.length+sz;
+        const parts = [];
+        let offset = 0;
+        const centralDir = [];
+
+        // Write Local File Headers & Data
+        for (const file of this.files) {
+            const nameBytes = new TextEncoder().encode(file.name);
+            const data = new Uint8Array(file.data);
+            const crc = this.crc32(data);
+            const size = data.length;
+
+            // Local Header
+            const header = new Uint8Array(30 + nameBytes.length);
+            const view = new DataView(header.buffer);
+
+            view.setUint32(0, 0x04034b50, true); // Sig
+            view.setUint16(4, 0x000A, true); // Version
+            view.setUint16(6, 0x0000, true); // Flags
+            view.setUint16(8, 0x0000, true); // Compression (Store)
+            view.setUint32(14, crc, true);
+            view.setUint32(18, size, true); // Compressed
+            view.setUint32(22, size, true); // Uncompressed
+            view.setUint16(26, nameBytes.length, true);
+            view.setUint16(28, 0, true); // Extra len
+
+            header.set(nameBytes, 30);
+            
+            parts.push(header);
+            parts.push(data);
+
+            // Record for Central Directory
+            centralDir.push({ nameBytes, crc, size, offset });
+            offset += header.length + size;
         }
-        const ds=off;
-        for(const c of cd) {
-            const h=new Uint8Array(46+c.nb.length); const v=new DataView(h.buffer);
-            v.setUint32(0,0x02014b50,true); v.setUint16(4,10,true); v.setUint16(6,10,true); v.setUint32(16,c.crc,true); v.setUint32(20,c.sz,true); v.setUint32(24,c.sz,true); v.setUint16(28,c.nb.length,true); v.setUint32(42,c.off,true);
-            h.set(c.nb,46); parts.push(h); off+=h.length;
+
+        const dirStart = offset;
+
+        // Write Central Directory
+        for (const cd of centralDir) {
+            const header = new Uint8Array(46 + cd.nameBytes.length);
+            const view = new DataView(header.buffer);
+
+            view.setUint32(0, 0x02014b50, true);
+            view.setUint16(4, 0x000A, true);
+            view.setUint16(6, 0x000A, true);
+            view.setUint16(8, 0x0000, true);
+            view.setUint16(10, 0x0000, true); // Compression
+            view.setUint32(16, cd.crc, true);
+            view.setUint32(20, cd.size, true);
+            view.setUint32(24, cd.size, true);
+            view.setUint16(28, cd.nameBytes.length, true);
+            view.setUint32(42, cd.offset, true);
+
+            header.set(cd.nameBytes, 46);
+            parts.push(header);
+            offset += header.length;
         }
-        const e=new Uint8Array(22); const ev=new DataView(e.buffer);
-        ev.setUint32(0,0x06054b50,true); ev.setUint16(8,this.files.length,true); ev.setUint16(10,this.files.length,true); ev.setUint32(12,off-ds,true); ev.setUint32(16,ds,true);
-        parts.push(e); return new Blob(parts,{type:'application/zip'});
+
+        // End of Central Directory
+        const eocd = new Uint8Array(22);
+        const view = new DataView(eocd.buffer);
+        view.setUint32(0, 0x06054b50, true);
+        view.setUint16(8, this.files.length, true); // Disk records
+        view.setUint16(10, this.files.length, true); // Total records
+        view.setUint32(12, offset - dirStart, true); // Size of CD
+        view.setUint32(16, dirStart, true); // Offset of CD
+
+        parts.push(eocd);
+
+        return new Blob(parts, { type: 'application/zip' });
     }
 }
 
 // --- CRYPTO UTILS ---
 const Crypto = {
-    async generateKeyPair() { return window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]); },
+    async generateKeyPair() {
+        return window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+    },
     async exportKey(key) { return window.crypto.subtle.exportKey("jwk", key); },
     async importKey(jwk) { return window.crypto.subtle.importKey("jwk", jwk, { name: "ECDH", namedCurve: "P-256" }, true, []); },
-    async deriveHMACKey(privateKey, publicKey) { const bits = await window.crypto.subtle.deriveBits({ name: "ECDH", public: publicKey }, privateKey, 256); return window.crypto.subtle.importKey("raw", bits, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]); },
+    async deriveHMACKey(privateKey, publicKey) {
+        const bits = await window.crypto.subtle.deriveBits({ name: "ECDH", public: publicKey }, privateKey, 256);
+        return window.crypto.subtle.importKey("raw", bits, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+    },
     async sign(key, data) { return window.crypto.subtle.sign("HMAC", key, data); },
     async verify(key, signature, data) { return window.crypto.subtle.verify("HMAC", key, signature, data); },
     randomNonce() { return window.crypto.getRandomValues(new Uint8Array(32)); }
@@ -441,234 +619,574 @@ const Crypto = {
 // --- APP LOGIC ---
 class GhostShare {
     constructor() {
-        this.myId = this.genId();
-        this.peer = null; this.conn = null;
-        this.audio = new UltrasonicPairing(this);
-        this.transfers = {}; this.queue = []; this.activeBundle = null;
+        this.state = STATES.INIT;
+        this.peer = null;
+        this.conn = null;
+        this.myId = null;
+        
+        // Modules
+        this.audio = new AudioModem();
+
+        // Security Context
+        this.keyPair = null;
+        this.hmacKey = null; 
+        this.myNonce = null;
+
+        // Transfers
+        this.transfers = {}; 
+        this.uploadQueue = []; // Array of file objects to send serially
+        this.isUploading = false;
+
+        // Bundle State
+        this.pendingBundle = null; // Incoming offer
+        this.activeBundle = null; // Currently receiving bundle { id, mode, files: [], completed: [] }
+
+        // UI Refs
         this.dom = {
-            id: document.getElementById('my-id'),
-            pill: document.getElementById('status-pill'),
-            text: document.getElementById('status-text'),
-            setup: document.getElementById('view-setup'),
-            work: document.getElementById('view-workspace'),
-            list: document.getElementById('transfer-list'),
+            status: document.getElementById('status-badge'),
+            myId: document.getElementById('my-id'),
+            peerInput: document.getElementById('peer-id-input'),
+            viewIdentity: document.getElementById('view-identity'),
+            viewConnect: document.getElementById('view-connect'),
+            viewWorkspace: document.getElementById('view-workspace'),
+            transferList: document.getElementById('transfer-list'),
+            modalBundle: document.getElementById('modal-bundle'),
+            bundlePreview: document.getElementById('bundle-preview'),
             toast: document.getElementById('toast'),
-            bundleModal: document.getElementById('modal-bundle'),
-            bundlePreview: document.getElementById('bundle-preview')
+            btnConnect: document.getElementById('btn-connect'),
+            btnListen: document.getElementById('btn-listen')
         };
-        this.dom.id.innerText = this.myId;
+
         this.init();
-        this.setupDrag();
+        this.setupDragDrop();
     }
 
-    genId() { const b=new Uint8Array(4); window.crypto.getRandomValues(b); return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('').toUpperCase(); }
-
-    async init() {
-        this.genQr();
-        const p = new URLSearchParams(location.search).get('peer');
-        if(p) document.getElementById('peer-input').value = p;
-        this.peer = new Peer(this.myId, { config: { iceServers: CFG.ICE }, debug: 1 });
-        this.peer.on('open', () => this.setStatus('READY', 'warn'));
-        this.peer.on('connection', c => this.handleInc(c));
-        this.peer.on('error', e => { this.toast(e.type); if(e.type==='peer-unavailable') this.reset(); });
+    // --- AUDIO PAIRING ---
+    startBroadcast() {
+        if(!this.myId) return;
+        this.audio.startLoop(this.myId);
+        this.toast("Broadcasting ID via Audio...");
     }
 
-    connectManual() {
-        const id = document.getElementById('peer-input').value.trim().toUpperCase();
-        if(id.length!==8) return this.toast('Invalid ID');
-        this.connect(id);
+    stopBroadcast() {
+        this.audio.stopLoop();
     }
 
-    connect(id) {
-        this.setStatus('CONNECTING', 'warn');
-        const c = this.peer.connect(id, { reliable: true });
-        this.setupConn(c);
-    }
-
-    handleInc(c) {
-        if(this.conn) { if(this.myId > c.peer) { c.close(); return; } else { this.conn.close(); } }
-        this.setupConn(c);
-    }
-
-    setupConn(c) {
-        this.conn = c;
-        c.on('open', async () => {
-            this.setStatus('HANDSHAKE', 'warn');
-            this.kp = await Crypto.generateKeyPair();
-            const exp = await Crypto.exportKey(this.kp.publicKey);
-            c.send({ t: 'KEY', k: exp });
-        });
-        c.on('data', d => this.handleData(d));
-        c.on('close', () => this.reset());
-        c.on('error', () => this.reset());
-    }
-
-    async handleData(d) {
-        try {
-            switch(d.t) {
-                case 'KEY':
-                    const pub = await Crypto.importKey(d.k);
-                    this.key = await Crypto.deriveHMACKey(this.kp.privateKey, pub);
-                    this.nonce = Crypto.randomNonce();
-                    this.conn.send({ t: 'NONCE', n: Array.from(this.nonce) });
-                    break;
-                case 'NONCE':
-                    const pay = new Uint8Array([...d.n, ...this.nonce, ...new TextEncoder().encode(this.myId+this.conn.peer)]);
-                    const sig = await Crypto.sign(this.key, pay);
-                    this.conn.send({ t: 'SIG', s: Array.from(new Uint8Array(sig)) });
-                    break;
-                case 'SIG':
-                    const vPay = new Uint8Array([...this.nonce, ...d.n, ...new TextEncoder().encode(this.conn.peer+this.myId)]);
-                    const valid = await Crypto.verify(this.key, new Uint8Array(d.s), vPay);
-                    if(valid) { this.setStatus('SECURE', 'secure'); this.stopAudioPairing(); }
-                    else { this.disconnect(); this.toast('Security Check Failed'); }
-                    break;
-                case 'OFFER': this.handleOffer(d); break;
-                case 'ACCEPT': this.startQueue(); break;
-                case 'REJECT': this.toast('Rejected'); this.queue=[]; break;
-                case 'META': this.prepDown(d); break;
-                case 'CHUNK': this.handleChunk(d); break;
-                case 'ACK': this.finTransfer(d.id); break;
-            }
-        } catch(e) { console.error(e); this.disconnect(); }
-    }
-
-    // --- UI Logic ---
-    showTab(t) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        document.getElementById('tab-audio').classList.add('hidden');
-        document.getElementById('tab-manual').classList.add('hidden');
-        document.getElementById(`tab-${t}`).classList.remove('hidden');
-    }
-    startBroadcast() { this.audio.broadcast(); }
-    startListen() { this.audio.listen(); }
-    stopAudioPairing() { this.audio.stop(); document.getElementById('modal-audio').classList.add('hidden'); }
-
-    // --- Files ---
-    handleFiles(files) {
-        if(!this.conn) return;
-        const list = Array.from(files);
-        const bid = Math.random().toString(36).slice(2);
-        const total = list.reduce((a,b)=>a+b.size,0);
-        const metas = list.map(f => ({ name: f.name, size: f.size, type: f.type, id: bid+'_'+Math.random().toString(36).slice(2) }));
-        this.queue = list.map((f, i) => ({ f, meta: metas[i] }));
-        this.conn.send({ t: 'OFFER', files: metas, total });
-        this.toast('Offer Sent');
-    }
-
-    handleOffer(d) {
-        this.bundle = { id: d.id, files: d.files, total: d.total };
-        document.getElementById('bundle-count').innerText = d.files.length;
-        document.getElementById('bundle-size').innerText = this.fmtBytes(d.total);
-        this.dom.bundlePreview.innerHTML = d.files.map(f=>`<div class="file-entry"><span>${f.name}</span><span>${this.fmtBytes(f.size)}</span></div>`).join('');
-        this.dom.bundleModal.classList.remove('hidden');
-    }
-
-    acceptBundle(zip) {
-        this.dom.bundleModal.classList.add('hidden');
-        this.bundle.zip = zip;
-        this.bundle.parts = [];
-        this.conn.send({ t: 'ACCEPT' });
-    }
-    rejectBundle() { this.dom.bundleModal.classList.add('hidden'); this.conn.send({ t: 'REJECT' }); }
-
-    startQueue() {
-        if(!this.queue.length) return this.toast('Finished');
-        const item = this.queue.shift();
-        this.send(item);
-    }
-
-    send(item) {
-        const { f, meta } = item;
-        this.transfers[meta.id] = { role: 'send', size: f.size, prog: 0 };
-        this.uiTransfer(meta.id, f.name, 'UPLOAD');
-        this.conn.send({ t: 'META', ...meta });
-        const reader = new FileReader(); let off=0; const cs=CFG.CHUNK;
-        const pump = () => {
-            if(!this.conn || this.conn.dataChannel.bufferedAmount > CFG.MAX_BUF) { setTimeout(pump, 50); return; }
-            const slice = f.slice(off, off+cs); reader.readAsArrayBuffer(slice);
-        };
-        reader.onload = e => {
-            this.conn.send({ t: 'CHUNK', id: meta.id, d: e.target.result });
-            off += e.target.result.byteLength;
-            this.uiUpdate(meta.id, off, f.size);
-            if(off < f.size) pump();
-        };
-        pump();
-    }
-
-    prepDown(d) {
-        this.transfers[d.id] = { role: 'recv', size: d.size, name: d.name, type: d.type, chunks: [], prog: 0 };
-        this.uiTransfer(d.id, d.name, 'DOWNLOAD');
-    }
-
-    handleChunk(d) {
-        const t = this.transfers[d.id]; if(!t) return;
-        t.chunks.push(d.d); t.prog += d.d.byteLength;
-        this.uiUpdate(d.id, t.prog, t.size);
-        if(t.prog >= t.size) {
-            const blob = new Blob(t.chunks, { type: t.type }); t.chunks = [];
-            this.conn.send({ t: 'ACK', id: d.id }); this.uiDone(d.id);
-            if(this.bundle && this.bundle.zip) {
-                this.bundle.parts.push({ n: t.name, d: blob });
-                if(this.bundle.parts.length === this.bundle.files.length) this.finishZip();
-            } else { this.save(blob, t.name); }
+    toggleListen() {
+        if (this.audio.isListening) {
+            this.audio.stopListen();
+            this.dom.btnListen.innerText = "👂 Listen";
+            this.dom.btnListen.classList.remove('listening');
+        } else {
+            this.dom.btnListen.innerText = "Scanning...";
+            this.dom.btnListen.classList.add('listening');
+            this.audio.listen((id) => {
+                this.dom.peerInput.value = id;
+                this.toggleListen(); // Stop listening
+                this.toast("Peer Found via Audio!");
+                
+                // Optional: Auto Connect if desired
+                // this.connect();
+            }).catch(e => {
+                this.toast("Mic Error: " + e.message);
+                this.toggleListen();
+            });
         }
     }
 
-    async finishZip() {
-        this.toast('Zipping...'); const z = new ZipWriter();
-        for(const p of this.bundle.parts) z.add(p.n, await p.d.arrayBuffer());
-        this.save(z.generate(), `ghostshare_${Date.now()}.zip`); this.bundle = null;
+    // --- INITIALIZATION ---
+    async init() {
+        const array = new Uint8Array(4);
+        window.crypto.getRandomValues(array);
+        this.myId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+        
+        this.dom.myId.innerText = this.myId;
+        this.generateQr();
+        this.checkDeepLink();
+
+        this.peer = new Peer(this.myId, { debug: 1, config: { iceServers: CONFIG.ICE_SERVERS } });
+
+        this.peer.on('open', () => this.updateState(STATES.INIT));
+        this.peer.on('connection', (conn) => this.handleIncomingConnection(conn));
+        this.peer.on('error', (err) => {
+            console.error(err);
+            this.toast(`Net Error: ${err.type}`);
+            if(err.type === 'peer-unavailable') this.resetUI();
+        });
     }
 
-    finTransfer(id) { this.uiDone(id); this.startQueue(); }
-
-    uiTransfer(id, n, t) {
-        const d = document.createElement('div'); d.className='transfer-row';
-        d.innerHTML = `<div class="flex-row"><span class="label">${t}</span><span>${n}</span></div><div class="progress-bg"><div class="progress-fill" id="bar-${id}"></div></div>`;
-        this.dom.list.prepend(d);
-    }
-    uiUpdate(id, c, t) { document.getElementById(`bar-${id}`).style.width = `${(c/t)*100}%`; }
-    uiDone(id) { document.getElementById(`bar-${id}`).style.background = 'var(--info)'; }
-    save(b, n) { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=n; document.body.appendChild(a); a.click(); setTimeout(()=>URL.revokeObjectURL(u),60000); }
-
-    setStatus(t, c) {
-        this.dom.text.innerText = t; this.dom.pill.className = `status-pill ${c}`;
-        if(t==='SECURE') { this.dom.setup.classList.add('hidden'); this.dom.work.classList.remove('hidden'); }
-        else { this.dom.setup.classList.remove('hidden'); this.dom.work.classList.add('hidden'); }
+    // --- CONNECTION & SECURITY ---
+    connect() {
+        const input = this.dom.peerInput.value.trim().toUpperCase();
+        const id = this.extractId(input);
+        if(!id || id === this.myId) return this.toast("Invalid Peer ID");
+        this.updateState(STATES.CONNECTING);
+        const conn = this.peer.connect(id, { reliable: true });
+        this.setupConnection(conn);
     }
 
-    toggleScanner() {
-        const r = document.getElementById('reader');
-        if(r.style.display==='none') {
-            r.style.display='block'; this.scanner = new Html5Qrcode("reader");
-            this.scanner.start({facingMode:"environment"}, {fps:10, qrbox:200}, (t)=>{
-                const id = new URL(t).searchParams.get('peer') || t;
-                document.getElementById('peer-input').value = id; this.toggleScanner(); this.connectManual();
-            });
-        } else { this.scanner.stop().then(()=>r.style.display='none'); }
+    handleIncomingConnection(conn) {
+        if (this.state === STATES.VERIFIED) { conn.close(); return; }
+        this.updateState(STATES.CONNECTING);
+        this.setupConnection(conn);
     }
 
-    copyId() { navigator.clipboard.writeText(this.myId); this.toast('Copied'); }
-    genQr() { const e=document.getElementById('qr-target'); e.innerHTML=''; new QRCode(e, {text:`${CFG.APP_URL}?peer=${this.myId}`, width:128, height:128}); }
-    toast(m) { const t=this.dom.toast; t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
-    fmtBytes(b) { if(b===0)return'0B'; const i=Math.floor(Math.log(b)/Math.log(1024)); return parseFloat((b/Math.pow(1024,i)).toFixed(2))+['B','KB','MB','GB'][i]; }
-    disconnect() { if(this.conn)this.conn.close(); if(this.peer)this.peer.destroy(); location.reload(); }
-    reset() { this.disconnect(); }
-    setupDrag() {
-        const o = document.getElementById('drag-overlay');
-        window.ondragover=e=>{e.preventDefault(); if(this.state==='SECURE') o.classList.add('active');};
-        window.ondragleave=e=>{if(e.target===o) o.classList.remove('active');};
-        window.ondrop=e=>{e.preventDefault(); o.classList.remove('active'); if(this.state==='SECURE') this.handleFiles(e.dataTransfer.files);};
+    setupConnection(conn) {
+        this.conn = conn;
+        conn.on('open', async () => {
+            this.updateState(STATES.HANDSHAKING);
+            this.keyPair = await Crypto.generateKeyPair();
+            const exported = await Crypto.exportKey(this.keyPair.publicKey);
+            conn.send({ type: 'HS_KEY', key: exported });
+        });
+        conn.on('data', (data) => this.handleData(data));
+        conn.on('close', () => this.disconnect());
+        conn.on('error', () => this.disconnect());
+    }
+
+    async handleData(msg) {
+        try {
+            switch(msg.type) {
+                // HANDSHAKE
+                case 'HS_KEY':
+                    if (this.state !== STATES.HANDSHAKING) return;
+                    const remoteKey = await Crypto.importKey(msg.key);
+                    this.hmacKey = await Crypto.deriveHMACKey(this.keyPair.privateKey, remoteKey);
+                    this.myNonce = Crypto.randomNonce();
+                    this.conn.send({ type: 'HS_CHALLENGE', nonce: Array.from(this.myNonce) });
+                    break;
+                case 'HS_CHALLENGE':
+                    if (this.state !== STATES.HANDSHAKING || !this.hmacKey) return;
+                    const sig = await Crypto.sign(this.hmacKey, new Uint8Array(msg.nonce));
+                    this.conn.send({ type: 'HS_PROOF', sig: Array.from(new Uint8Array(sig)) });
+                    break;
+                case 'HS_PROOF':
+                    if (this.state !== STATES.HANDSHAKING || !this.hmacKey || !this.myNonce) return;
+                    const valid = await Crypto.verify(this.hmacKey, new Uint8Array(msg.sig), this.myNonce);
+                    if (valid) {
+                        this.updateState(STATES.VERIFIED);
+                        this.toast("Secure Connection Verified");
+                    } else {
+                        this.disconnect();
+                    }
+                    break;
+
+                // DATA PLANE
+                case 'BUNDLE_OFFER':
+                    if (this.state !== STATES.VERIFIED) return;
+                    this.handleBundleOffer(msg);
+                    break;
+                case 'BUNDLE_ACCEPT':
+                    if (this.state !== STATES.VERIFIED) return;
+                    this.processUploadQueue(); // Start sending
+                    break;
+                case 'BUNDLE_REJECT':
+                    this.toast("Bundle Rejected");
+                    this.uploadQueue = [];
+                    break;
+                case 'META':
+                    if (this.state !== STATES.VERIFIED) return;
+                    this.initDownload(msg);
+                    break;
+                case 'CHUNK':
+                    if (this.state !== STATES.VERIFIED) return;
+                    this.handleChunk(msg);
+                    break;
+                case 'ACK_FIN':
+                    if (this.state !== STATES.VERIFIED) return;
+                    this.finalizeTransfer(msg.id, true);
+                    break;
+            }
+        } catch (e) {
+            console.error("Protocol Error", e);
+            this.disconnect();
+        }
+    }
+
+    // --- BUNDLE LOGIC (RECEIVER) ---
+    handleBundleOffer(msg) {
+        this.pendingBundle = msg;
+        
+        // Populate UI
+        document.getElementById('bundle-count').innerText = msg.files.length;
+        const totalSize = msg.files.reduce((acc, f) => acc + f.size, 0);
+        document.getElementById('bundle-total-size').innerText = `Total: ${this.formatBytes(totalSize)}`;
+        
+        const preview = this.dom.bundlePreview;
+        preview.innerHTML = '';
+        msg.files.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'file-entry';
+            div.innerHTML = `<span>${f.name}</span><span>${this.formatBytes(f.size)}</span>`;
+            preview.appendChild(div);
+        });
+
+        this.dom.modalBundle.classList.add('active');
+    }
+
+    acceptBundle(mode) {
+        this.dom.modalBundle.classList.remove('active');
+        const offer = this.pendingBundle;
+        
+        this.activeBundle = {
+            id: offer.id,
+            mode: mode, // 'zip' or 'individual'
+            totalFiles: offer.files.length,
+            completedFiles: [],
+            zipParts: [] // To store file data for zip
+        };
+
+        this.conn.send({ type: 'BUNDLE_ACCEPT', bundleId: offer.id });
+    }
+
+    rejectBundle() {
+        this.dom.modalBundle.classList.remove('active');
+        this.conn.send({ type: 'BUNDLE_REJECT', bundleId: this.pendingBundle.id });
+        this.pendingBundle = null;
+    }
+
+    // --- TRANSFER LOGIC ---
+
+    // SENDER SIDE
+    handleFiles(files) {
+        if (this.state !== STATES.VERIFIED) return this.toast("Not Connected");
+        
+        const fileList = Array.from(files);
+        if (fileList.length === 0) return;
+
+        // Create Bundle Offer
+        const bundleId = Date.now().toString(36);
+        const metaList = fileList.map(f => ({
+            name: f.name,
+            size: f.size,
+            mime: f.type,
+            id: bundleId + '_' + Math.random().toString(36).substr(2, 5)
+        }));
+
+        this.uploadQueue = fileList.map((f, i) => ({
+            file: f,
+            meta: metaList[i]
+        }));
+
+        this.conn.send({ type: 'BUNDLE_OFFER', id: bundleId, files: metaList });
+        this.toast("Offer Sent...");
+    }
+
+    processUploadQueue() {
+        if (this.uploadQueue.length === 0) {
+            this.toast("Bundle Completed");
+            return;
+        }
+
+        const item = this.uploadQueue.shift(); // Get next file
+        this.startUpload(item);
+    }
+
+    startUpload(item) {
+        const id = item.meta.id;
+        const file = item.file;
+
+        this.transfers[id] = {
+            role: 'sender',
+            file: file,
+            size: file.size,
+            name: file.name,
+            sent: 0,
+            status: 'TRANSFERRING',
+            startTime: Date.now(),
+            lastTime: Date.now(),
+            chunkSize: CONFIG.CHUNK_INITIAL
+        };
+
+        this.createTransferUI(id, file.name, file.size, 'upload');
+
+        // Send META for this specific file
+        this.conn.send({ type: 'META', ...item.meta });
+
+        // Start Chunking
+        const reader = new FileReader();
+        let offset = 0;
+        const t = this.transfers[id];
+
+        const pump = () => {
+            if (t.status !== 'TRANSFERRING' || !this.conn.open) return;
+
+            if (this.conn.dataChannel.bufferedAmount > CONFIG.BUFFER_LIMIT) {
+                setTimeout(pump, 50);
+                return;
+            }
+
+            // Adaptive Chunk Size
+            const buffered = this.conn.dataChannel.bufferedAmount;
+            if (buffered < CONFIG.CHUNK_INITIAL) t.chunkSize = Math.min(t.chunkSize * 2, CONFIG.CHUNK_MAX);
+            else t.chunkSize = Math.max(t.chunkSize / 2, CONFIG.CHUNK_INITIAL);
+
+            const slice = file.slice(offset, offset + t.chunkSize);
+            reader.readAsArrayBuffer(slice);
+        };
+
+        reader.onload = (e) => {
+            const data = e.target.result;
+            this.conn.send({ type: 'CHUNK', id: id, data: data });
+            offset += data.byteLength;
+            t.sent = offset;
+            this.updateMetrics(id);
+
+            if (offset < t.size) {
+                pump();
+            } else {
+                t.status = 'AWAITING_FIN';
+            }
+        };
+
+        pump();
+    }
+
+    // RECEIVER SIDE
+    initDownload(msg) {
+        this.transfers[msg.id] = {
+            role: 'receiver',
+            size: msg.size,
+            name: msg.name,
+            mime: msg.mime,
+            received: 0,
+            status: 'TRANSFERRING',
+            chunks: [],
+            startTime: Date.now(),
+            lastTime: Date.now()
+        };
+        this.createTransferUI(msg.id, msg.name, msg.size, 'download');
+    }
+
+    handleChunk(msg) {
+        const t = this.transfers[msg.id];
+        if (!t) return;
+
+        const data = new Uint8Array(msg.data);
+        t.chunks.push(data);
+        t.received += data.byteLength;
+        this.updateMetrics(msg.id);
+
+        if (t.received >= t.size) {
+            this.finishReceive(msg.id);
+        }
+    }
+
+    finishReceive(id) {
+        const t = this.transfers[id];
+        t.status = 'COMPLETED';
+        this.updateTransferUI(id);
+        
+        // Construct Blob
+        const blob = new Blob(t.chunks, { type: t.mime });
+
+        // Bundle Handling
+        if (this.activeBundle) {
+            if (this.activeBundle.mode === 'zip') {
+                this.activeBundle.completedFiles.push({
+                    name: t.name,
+                    data: blob 
+                });
+            } else {
+                // Individual Mode: Download immediately
+                this.downloadBlob(blob, t.name);
+            }
+
+            // Check if bundle complete
+            // (Wait for zip finalization if zip mode, else just count)
+        } else {
+            // Single file (legacy fallback)
+            this.downloadBlob(blob, t.name);
+        }
+
+        // ACK and Cleanup
+        this.conn.send({ type: 'ACK_FIN', id: id });
+        t.chunks = null; // GC
+        
+        // Logic for ZIP finalization
+        if (this.activeBundle && this.activeBundle.mode === 'zip') {
+             if (this.activeBundle.completedFiles.length === this.activeBundle.totalFiles) {
+                 this.finalizeZipBundle();
+             }
+        }
+    }
+
+    async finalizeZipBundle() {
+        this.toast("Creating ZIP Archive...");
+        const zip = new ZipWriter();
+        
+        for (const f of this.activeBundle.completedFiles) {
+            const buf = await f.data.arrayBuffer();
+            zip.add(f.name, buf);
+        }
+
+        const zipBlob = zip.generate();
+        this.downloadBlob(zipBlob, `bundle_${Date.now()}.zip`);
+        this.activeBundle = null;
+        this.toast("Bundle Downloaded");
+    }
+
+    finalizeTransfer(id) {
+        // Sender Side: When ACK received, process next
+        const t = this.transfers[id];
+        if (t && t.role === 'sender') {
+            t.status = 'COMPLETED';
+            this.updateTransferUI(id);
+            this.processUploadQueue(); // Trigger next file
+        }
+    }
+
+    downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+
+    // --- UI HELPERS ---
+    createTransferUI(id, name, size, type) {
+        const div = document.createElement('div');
+        div.className = 'transfer-item fade-in';
+        div.id = `ui-${id}`;
+        div.innerHTML = `
+            <div class="flex-row">
+                <span style="font-weight:700; color: ${type === 'upload' ? '#ff9800' : '#4caf50'}">
+                    ${type === 'upload' ? 'SENDING' : 'RECEIVING'}
+                </span>
+                <span style="font-size:11px;">${name}</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="bar-${id}"></div>
+            </div>
+            <div class="meta-row">
+                <span id="prog-${id}">0%</span>
+                <span id="speed-${id}">-- MB/s</span>
+            </div>
+        `;
+        this.dom.transferList.prepend(div);
+    }
+
+    updateMetrics(id) {
+        const t = this.transfers[id];
+        if(!t) return;
+        
+        const now = Date.now();
+        const processed = t.role === 'sender' ? t.sent : t.received;
+        const pct = Math.min(100, (processed / t.size) * 100).toFixed(1);
+        
+        const bar = document.getElementById(`bar-${id}`);
+        if(bar) bar.style.width = `${pct}%`;
+        const prog = document.getElementById(`prog-${id}`);
+        if(prog) prog.innerText = `${pct}%`;
+
+        if (now - t.lastTime > 500) {
+            const bytesSince = processed - (t.lastBytes || 0);
+            const timeDiff = (now - t.lastTime) / 1000;
+            const speed = bytesSince / timeDiff;
+            const spdEl = document.getElementById(`speed-${id}`);
+            if(spdEl) spdEl.innerText = `${this.formatBytes(speed)}/s`;
+            t.lastTime = now;
+            t.lastBytes = processed;
+        }
+    }
+
+    updateTransferUI(id) {
+        const t = this.transfers[id];
+        if (!t) return;
+        if (t.status === 'COMPLETED') {
+            document.getElementById(`bar-${id}`).style.background = 'var(--success)';
+        }
+    }
+
+    updateState(newState) {
+        this.state = newState;
+        if (newState === STATES.VERIFIED) {
+            this.dom.viewIdentity.classList.add('hidden');
+            this.dom.viewConnect.classList.add('hidden');
+            this.dom.viewWorkspace.classList.remove('hidden');
+            this.dom.status.className = 'status-badge secure';
+            this.dom.status.innerText = 'SECURE';
+        } else if (newState === STATES.HANDSHAKING) {
+            this.dom.status.className = 'status-badge handshake';
+            this.dom.status.innerText = 'VERIFYING...';
+        } else if (newState === STATES.INIT) {
+            this.resetUI();
+        } else {
+            this.dom.status.className = 'status-badge warn';
+            this.dom.status.innerText = newState;
+        }
+    }
+
+    disconnect() {
+        if (this.conn) this.conn.close();
+        if (this.peer) this.peer.destroy();
+        this.updateState(STATES.INIT);
+        this.init(); 
+    }
+
+    resetUI() {
+        this.dom.viewIdentity.classList.remove('hidden');
+        this.dom.viewConnect.classList.remove('hidden');
+        this.dom.viewWorkspace.classList.add('hidden');
+        this.dom.transferList.innerHTML = '';
+        this.dom.peerInput.value = '';
+        this.dom.btnConnect.innerText = 'Connect';
+        
+        this.dom.btnListen.innerText = "👂 Listen";
+        this.dom.btnListen.classList.remove('listening');
+        if(this.audio) this.audio.stopListen();
+
+        this.dom.status.className = 'status-badge';
+        this.dom.status.innerText = 'INIT';
+        this.uploadQueue = [];
+        this.activeBundle = null;
+    }
+
+    // --- UTILS ---
+    extractId(input) { try { return new URL(input).searchParams.get('peer'); } catch(e) { return input; } }
+    checkDeepLink() {
+        const peer = new URLSearchParams(window.location.search).get('peer');
+        if (peer) { this.dom.peerInput.value = peer; this.toast("Link Detected"); window.history.replaceState({}, document.title, window.location.pathname); }
+    }
+    generateQr() {
+        const target = document.getElementById('qr-target'); target.innerHTML = '';
+        new QRCode(target, { text: `${CONFIG.APP_URL}?peer=${this.myId}`, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.L });
+    }
+    toggleQr() { document.getElementById('qr-target').classList.toggle('hidden'); }
+    copyId() { navigator.clipboard.writeText(this.myId); this.toast("ID Copied"); }
+    toast(msg) { this.dom.toast.innerText = msg; this.dom.toast.classList.add('show'); setTimeout(()=>this.dom.toast.classList.remove('show'), 3000); }
+    formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    startScanner() {
+        document.getElementById('reader-container').classList.remove('hidden');
+        this.scanner = new Html5Qrcode("reader");
+        this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decoded) => {
+            const id = this.extractId(decoded);
+            if(id) { this.dom.peerInput.value = id; this.stopScanner(); this.connect(); }
+        });
+    }
+    stopScanner() { if(this.scanner) this.scanner.stop().then(() => { document.getElementById('reader-container').classList.add('hidden'); }); }
+    
+    setupDragDrop() {
+        const overlay = document.getElementById('drag-overlay');
+        window.addEventListener('dragover', e => { e.preventDefault(); if(this.state===STATES.VERIFIED) overlay.classList.add('active'); });
+        overlay.addEventListener('dragleave', e => { e.preventDefault(); overlay.classList.remove('active'); });
+        overlay.addEventListener('drop', e => {
+            e.preventDefault(); overlay.classList.remove('active');
+            if(this.state===STATES.VERIFIED && e.dataTransfer.files.length) this.handleFiles(e.dataTransfer.files);
+        });
     }
 }
 
 window.app = new GhostShare();
-window.onbeforeunload = () => window.app.state === 'SECURE' ? "Active Session" : undefined;
+window.onbeforeunload = () => window.app.state === STATES.VERIFIED ? "Active Session" : undefined;
 </script>
 </body>
 </html>
-
-
