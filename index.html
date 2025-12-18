@@ -2,1122 +2,943 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprehensive Study App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GhostDrop Social</title>
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         :root {
-            --bg-color: #f9fafb;
-            --text-color: #1f2937;
-            --primary-color: #4f46e5;
-            --primary-hover-color: #4338ca;
-            --secondary-bg-color: #ffffff;
-            --secondary-text-color: #4b5563;
-            --border-color: #e5e7eb;
-            --highlight-bg: #fefce8;
-            --highlight-text: #854d0e;
-            --success-color: #16a34a;
-            --error-color: #dc2626;
-            --code-bg-color: #f3f4f6;
-            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --radius-sm: 6px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
+            --bg: #ffffff;
+            --fg: #000000;
+            --border: #000000;
+            --dim: #888888;
+            --font-main: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
         }
 
-        .dark-mode {
-            --bg-color: #111827;
-            --text-color: #f9fafb;
-            --primary-color: #6366f1;
-            --primary-hover-color: #818cf8;
-            --secondary-bg-color: #1f2937;
-            --secondary-text-color: #d1d5db;
-            --border-color: #374151;
-            --highlight-bg: #1e293b;
-            --highlight-text: #fde047;
-            --success-color: #4ade80;
-            --error-color: #f87171;
-            --code-bg-color: #374151;
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html { scroll-behavior: smooth; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .container { display: flex; flex: 1; overflow: hidden; }
-
-        #sidebar {
-            width: 280px;
-            background-color: var(--secondary-bg-color);
-            padding: 1.5rem 1rem;
-            overflow-y: auto;
-            border-right: 1px solid var(--border-color);
-            transition: width 0.3s, background-color 0.3s, border-color 0.3s, transform 0.3s ease-in-out;
-            flex-shrink: 0;
-        }
-
-        #sidebar h2 { font-size: 1.25rem; margin-bottom: 1rem; border-bottom: 2px solid var(--primary-color); padding-bottom: 0.5rem; }
-        #sidebar ul { list-style: none; }
-        #sidebar li { padding: 0.75rem 0.5rem; cursor: pointer; border-radius: var(--radius-sm); transition: background-color 0.2s, color 0.2s; font-weight: 500; }
-        #sidebar li:hover, #sidebar li.active { background-color: var(--primary-color); color: white; }
-
-        #main-content { flex: 1; padding: 2rem; overflow-y: auto; }
-
-        .view { display: none; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .view.active { display: block; }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem 2rem;
-            border-bottom: 1px solid var(--border-color);
-            background-color: var(--secondary-bg-color);
-            transition: background-color 0.3s, border-color 0.3s;
-            position: sticky;
-            top: 0;
-            z-index: 1002;
-        }
-        
-        header h1 { font-size: 1.75rem; color: var(--primary-color); font-weight: 700; flex-shrink: 0; }
-        .header-controls { display: flex; align-items: center; }
-
-        #global-search-container { position: relative; width: 100%; max-width: 500px; }
-        #global-search { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--secondary-bg-color); color: var(--text-color); font-size: 1rem; }
-        #global-search-results {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background-color: var(--secondary-bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1003;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .search-result-item { padding: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border-color); }
-        .search-result-item:hover { background-color: var(--primary-color); color: white; }
-        .search-result-item:last-child { border-bottom: none; }
-        .search-result-item small { display: block; opacity: 0.7; }
-        .search-result-item:hover small { color: white; }
-
-        #burger-menu {
-            display: none;
-            flex-direction: column;
-            justify-content: space-around;
-            width: 2rem;
-            height: 2rem;
-            background: transparent;
-            border: none;
-            cursor: pointer;
+            margin: 0;
             padding: 0;
-            z-index: 1001;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-main);
+            font-size: 14px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            overscroll-behavior-y: contain;
         }
-        #burger-menu span { width: 2rem; height: 0.25rem; background-color: var(--text-color); border-radius: 10px; transition: all 0.3s linear; position: relative; transform-origin: 1px; }
-        
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; transition: opacity 0.3s ease-in-out; opacity: 0; }
-        #overlay.active { display: block; opacity: 1; }
 
-        button { background-color: var(--primary-color); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: var(--radius-md); cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background-color 0.2s, transform 0.1s; }
-        button:hover { background-color: var(--primary-hover-color); transform: translateY(-1px); }
-        button:disabled { background-color: var(--secondary-text-color); cursor: not-allowed; transform: none; }
-        button.secondary { background-color: var(--secondary-text-color); }
-        button.secondary:hover { background-color: var(--text-color); }
+        /* Layout Grid */
+        #app {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            grid-template-rows: auto 1fr;
+            height: 100%;
+            width: 100%;
+        }
 
-        select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--secondary-bg-color); color: var(--text-color); font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
-        select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 20%, transparent); }
-
-        .card { background-color: var(--secondary-bg-color); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1rem; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s, box-shadow 0.2s, border-color 0.3s; }
-        .card:hover { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
-        .highlight-card { border: 2px solid var(--primary-color); box-shadow: 0 0 15px color-mix(in srgb, var(--primary-color) 30%, transparent); }
-
-        h2 { font-size: 2rem; margin-bottom: 1rem; color: var(--primary-color); }
-        h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
-        .provenance { display: block; font-size: 0.8rem; color: var(--secondary-text-color); margin-top: 0.5rem; text-align: right; font-style: italic; }
-
-        pre { background-color: var(--code-bg-color); color: var(--text-color); padding: 1rem; border-radius: var(--radius-md); white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', Courier, monospace; }
-        .mermaid { text-align: center; margin: 1.5rem 0; background-color: white; padding: 1rem; border-radius: var(--radius-md); }
-        .dark-mode .mermaid { background-color: var(--secondary-bg-color); }
-        
-        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
-        th, td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: left; }
-        th { background-color: var(--code-bg-color); font-weight: 600; }
-        
+        /* Mobile Layout Override */
         @media (max-width: 768px) {
-            .container { flex-direction: column; }
-            #burger-menu { display: flex; margin-right: 1rem; }
-            header { flex-wrap: wrap; }
-            #global-search-container { order: 3; width: 100%; margin-top: 1rem; }
-            #sidebar { position: fixed; top: 0; left: 0; height: 100%; width: 280px; transform: translateX(-100%); z-index: 1000; }
-            #sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.2); }
-            #main-content { padding: 1.5rem; }
-            h2 { font-size: 1.75rem; }
+            #app {
+                display: flex;
+                flex-direction: column;
+            }
+            .desktop-only { display: none !important; }
+            .mobile-only { display: flex !important; }
+            #sidebar { 
+                display: none; 
+                flex: 1;
+                border-right: none; 
+            }
+            #main-panel { 
+                display: none; 
+                flex: 1;
+            }
+            #sidebar.active, #main-panel.active { display: flex; }
         }
+
+        /* Common UI Elements */
+        .border-bottom { border-bottom: 1px solid var(--border); }
+        .border-right { border-right: 1px solid var(--border); }
+        .border-top { border-top: 1px solid var(--border); }
+        .border-all { border: 1px solid var(--border); }
+
+        .btn {
+            background: var(--bg);
+            color: var(--fg);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-transform: uppercase;
+            border-radius: 0;
+            user-select: none;
+        }
+        .btn:hover { background: #eee; }
+        .btn:active { background: var(--fg); color: var(--bg); }
+        .btn:disabled { color: var(--dim); border-color: var(--dim); cursor: not-allowed; }
+        .btn-block { width: 100%; display: block; }
+        .btn-small { padding: 4px 8px; font-size: 10px; }
+
+        .input {
+            border: 1px solid var(--border);
+            padding: 8px;
+            font-family: var(--font-mono);
+            width: 100%;
+            border-radius: 0;
+            outline: none;
+            background: var(--bg);
+            color: var(--fg);
+        }
+        .input:focus { border-width: 2px; padding: 7px; }
+
+        /* Sidebar */
+        #sidebar {
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .user-card {
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .user-card:hover { background: #f5f5f5; }
+        .user-card.active { background: var(--fg); color: var(--bg); }
+        .user-card.active .status-dot { border: 1px solid var(--bg); }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            background: #eee;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--dim);
+            border: 1px solid transparent;
+        }
+        .status-dot.online { background: #000; }
+        .user-card.active .status-dot.online { background: #fff; }
+
+        /* Main Panel */
+        #main-panel {
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 80%;
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .msg-in { align-self: flex-start; background: #fff; }
+        .msg-out { align-self: flex-end; background: #f0f0f0; }
+        .msg-sys { align-self: center; border: none; color: var(--dim); font-style: italic; }
+
+        /* Input Area */
+        #input-area {
+            padding: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Mobile Tabs */
+        #mobile-tabs {
+            display: none;
+            height: 50px;
+        }
+        .tab-btn {
+            flex: 1;
+            border: none;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+            font-weight: bold;
+        }
+        .tab-btn.active {
+            background: var(--fg);
+            color: var(--bg);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* Toast */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--fg);
+            color: var(--bg);
+            padding: 8px 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            min-width: 200px;
+            border: 1px solid var(--bg);
+        }
+
+        /* Helpers */
+        .mono { font-family: var(--font-mono); }
+        .text-sm { font-size: 12px; }
+        .hidden { display: none; }
+        .mt-2 { margin-top: 8px; }
+        .mb-4 { margin-bottom: 16px; }
+        .flex { display: flex; }
+        .gap-2 { gap: 8px; }
+
+        /* QR Reader */
+        #reader { width: 100%; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
-    <header>
-        <button id="burger-menu" aria-label="Open menu">
-            <span></span><span></span><span></span>
-        </button>
-        <h1>Study App</h1>
-        <div id="global-search-container">
-            <input type="search" id="global-search" placeholder="Search anything...">
-            <div id="global-search-results"></div>
+<div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="border-right active">
+        <div class="border-bottom" style="padding: 16px;">
+            <div style="font-weight: bold; font-size: 16px;">GHOST DROP</div>
+            <div id="my-id" class="mono text-sm mt-2">Connecting...</div>
+            <div class="mt-2 flex gap-2">
+                <button class="btn btn-small" onclick="app.showQR()">Show QR</button>
+                <button class="btn btn-small" onclick="app.startScan()">Scan QR</button>
+            </div>
         </div>
-        <div class="header-controls">
-            <button id="dark-mode-toggle">Toggle Dark Mode</button>
+        
+        <div style="padding: 8px;" class="border-bottom">
+            <div class="flex gap-2">
+                <input type="text" id="add-friend-id" class="input" placeholder="Peer ID" autocomplete="off">
+                <button class="btn" onclick="app.addFriendInput()">ADD</button>
+            </div>
         </div>
-    </header>
 
-    <div class="container">
-        <nav id="sidebar">
-            <h2>Study Tools</h2>
-            <ul>
-                <li class="nav-item active" data-view="home">Home</li>
-                <li class="nav-item" data-view="summaries">Summaries & Solutions</li>
-                <li class="nav-item" data-view="flashcards">Flashcards</li>
-                <li class="nav-item" data-view="quiz">Practice Quiz</li>
-                <li class="nav-item" data-view="srs">Spaced Repetition (SRS)</li>
-            </ul>
-        </nav>
+        <div style="flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+            <div id="friends-list"></div>
+        </div>
+    </aside>
 
-        <main id="main-content">
-            <div id="home-view" class="view active">
-                <h2>Welcome to Your Study Dashboard!</h2>
-                <p>This application contains the complete and summarized content of your uploaded PDFs. Use the menu to access study tools, or use the global search bar above to find anything instantly.</p>
-                <h3>Processed Documents</h3>
-                <ul id="file-list" style="list-style: none; padding: 0;"></ul>
-            </div>
+    <!-- Main Panel -->
+    <main id="main-panel">
+        <div class="border-bottom" style="padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div id="chat-header" class="mono font-bold">SELECT FRIEND</div>
+            <div id="status-indicator" class="text-sm mono dim">OFFLINE</div>
+        </div>
 
-            <div id="summaries-view" class="view">
-                <h2>Summaries & Solutions</h2>
-                <p id="summary-description">Select a document to view its full content, or select a question bank to see all solutions.</p>
-                <div class="card">
-                    <select id="summary-doc-select"></select>
-                    <select id="summary-section-select" style="margin-top: 1rem;"></select>
-                </div>
-                <div id="summary-output"></div>
-            </div>
+        <div id="chat-history"></div>
 
-            <div id="flashcards-view" class="view">
-                <h2>Flashcards</h2>
-                <div id="flashcard-container" style="perspective: 1000px; width: 100%; max-width: 600px; height: 300px; margin: 0 auto 1.5rem auto;">
-                    <div class="flashcard" id="flashcard" style="width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer;">
-                        <div class="flashcard-face flashcard-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color);">Click me to start!</div>
-                        <div class="flashcard-face flashcard-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color); transform: rotateY(180deg);"></div>
-                    </div>
-                </div>
-                <div id="flashcard-controls" style="text-align: center; margin-bottom: 1.5rem;">
-                    <button id="prev-card-btn">Previous</button>
-                    <span id="card-counter" style="margin: 0 1rem; font-weight: 500;">0 / 40</span>
-                    <button id="next-card-btn">Next</button>
-                </div>
-            </div>
-            
-            <div id="quiz-view" class="view">
-                <h2>Practice Quiz</h2>
-                <div id="quiz-container" class="card">
-                    <h3 id="quiz-question" style="margin-top: 0;"></h3>
-                    <div id="quiz-options" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-                    <div id="quiz-feedback" style="margin-top: 1rem; padding: 1rem; border-radius: var(--radius-md);"></div>
-                </div>
-                <button id="next-quiz-btn">Next Question</button>
-            </div>
-            
-            <div id="srs-view" class="view">
-                <h2>Spaced Repetition System (SRS)</h2>
-                 <div id="srs-card-container" style="display: none;">
-                    <div id="srs-flashcard-container" style="perspective: 1000px; width: 100%; max-width: 600px; height: 300px; margin: 0 auto 1.5rem auto;">
-                       <div class="flashcard" id="srs-flashcard" style="width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer;">
-                            <div class="flashcard-face flashcard-front" id="srs-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color);"></div>
-                            <div class="flashcard-face flashcard-back" id="srs-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 2rem; text-align: center; font-size: 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); background-color: var(--secondary-bg-color); transform: rotateY(180deg);"></div>
-                        </div>
-                    </div>
-                    <div class="srs-controls" style="text-align:center; margin-top: 1.5rem;">
-                        <button class="srs-rating-btn" data-rating="1">Hard</button>
-                        <button class="srs-rating-btn" data-rating="3">Good</button>
-                        <button class="srs-rating-btn" data-rating="5">Easy</button>
-                    </div>
-                </div>
-                <div id="srs-stats" class="card">
-                    <h3>Review Session</h3>
-                    <p>You have <strong id="srs-due-count">0</strong> cards due for review today.</p>
-                    <button id="srs-start-review-btn">Start Review Session</button>
-                </div>
-            </div>
-        </main>
-        <div id="overlay"></div>
+        <div id="input-area" class="border-top">
+            <input type="file" id="file-input" class="hidden" onchange="transfer.handleFileSelect(this)">
+            <button id="btn-file" class="btn" onclick="document.getElementById('file-input').click()" disabled>FILE</button>
+            <input type="text" id="msg-input" class="input" placeholder="Message..." onkeypress="if(event.key==='Enter') app.sendMsg()" autocomplete="off" disabled>
+            <button id="btn-send" class="btn" onclick="app.sendMsg()" disabled>SEND</button>
+        </div>
+    </main>
+
+    <!-- Mobile Tabs -->
+    <div id="mobile-tabs" class="mobile-only">
+        <button class="tab-btn active" onclick="app.switchTab('friends')">FRIENDS</button>
+        <button class="tab-btn" onclick="app.switchTab('chat')">CHAT</button>
     </div>
+</div>
 
-<script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+<!-- Modals -->
+<div id="modal-qr" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="mono" style="margin-top:0">IDENTITY</h3>
+        <div id="qrcode" style="display: flex; justify-content: center; margin: 16px 0;"></div>
+        <button class="btn btn-block" onclick="app.closeModal('modal-qr')">CLOSE</button>
+    </div>
+</div>
+
+<div id="modal-scan" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="mono" style="margin-top:0">SCAN FRIEND</h3>
+        <div id="reader"></div>
+        <button class="btn btn-block mt-2" onclick="app.stopScan()">CANCEL</button>
+    </div>
+</div>
+
+<div id="modal-transfer" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="mono" style="margin-top:0">INCOMING FILE</h3>
+        <div id="transfer-details" class="mono text-sm mb-4"></div>
+        <div class="flex gap-2">
+            <button class="btn btn-block" onclick="transfer.respond(true)">ACCEPT</button>
+            <button class="btn btn-block" onclick="transfer.respond(false)">REJECT</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+/**
+ * GHOST DROP SOCIAL - HARDENED PRODUCTION VERSION
+ * Fixes: Backpressure, Memory Safety, WakeLock, Protocol, Scanner, Mobile Input
+ */
+
+// --- 1. State & Constants ---
+const CHUNK_SIZE = 16 * 1024; // 16KB strict chunking
+const BUFFER_THRESHOLD = 64 * 1024; // 64KB backpressure threshold
+
+const state = {
+    peer: null,
+    id: localStorage.getItem('gd_id'),
+    friends: JSON.parse(localStorage.getItem('gd_friends') || '{}'),
+    activePeer: null,
+    conns: {}, // peerId -> DataConnection
+    transfers: {}, // peerId -> TransferState
+    scanner: null
+};
+
+// --- 2. Wake Lock Manager ---
+const wakeLock = {
+    sentinel: null,
+    count: 0,
+    async request() {
+        this.count++;
+        if (!this.sentinel && 'wakeLock' in navigator) {
+            try { this.sentinel = await navigator.wakeLock.request('screen'); } 
+            catch(e) { console.warn('WakeLock denied', e); }
+        }
+    },
+    release() {
+        if (this.count > 0) this.count--;
+        if (this.count === 0 && this.sentinel) {
+            this.sentinel.release().catch(() => {});
+            this.sentinel = null;
+        }
+    }
+};
+
+// --- 3. Utilities ---
+const utils = {
+    genId: () => {
+        const id = 'ghost-' + Math.floor(Math.random() * 9000 + 1000);
+        localStorage.setItem('gd_id', id);
+        return id;
+    },
+    toast: (msg) => {
+        const c = document.getElementById('toast-container');
+        const d = document.createElement('div');
+        d.className = 'toast';
+        d.innerText = msg;
+        c.appendChild(d);
+        setTimeout(() => d.remove(), 4000);
+    },
+    formatSize: (b) => {
+        if (b === 0) return '0 B';
+        const u = ['B', 'KB', 'MB', 'GB'];
+        let i = 0;
+        while(b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+        return b.toFixed(1) + u[i];
+    },
+    notify: (title, body) => {
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'granted') new Notification(title, { body });
+        else if (Notification.permission !== 'denied') Notification.requestPermission();
+    },
+    revoke: (url) => {
+        if (url) setTimeout(() => URL.revokeObjectURL(url), 60000); // Clean up after 1 min
+    }
+};
+
+if (!state.id) state.id = utils.genId();
+
+// --- 4. Network Layer ---
+const net = {
+    init: () => {
+        state.peer = new Peer(state.id, { 
+            debug: 1,
+            config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+        });
+        
+        state.peer.on('open', (id) => {
+            document.getElementById('my-id').innerText = id;
+            new QRCode(document.getElementById("qrcode"), { text: id, width: 128, height: 128 });
+            net.pingFriends();
+            if ('Notification' in window) Notification.requestPermission();
+        });
+
+        state.peer.on('connection', (conn) => {
+            net.bindConn(conn);
+        });
+
+        state.peer.on('error', (err) => {
+            utils.toast(`Net Error: ${err.type}`);
+        });
+
+        state.peer.on('disconnected', () => {
+            utils.toast('Disconnected from signaling server. Reconnecting...');
+            state.peer.reconnect();
+        });
+    },
+
+    connect: (id) => {
+        if (state.conns[id] && state.conns[id].open) return state.conns[id];
+        const conn = state.peer.connect(id, { reliable: true });
+        net.bindConn(conn);
+        return conn;
+    },
+
+    bindConn: (conn) => {
+        if (state.conns[conn.peer]) {
+            state.conns[conn.peer].close(); // Close existing to replace
+        }
+        state.conns[conn.peer] = conn;
+
+        conn.on('open', () => {
+            // CRITICAL: Set backpressure threshold explicitly
+            if (conn.dataChannel) {
+                conn.dataChannel.bufferedAmountLowThreshold = BUFFER_THRESHOLD;
+            }
+
+            if (state.friends[conn.peer]) {
+                const wasOffline = !state.friends[conn.peer].online;
+                state.friends[conn.peer].online = true;
+                app.renderFriends();
+                if (wasOffline) utils.notify('GhostDrop', `${state.friends[conn.peer].nick || conn.peer} is online`);
+            }
+            if (state.activePeer === conn.peer) app.updateHeader();
+        });
+
+        conn.on('data', (data) => {
+            if (data.constructor === ArrayBuffer || data instanceof Uint8Array) {
+                transfer.receiveChunk(conn.peer, data);
+            } else {
+                transfer.handleMsg(conn.peer, data);
+            }
+        });
+
+        conn.on('close', () => {
+            net.cleanup(conn.peer);
+        });
+
+        conn.on('error', () => {
+            net.cleanup(conn.peer);
+        });
+    },
+
+    cleanup: (peerId) => {
+        if (state.friends[peerId]) {
+            state.friends[peerId].online = false;
+            app.renderFriends();
+        }
+        
+        // Clean up active transfers on disconnect
+        if (state.transfers[peerId]) {
+            transfer.cleanup(peerId);
+            utils.toast(`Connection lost with ${peerId}`);
+        }
+
+        delete state.conns[peerId];
+        if (state.activePeer === peerId) app.updateHeader();
+    },
+
+    pingFriends: () => {
+        Object.keys(state.friends).forEach(id => {
+            net.connect(id);
+        });
+    }
+};
+
+// --- 5. Transfer Engine (Hardened) ---
+const transfer = {
+    pendingMeta: null,
     
-    const getMermaidTheme = () => document.body.classList.contains('dark-mode') ? 'dark' : 'default';
-    mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme(), securityLevel: 'loose' });
+    // --- SENDER LOGIC ---
+    sendFile: async (file) => {
+        if (!state.activePeer) return;
+        const conn = state.conns[state.activePeer];
+        if (!conn || !conn.open) return utils.toast('Peer disconnected');
+        if (state.transfers[state.activePeer]) return utils.toast('Transfer already in progress');
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const DB = {
-            documents: [
-                 {
-                    "name": "AEP Notes Chapter 1 and Chapter 2.pdf",
-                    "type": "summary",
-                    "sections": [
-                        { 
-                            "title": "Differences: Microprocessor vs Microcontroller",
-                            "content": [
-                                { "type": "paragraph", "text": "The core difference lies in their design and application. A microprocessor is a general-purpose central processing unit (CPU) that requires external components, while a microcontroller is a specialized, self-contained system on a chip designed for a specific task." },
-                                {
-                                    "type": "table",
-                                    "headers": ["Feature", "Microprocessor", "Microcontroller"],
-                                    "rows": [
-                                        ["Core Components", "ALU, control unit, registers. Requires external RAM, ROM, I/O.", "Self-contained with CPU, RAM, ROM, I/O on a single chip."],
-                                        ["Tasking", "Designed for multitasking and complex operations (e.g., a computer).", "Designed for a single, specific task (e.g., controlling a microwave)."],
-                                        ["Cost & Size", "Generally more expensive and part of a larger board.", "Cheaper and more compact."],
-                                        ["Power Consumption", "Higher power consumption.", "Lower power consumption, ideal for battery-powered devices."]
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            "title": "Architecture of an Embedded System",
-                            "content": [
-                                { "type": "paragraph", "text": "An embedded system follows a standard data flow: input is gathered from the environment, processed by a controller, which then produces a corresponding output." },
-                                { "type": "diagram", "text": "graph TD\n  A[Input: Sensors / Keypad] --> B(ADC - Analog to Digital);\n  B --> C{Arduino Controller};\n  C --> D(Memory);\n  C --> E(DAC - Digital to Analog);\n  E --> F[Output: Actuators / Display];\n  C <--> G[Communication Devices];" }
-                            ]
-                        },
-                        {
-                            "title": "Arduino UNO PIN Diagram",
-                            "content": [
-                               { "type": "paragraph", "text": "The Arduino UNO is organized into several functional groups of pins and components." },
-                               { "type": "diagram", "text": "graph TD\n    subgraph Power\n        p1(USB Port)\n        p2(Barrel Jack)\n    end\n    subgraph Core\n        c1(ATmega328p Microcontroller)\n        c2(16MHz Crystal Oscillator)\n        c3(Reset Button)\n    end\n    subgraph GPIO\n        g1(14 Digital Pins 0-13)\n        g2(6 Analog Pins A0-A5)\n    end\n    subgraph Communication\n        co1(TX/RX for UART)\n        co2(ICSP for SPI)\n        co3(SDA/SCL for I2C)\n    end\n    Power --> Core --> GPIO & Communication" }
-                            ]
-                        },
-                        {
-                            "title": "Arduino Control Statements",
-                            "content": [
-                                { "type": "paragraph", "text": "Control statements like `if-else` and `switch-case` are used to control the program flow based on certain conditions." },
-                                { "type": "diagram", "text": "graph TD\n    A(Start) --> B{if condition};\n    B -- True --> C[Execute 'if' block];\n    B -- False --> D[Execute 'else' block];\n    C --> E(End);\n    D --> E;" }
-                            ]
-                        },
-                        {
-                            "title": "Arduino Looping Structures",
-                            "content": [
-                                { "type": "paragraph", "text": "Loops are used to execute a block of code repeatedly. The main types are `for` and `while` loops." },
-                                { "type": "diagram", "text": "graph TD\n    A(Start) --> B[Initialize Counter];\n    B --> C{Condition Check};\n    C -- True --> D[Execute Loop Body];\n    D --> E[Increment/Decrement Counter];\n    E --> C;\n    C -- False --> F(End);" }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "AEP Notes Chapter 3.pdf",
-                    "type": "summary",
-                    "sections": [
-                        {
-                            "title": "Sensors and Actuators",
-                            "content": [
-                                { "type": "paragraph", "text": "A sensor is a device that detects changes in the environment and provides a corresponding output, usually an electrical signal. An actuator is a component that converts this energy into mechanical motion." }
-                            ]
-                        },
-                        {
-                            "title": "16x2 LCD Display",
-                            "content": [
-                                { "type": "paragraph", "text": "A Liquid Crystal Display (LCD) is used to display characters and numbers. A 16x2 display has 16 columns and 2 rows. Its pins control power, contrast, data transfer, and more." },
-                                { "type": "table", "headers": ["Pin", "Name", "Function"], "rows": [
-                                    ["1", "VSS", "Ground"],
-                                    ["2", "VCC", "+5V Power"],
-                                    ["3", "VEE", "Contrast Control"],
-                                    ["4", "RS", "Register Select (Command/Data)"],
-                                    ["5", "RW", "Read/Write"],
-                                    ["6", "E", "Enable"],
-                                    ["7-14", "D0-D7", "Data Pins"],
-                                    ["15", "LED+", "Backlight Anode (+)"],
-                                    ["16", "LED-", "Backlight Cathode (-)"]
-                                ]}
-                            ]
-                        },
-                        {
-                            "title": "Ultrasonic Sensor (HC-SR04)",
-                            "content": [
-                                { "type": "paragraph", "text": "This sensor measures distance using sound waves. It sends a 'Trig' pulse and listens for the returning 'Echo'. The time difference is used to calculate the distance." },
-                                { "type": "diagram", "text": "graph LR\n    A(Controller) -- Trig Pulse --> B(Sensor);\n    B -- Sound Wave --> C(Object);\n    C -- Echo --> B;\n    B -- Echo Signal --> A;" },
-                                { "type": "paragraph", "text": "The distance is calculated with the formula: `Distance (cm) = (Duration * 0.0343) / 2`, where duration is the travel time in microseconds." }
-                            ]
-                        },
-                        {
-                            "title": "Communication Protocols: UART vs I2C",
-                            "content": [
-                                { "type": "paragraph", "text": "UART and I2C are common serial communication protocols." },
-                                { "type": "table", "headers": ["Feature", "UART", "I2C"], "rows": [
-                                    ["Full Name", "Universal Asynchronous Receiver-Transmitter", "Inter-Integrated Circuit"],
-                                    ["Wires", "2 (TX, RX)", "2 (SDA, SCL)"],
-                                    ["Clock", "No shared clock (Asynchronous)", "Shared clock (Synchronous)"],
-                                    ["Devices", "Point-to-point (2 devices)", "Multi-device bus (up to 128 devices)"],
-                                    ["Data Flow", "Full-duplex", "Half-duplex"]
-                                ]},
-                                { "type": "diagram", "text": "graph TD\n    subgraph UART\n        D1(Device 1) -- TX --> D2(Device 2);\n        D1 <-- RX --- D2;\n    end\n    subgraph I2C\n        Master -- \"SDA / SCL\" --> Slave1;\n        Master -- \"SDA / SCL\" --> Slave2;\n        Master -- \"SDA / SCL\" --> Slave3;\n    end" }
-                            ]
-                        },
-                        {
-                            "title": "L293D Motor Driver IC",
-                            "content": [
-                                { "type": "paragraph", "text": "The L293D is an IC used to drive DC motors, as microcontrollers cannot supply enough current. It allows for control over the direction and speed of two separate motors." },
-                                { "type": "table", "headers": ["Pin Type", "Function"], "rows": [
-                                    ["VCC1 / Vss", "Logic Circuit Power (+5V)"],
-                                    ["VCC2 / Vs", "Motor Power (+4.5V to +36V)"],
-                                    ["Enable 1,2 / 3,4", "Turns the corresponding motor ON/OFF"],
-                                    ["Input 1,2 / 3,4", "Controls the direction of the motor"],
-                                    ["Output 1,2 / 3,4", "Connects to the motor terminals"],
-                                    ["Ground", "Common ground connection"]
-                                ]}
-                            ]
-                        },
-                        {
-                            "title": "Servomotor",
-                            "content": [
-                                { "type": "paragraph", "text": "A servomotor is a rotary actuator that allows for precise control of angular position. It typically operates on a principle of Pulse Width Modulation (PWM)." },
-                                 { "type": "diagram", "text": "graph TD\n    A[Control Signal] -- PWM --> C(DC Motor);\n    C --> D(Gear Mechanism);\n    D --> E[Output Shaft];\n    E --> B{Position Sensor};\n    B -- Feedback --> A;" }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Raspberry PI Basics.pdf",
-                    "type": "summary",
-                    "sections": [
-                        {
-                            "title": "Raspberry Pi Architecture",
-                             "content": [
-                                { "type": "paragraph", "text": "The Raspberry Pi is a single-board computer with a central processor connected to various peripherals and controllers." },
-                                { "type": "diagram", "text": "graph TD\n    A(Processor) <--> B(RAM);\n    A <--> C(USB Controller);\n    A <--> D(Ethernet Controller);\n    A <--> E(GPIO Pins);\n    A <--> F(Wireless Module);\n    A <--> G(Display/Camera Ports);\n    C --> H[USB Ports];\n    D --> I[Ethernet Port];\n    F --> J[WiFi & Bluetooth];\n    G --> K[HDMI/DSI/CSI];" }
-                            ]
-                        },
-                        {
-                            "title": "Differences: Raspberry Pi vs Arduino",
-                            "content": [
-                                { "type": "paragraph", "text": "While both are popular in hobbyist electronics, they serve fundamentally different purposes. The Raspberry Pi is a small computer, whereas the Arduino is a microcontroller." },
-                                {
-                                    "type": "table",
-                                    "headers": ["Feature", "Raspberry Pi", "Arduino UNO"],
-                                    "rows": [
-                                        ["Core", "Minicomputer (runs an OS like Linux)", "Microcontroller (runs a single program)"],
-                                        ["Connectivity", "Inbuilt WiFi, Bluetooth, Ethernet", "Requires external modules (shields)"],
-                                        ["Processing Power", "High (comparable to a smartphone)", "Low (designed for simple control tasks)"],
-                                        ["Power Consumption", "Higher", "Much Lower"],
-                                        ["Primary Use", "Complex tasks: web servers, media centers, AI", "Simple tasks: reading sensors, controlling motors"]
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "AEP Notes Chapter 4 and Chapter 5.pdf",
-                    "type": "summary",
-                    "sections": [
-                         {
-                            "title": "Differences: Python List vs Tuple",
-                            "content": [
-                                { "type": "paragraph", "text": "Lists and Tuples are both sequence data types in Python, but their key difference is 'mutability'—the ability to be changed after creation." },
-                                {
-                                    "type": "table",
-                                    "headers": ["Feature", "List", "Tuple"],
-                                    "rows": [
-                                        ["Mutability", "Mutable (can be changed)", "Immutable (cannot be changed)"],
-                                        ["Syntax", "Created with square brackets `[1, 2, 3]`", "Created with parentheses `(1, 2, 3)`"],
-                                        ["Use Case", "For collections of items that may need to change (e.g., a list of users).", "For collections of items that should not change (e.g., coordinates (x, y))."],
-                                        ["Performance", "Slightly slower due to dynamic size.", "Slightly faster and more memory-efficient."]
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            "title": "Python Set Operations",
-                            "content": [
-                                { "type": "paragraph", "text": "Sets are collections of unique items and are optimized for mathematical operations." },
-                                { "type": "diagram", "text": "graph TD\n    A[\"Set A: {red, green, blue}\"]\n    B[\"Set B: {red, yellow, orange}\"]\n\n    subgraph Operations\n        U[\"Union\"] --> R1(\"{red, green, blue, yellow, orange}\")\n        I[\"Intersection\"] --> R2(\"{red}\")\n        D[\"Difference (A-B)\"] --> R3(\"{green, blue}\")\n        S[\"Symmetric Difference\"] --> R4(\"{green, blue, yellow, orange}\")\n    end\n\n    A --> U & I & D & S;\n    B --> U & I & D & S;" }
-                            ]
-                        },
-                         {
-                            "title": "Python Dictionary Properties",
-                            "content": [
-                                { "type": "paragraph", "text": "Dictionaries are collections of key-value pairs with specific properties." },
-                                { "type": "table", "headers": ["Property", "Description"], "rows": [
-                                    ["Uniqueness", "Keys must be unique within a dictionary. Duplicate keys will overwrite previous values."],
-                                    ["Immutability of Keys", "Keys must be of an immutable type (e.g., string, number, tuple). Lists cannot be keys."],
-                                    ["Mutability of Values", "Values can be of any data type (mutable or immutable) and can be duplicated."]
-                                ]}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "AEP MCQs and short questions.pdf",
-                    "type": "solutions",
-                    "content": [
-                        {"q": "1. What is a sensor?", "a": "A device that produces an output signal (usually electrical) for the purpose of sensing a physical phenomenon. It's an input device for a controller."},
-                        {"q": "2. A sensor is an _____ device.", "a": "Input device."},
-                        {"q": "3. A (16x2) LCD display has:", "a": "2 rows and 16 columns."},
-                        {"q": "4. Which device converts an electrical signal to a sound signal?", "a": "Speaker."},
-                        {"q": "5. Which sensor detects an object's distance using sound energy?", "a": "Ultrasonic sensor."},
-                        {"q": "6. Which device converts temperature to an electrical signal?", "a": "Thermistor."},
-                        {"q": "7. How many analog input pins are on an Arduino UNO board?", "a": "6 (A0 to A5)."},
-                        {"q": "8. How many digital I/O pins are on an Arduino UNO board?", "a": "14 (0 to 13)."},
-                        {"q": "9. How many Ground pins are on an Arduino UNO board?", "a": "3."},
-                        {"q": "10. How many +5V pins are on an Arduino UNO board?", "a": "1."},
-                        {"q": "11. What is the use of the pinMode() function?", "a": "To declare a pin as either an INPUT or an OUTPUT."},
-                        {"q": "12. Which of the following is not a standard Arduino function: AnalogRead(), AnalogWrite(), serial.begin(), AnalogStore()?", "a": "AnalogStore() is not a standard function."},
-                        {"q": "13. What does delay(5000); mean?", "a": "Wait for 5000 milliseconds, which is 5 seconds."},
-                        {"q": "14. What does digitalWrite(13, LOW); do?", "a": "It turns the device connected to pin 13 OFF."},
-                        {"q": "15. A forward slash (//) is used for what?", "a": "Single-line comments."},
-                        {"q": "16. Is an LED an input or output device?", "a": "Output."},
-                        {"q": "17. Is a Pushbutton an input or output device?", "a": "Input."},
-                        {"q": "18. Is a Knob (potentiometer) an input or output device?", "a": "Input."},
-                        {"q": "19. Is a Servomotor an input or output device?", "a": "Output (actuator)."},
-                        {"q": "20. What is a 'sketch' in Arduino?", "a": "An Arduino program file."},
-                        {"q": "21. In the code `delay(1000);`, how long is the pause?", "a": "1 second."},
-                        {"q": "22. In `digitalWrite(13, HIGH);`, which pin is being controlled?", "a": "Pin 13."},
-                        {"q": "23. Which statement do you change to alter the timing of a blink?", "a": "The `delay()` statement."},
-                        {"q": "24. Which function in an Arduino sketch runs forever?", "a": "`void loop()`."},
-                        {"q": "25. Which constant is used to turn an LED ON?", "a": "HIGH."},
-                        {"q": "26. Which constant is used to turn an LED OFF?", "a": "LOW."},
-                        {"q": "27. Which symbol begins a single-line comment?", "a": "//"},
-                        {"q": "28. What must the entire code block of a function end with?", "a": "A closing curly brace }."},
-                        {"q": "29. Which symbol ends a statement in Arduino C?", "a": "Semicolon ;"},
-                        {"q": "30. Why do LEDs have different length legs?", "a": "To indicate polarity: the longer leg is the positive (anode), and the shorter is the negative (cathode)."},
-                        {"q": "31. What microcontroller is used in the Arduino UNO?", "a": "ATmega328P."},
-                        {"q": "32. Which function is called only once when a program starts?", "a": "`void setup()`."},
-                        {"q": "33. What does enclosing text in /* ... */ do?", "a": "Creates a multi-line comment."},
-                        {"q": "34. Is `pinMode(led, INPUT);` a correct declaration for an LED?", "a": "False. An LED is an output device, so it should be `pinMode(led, OUTPUT);`."},
-                        {"q": "35. What is the component used for temporary electronic circuits?", "a": "Breadboard."},
-                        {"q": "36. Arduino can interact with:", "a": "All of these (LEDs, Keypads, Sensors)."},
-                        {"q": "37. What is the meaning of `delay(1000)`?", "a": "Provide a delay of 1000 milliseconds (1 second)."},
-                        {"q": "38. What is PWM?", "a": "Pulse Width Modulation."},
-                        {"q": "39. Which pins on the Arduino UNO are used for serial communication (Tx/Rx)?", "a": "Digital pins 0 (RX) and 1 (TX)."},
-                        {"q": "40. What is the correct syntax for reading an analog pin?", "a": "`analogRead(A0);`"},
-                        {"q": "41. A program written with the Arduino IDE is called a:", "a": "Sketch."},
-                        {"q": "42. Is the Arduino IDE an open-source platform?", "a": "True."},
-                        {"q": "43. What does IDE stand for?", "a": "Integrated Development Environment."},
-                        {"q": "44. What is the HC-SR04 component?", "a": "Ultrasonic sensor."},
-                        {"q": "45. Which sensor is used to detect smoke?", "a": "Gas sensor (like MQ series)."},
-                        {"q": "46. Which sensor is used to detect the distance of an object?", "a": "Ultrasonic sensor."},
-                        {"q": "47. Which IC is a common DC motor driver?", "a": "L293D."},
-                        {"q": "48. How many pins does an L293D IC have?", "a": "16."},
-                        {"q": "49. What is used to control a high-power circuit with a low-power signal?", "a": "A Relay."},
-                        {"q": "50. What are the two main functions in an Arduino sketch?", "a": "`setup()` and `loop()`."},
-                        {"q": "51. What does GPIO stand for?", "a": "General Purpose Input/Output."},
-                        {"q": "52. Which command displays characters in the serial monitor?", "a": "`Serial.println()`."},
-                        {"q": "53. What is the component with a knob that varies resistance?", "a": "Potentiometer."},
-                        {"q": "54. What does `lcd.begin()` do?", "a": "It initializes the LCD screen, setting its dimensions (e.g., 16 columns, 2 rows)."},
-                        {"q": "55. What does `lcd.clear()` do?", "a": "It clears all characters from the LCD screen."},
-                        {"q": "56. What does `lcd.setCursor()` do?", "a": "It sets the position of the cursor (where the next character will be printed) on the LCD screen."},
-                        {"q": "57. What is the value of a resistor with color code Red, Red, Orange?", "a": "22 KΩ (22 x 10^3 Ohms)."},
-                        {"q": "58. What is the color code for a 10 KΩ resistor?", "a": "Brown, Black, Orange."},
-                        {"q": "59. What is the syntax of the `map()` function?", "a": "`map(value, fromLow, fromHigh, toLow, toHigh)`."},
-                        {"q": "60. Which constant represents +5V?", "a": "HIGH."},
-                        {"q": "61. `LiquidCrystal lcd(rs, en, d4, d5, d6, d7)` is an example of what pin configuration?", "a": "6-pin (4-bit mode)."},
-                        {"q": "62. What are the 2 arguments in `lcd.setCursor()`?", "a": "First: column number, Second: row number."},
-                        {"q": "63. How many times does the `loop()` function run?", "a": "Infinitely, as long as the Arduino has power."},
-                        {"q": "64. What are the two modes for `pinMode()`?", "a": "INPUT and OUTPUT."},
-                        {"q": "65. Which Arduino board uses the ATmega328 controller?", "a": "Arduino UNO."},
-                        {"q": "66. How many arguments does `digitalRead()` have?", "a": "1 (the pin number)."},
-                        {"q": "67. Which of the following is a temperature sensor: LM25, MQ5, LM35, MQ6?", "a": "LM35."},
-                        {"q": "68. What does IoT stand for?", "a": "Internet of Things."},
-                        {"q": "69. Which of these is LEAST likely to be an IoT device: Smartwatch, Android Phone, Laptop, Tubelight?", "a": "Tubelight (unless it's a 'smart' tubelight)."},
-                        {"q": "70. Which is not an IoT platform: Xiaomi Cloud, Google Cloud, Myntra, AWS?", "a": "Myntra (it's an e-commerce platform)."},
-                        {"q": "71. IoT is based on which technology?", "a": "Both Hardware and Software."},
-                        {"q": "72. What is an IoT network?", "a": "A collection of interconnected devices."},
-                        {"q": "73. What is the full form of MQTT?", "a": "Message Queue Telemetry Transport."},
-                        {"q": "74. What does IIOT stand for?", "a": "Industrial Internet of Things."},
-                        {"q": "75. Is an IoT network a collection of interconnected devices?", "a": "True."},
-                        {"q": "76. How is an IoT device's data typically associated or stored?", "a": "In the Cloud."},
-                        {"q": "77. Which of the following is not an application of IoT: Wearables, Smart Grid, Arduino, Smart City?", "a": "Arduino (it's a tool to build IoT applications)."},
-                        {"q": "78. How is the Raspberry Pi defined?", "a": "As a minicomputer or single-board computer."},
-                        {"q": "79. How many total pins does a Raspberry Pi 4 Model B have?", "a": "40."},
-                        {"q": "80. How many GPIO pins does a Raspberry Pi 4 have?", "a": "28 of the 40 pins are GPIO pins."},
-                        {"q": "81. What are the capabilities of a Raspberry Pi?", "a": "All of the above (browsing, spreadsheets, programming, etc.)."},
-                        {"q": "82. How many ground pins does a Raspberry Pi 4B have?", "a": "8."},
-                        {"q": "83. How many +5V pins does a Raspberry Pi 4B have?", "a": "2."},
-                        {"q": "84. How many +3.3V pins does a Raspberry Pi 4B have?", "a": "2."},
-                        {"q": "85. What is the standard form of SDA in I2C?", "a": "Serial Data."},
-                        {"q": "86. What is the standard form of SCL in I2C?", "a": "Serial Clock."},
-                        {"q": "87. What is the standard form of TXD in UART?", "a": "Transmit Data."},
-                        {"q": "88. How many connections does I2C communication have?", "a": "Two (SDA and SCL)."},
-                        {"q": "89. Which port is used to power the Raspberry Pi?", "a": "Micro USB port or USB-C port (depending on the model)."},
-                        {"q": "90. What is the standard form of CSI?", "a": "Camera Serial Interface."},
-                        {"q": "91. What is the standard form of RFID?", "a": "Radio Frequency Identification."},
-                        {"q": "92. Is the Arduino UNO hardware or software?", "a": "Hardware Device."},
-                        {"q": "93. Can ESP32 have touch sensor GPIO pins?", "a": "True."},
-                        {"q": "94. What is Blynk?", "a": "A mobile application platform for IoT."},
-                        {"q": "95. Who developed the ESP32 series of microcontrollers?", "a": "Espressif Systems."},
-                        {"q": "96. Does the ESP32 have WiFi capability?", "a": "True."},
-                        {"q": "97. Do ESP32 devices have more GPIO pins than ESP8266?", "a": "True."},
-                        {"q": "98. What does SaaS mean?", "a": "Software as a Service."},
-                        {"q": "99. What is the Arduino IoT Cloud?", "a": "An online platform to create, deploy, and monitor IoT projects."},
-                        {"q": "100. What does UART stand for?", "a": "Universal Asynchronous Reception and Transmission."}
-                    ]
-                },
-                {
-                    "name": "Basic List Tuple and List Comprehension Questions.pdf",
-                    "type": "solutions",
-                    "content": [
-                        {"q": "1. Create a list of numbers from 0 to 50 using List comprehension.", "a": "<pre><code>Numbers = [x for x in range(51)]</code></pre>"},
-                        {"q": "2. Create a list of the square of numbers from 1 to 20.", "a": "<pre><code>squares = [x**2 for x in range(1, 21)]</code></pre>"},
-                        {"q": "3. Create a list of 10 characters and slice it from index 3 to 7.", "a": "<pre><code>Chars = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']\nSlice = Chars[3:8] # Result: ['D', 'E', 'F', 'G', 'H']</code></pre>"},
-                        {"q": "4. What is the difference between list.insert() and list.append()?", "a": "`append()` adds an element to the very end of the list. `insert()` adds an element at a specified index, shifting other elements."},
-                        {"q": "5. How do you combine two lists?", "a": "Using the `extend()` method (`L.extend(M)`) or the `+` operator (`L + M`)."},
-                        {"q": "6. How do you remove an item from a list by index vs. by value?", "a": "Use `pop(index)` to remove by index (e.g., `L.pop(3)`). Use `remove(value)` to remove the first occurrence of a value (e.g., `L.remove(\"OS\")`)."},
-                        {"q": "7. Create a list of even numbers from 0 to 24.", "a": "<pre><code>evens = [x for x in range(0, 25, 2)]</code></pre>"},
-                        {"q": "8. Create a list of numbers from 0 to 10, with each number multiplied by 5.", "a": "<pre><code>multiplied = [x * 5 for x in range(11)]</code></pre>"},
-                        {"q": "9. From a list of strings, create a new list with only the first letter of each string.", "a": "<pre><code>L = [\"EPR\", \"EPA\", \"FEP\"]\nfirst_letters = [word[0] for word in L] # Result: ['E', 'E', 'F']</code></pre>"},
-                        {"q": "10. Separate characters in a string into a list.", "a": "<pre><code>letters = [char for char in \"embedded\"]</code></pre>"},
-                        {"q": "11. Convert a list of lowercase letters to uppercase.", "a": "<pre><code>L = ['a', 'b', 'c']\nupper_L = [letter.upper() for letter in L]</code></pre>"},
-                        {"q": "12. From a string containing text and numbers, extract only the digits.", "a": "<pre><code>text = \"My number is 9876543210.\"\ndigits = [char for char in text if char.isdigit()]</code></pre>"},
-                        {"q": "13. How do you read all lines from a text file into a list?", "a": "<pre><code>with open(\"emails.txt\", 'r') as file:\n    emails = [line.strip() for line in file]\n</code></pre>"},
-                        {"q": "14. Double only the even numbers from 1 to 10.", "a": "<pre><code>doubled_evens = [x * 2 for x in range(1, 11) if x % 2 == 0]</code></pre>"},
-                        {"q": "15. Add all possible combinations of numbers from two lists.", "a": "<pre><code>L=[1,2], M=[10,20]\naddition = [x + y for x in L for y in M] # Result: [11, 21, 12, 22]</code></pre>"},
-                        {"q": "16. How do you count the occurrences of a specific item in a list?", "a": "Use the `.count()` method. `L.count(9)` will count how many 9s are in list L."},
-                        {"q": "17. How can you count all items in a list at once?", "a": "Use the `Counter` class from the `collections` module. <pre><code>from collections import Counter\nprint(Counter(L))</code></pre>"},
-                        {"q": "18. How do you reverse a list in-place?", "a": "Use the `.reverse()` method. `L.reverse()`."},
-                        {"q": "19. How do you access each list item in reversed order without changing the list?", "a": "Use the `reversed()` function in a loop: `for x in reversed(L):`"},
-                        {"q": "20. How do you sort a list?", "a": "Use the `.sort()` method to sort it in-place. `L.sort()`."},
-                        {"q": "21. How do you sort a list in reverse (descending) order?", "a": "Use the `reverse=True` argument: `L.sort(reverse=True)`."},
-                        {"q": "22. How do you sum all elements of a number list?", "a": "Use the `sum()` function: `total = sum(L)`."},
-                        {"q": "23. What does the slice `L[::-1]` do?", "a": "It creates a reversed copy of the list without modifying the original."},
-                        {"q": "24. How can you add items to the end of a list using `len()`?", "a": "By assigning to a slice at the end: `L[len(L):] = [1, 2, 3]`."},
-                        {"q": "25. How do you insert items at a specific index using slicing?", "a": "Assign to an empty slice at that index: `L[2:2] = [1, 2, 3]` inserts the items at index 2."},
-                        {"q": "26. How do you delete items using slicing?", "a": "Assign an empty list to the slice you want to remove: `L[1:4] = []` deletes items from index 1 up to (but not including) 4."},
-                        {"q": "27. What is the difference between `L2 = L1` and `L2 = L1[:]`?", "a": "`L2 = L1` makes L2 a reference to L1 (changing one changes the other). `L2 = L1[:]` creates a shallow copy of L1, so they are independent lists."},
-                        {"q": "28. How do you create a list with the absolute values of another list?", "a": "<pre><code>L = [-2, -1, 0, 1, 2]\nabsolutes = [abs(x) for x in L]</code></pre>"},
-                        {"q": "29. How do you remove leading/trailing whitespace from a list of strings?", "a": "Use the `.strip()` method in a list comprehension: `clean_list = [s.strip() for s in original_list]`."},
-                        {"q": "30. Why use list comprehensions?", "a": "They are more concise, readable, and often faster than traditional for loops for creating lists."},
-                        {"q": "31. How do you print only the positive numbers from a list?", "a": "<pre><code>L = [-2, -1, 0, 1, 2]\npositives = [x for x in L if x > 0]</code></pre>"},
-                        {"q": "32. How do you convert a List into a Tuple?", "a": "Use the `tuple()` constructor: `my_tuple = tuple(my_list)`."},
-                        {"q": "33. How do you convert a string into a tuple?", "a": "Use the `tuple()` constructor: `my_tuple = tuple('abcd')` results in `('a', 'b', 'c', 'd')`."},
-                        {"q": "34. What are Tuple Packing and Unpacking?", "a": "**Packing** is creating a tuple: `T = (1, 2, 3)`. **Unpacking** is assigning the tuple's elements to variables: `x, y, z = T`."},
-                        {"q": "35. How can you swap two variables using a tuple?", "a": "Use tuple packing and unpacking on one line: `a, b = b, a`."},
-                        {"q": "36. How can you split an email address into a username and domain?", "a": "Use `.split('@')` with tuple unpacking: `username, domain = 'name@example.com'.split('@')`."},
-                        {"q": "37. How do you access tuple items using negative indexing?", "a": "`T[-1]` accesses the last item, `T[-2]` the second to last, and so on."},
-                        {"q": "38. How does tuple slicing work?", "a": "It works just like list slicing, creating a new tuple. `T[2:5]` creates a new tuple with elements from index 2 up to 5."},
-                        {"q": "39. Can you change the value of a tuple? E.g., `T = (1, [2, 3], 4)`", "a": "You cannot change the immutable elements (like 1 and 4). However, you *can* change the contents of mutable elements within it, like the list. `T[1][0] = 99` is a valid operation."},
-                        {"q": "40. How can you sort a tuple?", "a": "You can't sort a tuple directly. You must convert it to a list, sort the list, and then convert it back to a tuple: `sorted_tuple = tuple(sorted(my_tuple))`."},
-                        {"q": "41. How do you count occurrences in a tuple?", "a": "Use the `.count()` method: `T.count('red')`."},
-                        {"q": "42. How do you sum the elements of a tuple?", "a": "Use the `sum()` function: `total = sum(T)`."},
-                        {"q": "43. How do you create a tuple of a sequence of numbers?", "a": "Use the `range()` function inside the `tuple()` constructor: `T = tuple(range(10))`."},
-                        {"q": "44. How do you create a set from a string 'abcde'?", "a": "`S = set('abcde')`"},
-                        {"q": "45. How do you convert a list into a set (removing duplicates)?", "a": "Use the `set()` constructor: `my_set = set(my_list)`."},
-                        {"q": "46. How do you create a set of numbers from 0 to 9?", "a": "`S = set(range(10))`"}
-                    ]
-                }
-            ],
-            "flashcards": [
-                {"id":1, "front":"What is the main difference between a microprocessor and a microcontroller?", "back":"A microprocessor is a CPU that needs external memory and peripherals. A microcontroller is a self-contained system-on-a-chip with its own CPU, memory, and I/O.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":2, "front":"What does an ADC do in an embedded system?", "back":"An Analog-to-Digital Converter (ADC) converts a continuous analog signal (like from a temperature sensor) into a discrete digital value that the microcontroller can process.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":3, "front":"What is the function of the crystal oscillator on an Arduino?", "back":"It provides a stable clock signal (16 MHz on the UNO) that the microcontroller uses to execute instructions at a consistent pace.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":4, "front":"What is PWM and which Arduino UNO pins support it?", "back":"Pulse Width Modulation (PWM) simulates an analog output on a digital pin. Supported on pins 3, 5, 6, 9, 10, 11.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":5, "front":"What are the two main functions in every Arduino sketch?", "back":"`void setup()` which runs once at the start, and `void loop()` which runs repeatedly forever.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":6, "front":"What is an actuator?", "back":"A component that converts an electrical signal into physical motion or action (e.g., a motor, servo, or solenoid).", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":7, "front":"What is the purpose of the RS (Register Select) pin on an LCD?", "back":"It selects whether you are sending a command (like clear screen) or data (a character to display) to the LCD.", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":8, "front":"How does an ultrasonic sensor measure distance?", "back":"It sends out a sound pulse (Trig) and measures the time it takes for the echo to return (Echo). Distance is calculated based on this time and the speed of sound.", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":9, "front":"What are the two signal lines in the I2C protocol?", "back":"SDA (Serial Data) and SCL (Serial Clock).", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":10, "front":"Why is a motor driver like the L293D needed to control a DC motor with an Arduino?", "back":"The Arduino's pins cannot supply enough current to power a motor directly. The driver IC acts as a high-current switch, taking control signals from the Arduino to power the motor from a separate power source.", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":11, "front":"What is a servomotor?", "back":"A type of motor that allows for precise control of angular position (e.g., 0-180 degrees).", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":12, "front":"What is a major difference between a Raspberry Pi and an Arduino?", "back":"A Raspberry Pi is a single-board computer that runs a full operating system (like Linux), while an Arduino is a microcontroller designed to run a single program.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":13, "front":"What library is used in Python to control Raspberry Pi's GPIO pins?", "back":"The `RPi.GPIO` library.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":14, "front":"What does 'immutable' mean in the context of a Python Tuple?", "back":"It means that once a tuple is created, its elements cannot be changed, added, or removed.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":15, "front":"What is the key characteristic of a Python Set?", "back":"It is an unordered collection of *unique* items. Duplicates are automatically removed.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":16, "front":"What is a Python Dictionary?", "back":"An unordered collection of key-value pairs. Values are accessed via their unique, immutable key.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":17, "front":"What are the four main set operations in Python?", "back":"Union, Intersection, Difference, and Symmetric Difference.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":18, "front":"What does list comprehension do? `[x*2 for x in range(5)]`", "back":"It creates a new list by applying an expression to each item in an iterable. The example produces `[0, 2, 4, 6, 8]`.", "provenance":"Basic List Tuple and List Comprehension Questions.pdf"},
-                {"id":19, "front":"How do you create a shallow copy of a list `L1` into `L2`?", "back":"Using the slice notation: `L2 = L1[:]`.", "provenance":"Basic List Tuple and List Comprehension Questions.pdf"},
-                {"id":20, "front":"How can you swap the values of two variables, `a` and `b`, in a single line in Python?", "back":"Using tuple unpacking: `a, b = b, a`.", "provenance":"Basic List Tuple and List Comprehension Questions.pdf"},
-                {"id":21, "front":"Can you change an item inside a list that is itself inside a tuple?", "back":"Yes. While the tuple itself is immutable (you can't replace the list with another object), the list object inside it is mutable, so its contents can be changed.", "provenance":"Basic List Tuple and List Comprehension Questions.pdf"},
-                {"id":22,"front":"What does the command `Serial.println()` do in Arduino?","back":"It prints data to the serial monitor, followed by a newline character.","provenance":"AEP MCQs and short questions.pdf"},
-                {"id":23,"front":"What is the value of a resistor with the color code Brown, Black, Orange?","back":"10 KΩ (Brown=1, Black=0, Orange=x10^3).","provenance":"AEP MCQs and short questions.pdf"},
-                {"id":24,"front":"What does RFID stand for?","back":"Radio Frequency Identification.","provenance":"AEP MCQs and short questions.pdf"},
-                {"id":25,"front":"What is Blynk in the context of IoT?","back":"It is an IoT platform with a mobile app that allows you to easily create interfaces to control and monitor hardware projects.","provenance":"AEP MCQs and short questions.pdf"},
-                {"id":26,"front":"What is the `map()` function used for in Arduino?","back":"It re-maps a number from one range to another. For example, `map(val, 0, 1023, 0, 255)` converts an analog reading to a PWM value.","provenance":"AEP MCQs and short questions.pdf"},
-                {"id":27,"front":"What are the two ways to power an Arduino UNO board?", "back":"Through the USB cable or by supplying an external voltage (7-12V recommended) to the barrel jack or the Vin pin.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":28,"front":"What is the difference between `digitalRead()` and `analogRead()`?", "back":"`digitalRead()` reads if a pin is HIGH or LOW (a 1 or 0). `analogRead()` reads a voltage level on an analog pin and returns a number between 0 and 1023.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":29,"front":"What is the purpose of the `pull_up_down` parameter when setting up a GPIO pin as input on a Raspberry Pi?", "back":"It activates an internal pull-up or pull-down resistor to give the pin a defined state (HIGH or LOW) when nothing is connected, preventing it from 'floating'.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":30,"front":"How do you remove whitespace from the ends of a string in Python?", "back":"Using the `.strip()` method. Example: `'  hello  '.strip()` returns `'hello'`.", "provenance":"Basic List Tuple and List Comprehension Questions.pdf"},
-                {"id":31,"front":"What is a key difference between `L.sort()` and `sorted(L)` for a list `L`?", "back":"`L.sort()` sorts the list in-place (modifies the original list) and returns `None`. `sorted(L)` returns a new, sorted list, leaving the original list unchanged.", "provenance":"Basic List Tuple and List Comprehension Questions.pdf"},
-                {"id":32,"front":"What is the role of the `Enable` pin on an L293D motor driver?", "back":"It acts as a switch for the motor. The motor will only run when the corresponding enable pin is set to HIGH.", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":33,"front":"How is data transmitted in UART?", "back":"Asynchronously, meaning there is no shared clock. Devices agree on a speed (baud rate) beforehand and use start/stop bits for synchronization.", "provenance":"AEP Notes Chapter 3.pdf"},
-                {"id":34,"front":"What are the main hardware components on a Raspberry Pi 4?", "back":"A Broadcom quad-core CPU, LPDDR4 RAM, dual-band WiFi, Bluetooth, Gigabit Ethernet, USB 3.0/2.0 ports, two micro-HDMI ports, and a 40-pin GPIO header.", "provenance":"Raspberry PI Basics.pdf"},
-                {"id":35,"front":"What is a 'key:value' pair?", "back":"It is the fundamental structure in a Python dictionary, where a unique 'key' is associated with a 'value'.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":36,"front":"What does `if __name__ == '__main__'` do in a Python script?", "back":"This block of code will only run when the script is executed directly, not when it is imported as a module into another script.", "provenance":"General Python Concept"},
-                {"id":37,"front":"What is an `if-elif-else` statement used for?", "back":"It is a control structure used to test multiple conditions in sequence. It executes the block of code for the first condition that evaluates to true.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"},
-                {"id":38,"front":"What does `L[2:5]` do to a Python list `L`?", "back":"This is slicing. It returns a new list containing the elements from index 2 up to (but not including) index 5.", "provenance":"AEP Notes Chapter 4 and Chapter 5.pdf"},
-                {"id":39,"front":"How do you get the number of items in a list, tuple, or dictionary?", "back":"Using the built-in `len()` function. Example: `len(my_list)`.", "provenance":"Basic List Tuple and List Comprehension Questions.pdf"},
-                {"id":40,"front":"What is the purpose of the `break` statement in a loop?", "back":"It immediately terminates the current loop (for or while) and execution continues at the statement following the loop.", "provenance":"AEP Notes Chapter 1 and Chapter 2.pdf"}
-            ]
+        const tid = Date.now().toString(36);
+        state.transfers[state.activePeer] = {
+            role: 'sender',
+            file: file,
+            offset: 0,
+            tid: tid
         };
 
-        const AppState = { currentView: 'home', currentCardIndex: 0, searchIndex: [] };
-        const sidebarItems = document.querySelectorAll('.nav-item');
-        const views = document.querySelectorAll('.view');
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const burgerMenu = document.getElementById('burger-menu');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        const globalSearchInput = document.getElementById('global-search');
-        const globalSearchResults = document.getElementById('global-search-results');
+        conn.send({
+            type: 'HEADER',
+            name: file.name,
+            size: file.size,
+            mime: file.type,
+            tid: tid
+        });
 
+        ui.addSysMsg(`Offering: ${file.name}`);
+    },
 
-        function init() {
-            buildSearchIndex();
-            globalSearchInput.addEventListener('input', handleGlobalSearch);
-            document.addEventListener('click', (e) => {
-                if (!globalSearchInput.contains(e.target)) {
-                    globalSearchResults.style.display = 'none';
-                }
-            });
-
-            burgerMenu.addEventListener('click', toggleMenu);
-            overlay.addEventListener('click', toggleMenu);
-            sidebarItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    const viewName = item.getAttribute('data-view');
-                    switchView(viewName);
-                    if (sidebar.classList.contains('open')) toggleMenu();
-                });
-            });
-            darkModeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme(), securityLevel: 'loose' });
-                const visibleDiagrams = document.querySelectorAll('#summary-output .mermaid');
-                if(visibleDiagrams.length > 0) {
-                     mermaid.run({ nodes: visibleDiagrams });
-                }
-            });
-            initHome();
-            initSummaries();
-            initFlashcards();
-            initQuiz();
-            initSRS();
-            switchView('home');
-        }
-
-        function toggleMenu() {
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-        }
-
-        function switchView(viewName, callback) {
-            AppState.currentView = viewName;
-            views.forEach(view => view.classList.toggle('active', view.id === `${viewName}-view`));
-            sidebarItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewName));
-            if (callback) {
-                setTimeout(callback, 50);
-            }
-        }
+    startStream: async (peerId) => {
+        const t = state.transfers[peerId];
+        if (!t || t.role !== 'sender') return;
         
-        function buildSearchIndex() {
-            DB.flashcards.forEach((card, index) => {
-                AppState.searchIndex.push({ text: `${card.front.toLowerCase()} ${card.back.toLowerCase()}`, type: 'flashcard', location: { index }, display: card.front });
-            });
-            DB.documents.forEach(doc => {
-                if (doc.type === 'summary') {
-                    doc.sections.forEach(section => {
-                        const combinedText = section.content.map(c => c.text || (c.rows ? c.rows.flat().join(' ') : '')).join(' ').toLowerCase();
-                        AppState.searchIndex.push({ 
-                            text: `${section.title.toLowerCase()} ${combinedText}`, 
-                            type: 'summary', 
-                            location: { fileName: doc.name, sectionTitle: section.title },
-                            display: `${section.title} <small>${doc.name}</small>`
-                        });
-                    });
-                } else if (doc.type === 'solutions') {
-                    doc.content.forEach(item => {
-                        AppState.searchIndex.push({
-                            text: `${item.q.toLowerCase()} ${item.a.toLowerCase()}`,
-                            type: 'solution',
-                            location: { fileName: doc.name, question: item.q },
-                            display: `${item.q} <small>${doc.name}</small>`
-                        });
-                    });
-                }
-            });
+        const conn = state.conns[peerId];
+        if (!conn || !conn.open) {
+            transfer.cleanup(peerId);
+            return;
         }
 
-        function handleGlobalSearch(e) {
-            const query = e.target.value.toLowerCase();
-            if (query.length < 3) {
-                globalSearchResults.style.display = 'none';
-                return;
-            }
-            const results = AppState.searchIndex.filter(item => item.text.includes(query)).slice(0, 10);
-            globalSearchResults.innerHTML = '';
-            if (results.length > 0) {
-                results.forEach(res => {
-                    const itemEl = document.createElement('div');
-                    itemEl.className = 'search-result-item';
-                    itemEl.innerHTML = res.display;
-                    itemEl.addEventListener('mousedown', () => navigateToSearchResult(res));
-                    globalSearchResults.appendChild(itemEl);
-                });
-                globalSearchResults.style.display = 'block';
-            } else {
-                globalSearchResults.style.display = 'none';
-            }
-        }
-
-        function navigateToSearchResult(result) {
-            globalSearchInput.value = '';
-            globalSearchResults.style.display = 'none';
-            
-            if (result.type === 'flashcard') {
-                switchView('flashcards', () => showFlashcardByIndex(result.location.index));
-            } else if (result.type === 'summary' || result.type === 'solution') {
-                switchView('summaries', () => {
-                    const docSelect = document.getElementById('summary-doc-select');
-                    const sectionSelect = document.getElementById('summary-section-select');
-                    docSelect.value = result.location.fileName;
-                    docSelect.dispatchEvent(new Event('change', { bubbles: true }));
-
-                    if (result.type === 'summary') {
-                        let sectionIndex = -1;
-                        const docData = DB.documents.find(d => d.name === result.location.fileName);
-                        if (docData) {
-                           sectionIndex = docData.sections.findIndex(s => s.title === result.location.sectionTitle);
-                        }
-                        if (sectionIndex !== -1) {
-                            sectionSelect.value = sectionIndex;
-                            sectionSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
-                    }
-                    
-                     setTimeout(() => {
-                        let targetId = result.type === 'solution' ? result.location.question : result.location.sectionTitle;
-                        const element = document.getElementById(CSS.escape(targetId));
-                        if (element) {
-                            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            element.classList.add('highlight-card');
-                            setTimeout(() => element.classList.remove('highlight-card'), 2000);
-                        }
-                    }, 100);
-                });
-            }
-        }
-
-        function initHome() {
-            const fileList = document.getElementById('file-list');
-            fileList.innerHTML = '';
-            DB.documents.forEach(doc => {
-                const li = document.createElement('li');
-                li.className = 'card';
-                li.innerHTML = `<a href="${doc.name}" target="_blank" style="text-decoration:none;font-weight:600;color:var(--primary-color);">${doc.name}</a>`;
-                fileList.appendChild(li);
-            });
-        }
+        wakeLock.request();
+        ui.addSysMsg(`Sending ${t.file.name}...`);
         
-        function initSummaries() {
-            const docSelect = document.getElementById('summary-doc-select');
-            const sectionSelect = document.getElementById('summary-section-select');
-            
-            docSelect.innerHTML = '';
-            DB.documents.forEach(doc => docSelect.add(new Option(doc.name, doc.name)));
+        const file = t.file;
+        const reader = new FileReader();
 
-            const updateSections = () => {
-                const fileName = docSelect.value;
-                const docData = DB.documents.find(d => d.name === fileName);
-                sectionSelect.innerHTML = '';
-                
-                if (docData.type === 'solutions') {
-                    sectionSelect.style.display = 'none';
-                    displayFullSolutions(docData);
-                } else if (docData.type === 'summary') {
-                    sectionSelect.style.display = 'block';
-                    docData.sections.forEach((section, index) => {
-                        sectionSelect.add(new Option(section.title, index));
-                    });
-                    displayDetailedSummary(docData, 0);
-                }
-            };
-            
-            docSelect.addEventListener('change', updateSections);
-            sectionSelect.addEventListener('change', () => {
-                const docData = DB.documents.find(d => d.name === docSelect.value);
-                if(docData) displayDetailedSummary(docData, parseInt(sectionSelect.value))
-            });
-            updateSections();
-        }
-
-        function displayFullSolutions(docData) {
-            const outputDiv = document.getElementById('summary-output');
-            let html = `<h2>Solutions: ${docData.name}</h2>`;
-            docData.content.forEach(item => {
-                html += `<div class="card" id="${CSS.escape(item.q)}">
-                    <p><strong>Q: ${item.q}</strong></p>
-                    <div><strong>A:</strong> ${item.a}</div>
-                </div>`;
-            });
-            outputDiv.innerHTML = html;
-        }
-
-        async function displayDetailedSummary(docData, sectionIndex) {
-            const outputDiv = document.getElementById('summary-output');
-            if (!docData || !docData.sections[sectionIndex]) {
-                outputDiv.innerHTML = '';
+        const readNextChunk = async () => {
+            if (!state.transfers[peerId]) return; // Cancelled
+            if (t.offset >= file.size) {
+                ui.addSysMsg(`Transfer complete.`);
+                transfer.cleanup(peerId);
                 return;
             }
 
-            const section = docData.sections[sectionIndex];
-            let html = `<div class="card" id="${CSS.escape(section.title)}"><h2>${section.title}</h2>`;
-            section.content.forEach((item) => {
-                if (item.type === 'paragraph') {
-                    html += `<p>${item.text}</p>`;
-                } else if (item.type === 'table') {
-                    html += `<table><thead><tr>${item.headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-                    html += item.rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
-                    html += `</tbody></table>`;
-                } else if (item.type === 'diagram') {
-                    html += `<div class="mermaid">${item.text}</div>`;
-                }
-            });
-            html += `</div>`;
-            outputDiv.innerHTML = html;
-            
-            const diagramElements = outputDiv.querySelectorAll('.mermaid');
-            if(diagramElements.length > 0) {
-                 await mermaid.run({ nodes: diagramElements });
+            // BACKPRESSURE CHECK
+            if (conn.dataChannel.bufferedAmount > BUFFER_THRESHOLD) {
+                // Wait for 'bufferedamountlow' event
+                await new Promise(resolve => {
+                    const handler = () => {
+                        conn.dataChannel.removeEventListener('bufferedamountlow', handler);
+                        resolve();
+                    };
+                    conn.dataChannel.addEventListener('bufferedamountlow', handler, { once: true });
+                    // Fallback safety timeout if event misses (rare but possible)
+                    setTimeout(() => {
+                        conn.dataChannel.removeEventListener('bufferedamountlow', handler);
+                        resolve();
+                    }, 1000); 
+                });
             }
-        }
+
+            const slice = file.slice(t.offset, t.offset + CHUNK_SIZE);
+            reader.readAsArrayBuffer(slice);
+        };
+
+        reader.onload = (e) => {
+            try {
+                conn.send(e.target.result);
+                t.offset += e.target.result.byteLength;
+                readNextChunk();
+            } catch(err) {
+                console.error('Send error', err);
+                transfer.cleanup(peerId);
+                utils.toast('Transfer error');
+            }
+        };
         
-        function showFlashcardByIndex(index) {
-            const flashcard = document.getElementById('flashcard');
-            
-            AppState.currentCardIndex = index;
-            
-            const front = flashcard.querySelector('.flashcard-front');
-            const back = flashcard.querySelector('.flashcard-back');
-            const counter = document.getElementById('card-counter');
-            const cardData = DB.flashcards[index];
-            
-            front.innerHTML = cardData.front;
-            back.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
-            counter.textContent = `${index + 1} / ${DB.flashcards.length}`;
-            flashcard.classList.remove('flipped');
-            
-            flashcard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            flashcard.classList.add('highlight-card');
-            setTimeout(() => flashcard.classList.remove('highlight-card'), 2000);
-        }
+        reader.onerror = () => {
+            utils.toast('File read error');
+            transfer.cleanup(peerId);
+        };
 
-        function initFlashcards() {
-            const prevBtn = document.getElementById('prev-card-btn');
-            const nextBtn = document.getElementById('next-card-btn');
-            
-            document.getElementById('flashcard').addEventListener('click', (e) => e.currentTarget.classList.toggle('flipped'));
+        readNextChunk();
+    },
 
-            nextBtn.addEventListener('click', () => {
-                const newIndex = (AppState.currentCardIndex + 1) % DB.flashcards.length;
-                showFlashcardByIndex(newIndex);
-            });
-            prevBtn.addEventListener('click', () => {
-                const newIndex = (AppState.currentCardIndex - 1 + DB.flashcards.length) % DB.flashcards.length;
-                showFlashcardByIndex(newIndex);
-            });
-            
-            showFlashcardByIndex(0);
-        }
-        
-        function initQuiz() {
-            const questionEl = document.getElementById('quiz-question');
-            const optionsEl = document.getElementById('quiz-options');
-            const feedbackEl = document.getElementById('quiz-feedback');
-            const nextBtn = document.getElementById('next-quiz-btn');
-            let currentQuestion = {};
-
-            function displayQuizQuestion() {
-                feedbackEl.style.display = 'none';
-                optionsEl.innerHTML = '';
-                const flashcards = DB.flashcards;
-                if (!flashcards || flashcards.length < 4) {
-                    questionEl.textContent = "Not enough flashcards to generate a quiz.";
+    // --- RECEIVER LOGIC ---
+    handleMsg: (peerId, msg) => {
+        switch (msg.type) {
+            case 'HEADER':
+                if (transfer.pendingMeta) {
+                    // Busy, auto-reject
+                    const conn = state.conns[peerId];
+                    if(conn) conn.send({ type: 'REJECT', tid: msg.tid });
                     return;
                 }
-                const correctCard = flashcards[Math.floor(Math.random() * flashcards.length)];
-                
-                const otherCards = flashcards.filter(card => card.id !== correctCard.id);
-                otherCards.sort(() => 0.5 - Math.random());
-                const distractors = otherCards.slice(0, 3);
-
-                const options = [
-                    { text: correctCard.back, correct: true, provenance: correctCard.provenance },
-                    ...distractors.map(d => ({ text: d.back, correct: false, provenance: d.provenance }))
-                ].sort(() => Math.random() - 0.5);
-                currentQuestion = { question: correctCard.front, options };
-                questionEl.textContent = currentQuestion.question;
-                options.forEach(option => {
-                    const optionBtn = document.createElement('button');
-                    optionBtn.className = 'quiz-option';
-                    optionBtn.style.width = '100%';
-                    optionBtn.style.textAlign = 'left';
-                    optionBtn.style.marginBottom = '0.5rem';
-                    optionBtn.innerHTML = option.text;
-                    optionBtn.onclick = () => checkAnswer(option, optionBtn);
-                    optionsEl.appendChild(optionBtn);
-                });
-            }
-            
-            function checkAnswer(selectedOption, btnEl) {
-                optionsEl.querySelectorAll('.quiz-option').forEach(btn => {
-                    btn.disabled = true;
-                    const optionText = btn.innerHTML;
-                    const isCorrect = currentQuestion.options.find(o => o.text === optionText)?.correct;
-                    if(isCorrect) {
-                        btn.style.backgroundColor = 'var(--success-color)';
-                        btn.style.borderColor = 'var(--success-color)';
-                    } else {
-                        btn.style.backgroundColor = 'var(--secondary-text-color)';
-                    }
-                });
-
-                if (selectedOption.correct) {
-                    feedbackEl.innerHTML = `<strong>Correct!</strong> <span class="provenance">[SOURCE: ${selectedOption.provenance}]</span>`;
-                    btnEl.style.backgroundColor = 'var(--success-color)';
-                } else {
-                    const correctOption = currentQuestion.options.find(o => o.correct);
-                    feedbackEl.innerHTML = `<strong>Incorrect.</strong> The correct answer was: <p style='margin-top:0.5rem'>${correctOption.text}</p><span class="provenance">[SOURCE: ${correctOption.provenance}]</span>`;
-                    btnEl.style.backgroundColor = 'var(--error-color)';
+                transfer.pendingMeta = { ...msg, peer: peerId };
+                const nick = state.friends[peerId]?.nick || peerId.substring(0,8);
+                document.getElementById('transfer-details').innerText = 
+                    `From: ${nick}\nFile: ${msg.name}\nSize: ${utils.formatSize(msg.size)}`;
+                document.getElementById('modal-transfer').classList.add('open');
+                break;
+            case 'ACK':
+                if (state.transfers[peerId]?.tid === msg.tid) {
+                    transfer.startStream(peerId);
                 }
-                feedbackEl.style.color = 'white';
-                feedbackEl.style.display = 'block';
-                feedbackEl.style.backgroundColor = selectedOption.correct ? 'var(--success-color)' : 'var(--error-color)';
-            }
-
-            nextBtn.addEventListener('click', displayQuizQuestion);
-            displayQuizQuestion();
+                break;
+            case 'REJECT':
+                utils.toast('Transfer rejected');
+                transfer.cleanup(peerId);
+                break;
+            case 'CHAT':
+                if (state.activePeer === peerId) ui.addChat(msg.text, false);
+                else utils.toast(`Msg from ${state.friends[peerId]?.nick || 'Unknown'}`);
+                break;
         }
+    },
 
-        function initSRS() {
-            const startBtn = document.getElementById('srs-start-review-btn');
-            const dueCountEl = document.getElementById('srs-due-count');
-            const srsCardContainer = document.getElementById('srs-card-container');
-            const srsStatsContainer = document.getElementById('srs-stats');
-            const srsCardFront = document.getElementById('srs-card-front');
-            const srsCardBack = document.getElementById('srs-card-back');
-            const srsFlashcard = document.getElementById('srs-flashcard');
-            let srsState = { deck: [], currentCard: null, dueCards: [] };
-
-            function showModal(message) {
-                 const modal = document.createElement('div');
-                 modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1005;`;
-                 modal.innerHTML = `<div style="background-color: var(--secondary-bg-color); color: var(--text-color); padding: 2rem; border-radius: var(--radius-lg); box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;">
-                    <p>${message}</p>
-                    <button id="modal-ok-btn" style="margin-top: 1rem;">OK</button>
-                 </div>`;
-                 document.body.appendChild(modal);
-                 document.getElementById('modal-ok-btn').onclick = () => modal.remove();
-            }
-
-            function loadSRSData() {
+    respond: async (accept) => {
+        const meta = transfer.pendingMeta;
+        if (!meta) return;
+        
+        document.getElementById('modal-transfer').classList.remove('open');
+        transfer.pendingMeta = null;
+        
+        const conn = state.conns[meta.peer];
+        if (!conn || !conn.open) return utils.toast('Sender disconnected');
+        
+        if (accept) {
+            // Try to use File System Access API for zero-memory download if available
+            let fileHandle = null;
+            if (window.showSaveFilePicker) {
                 try {
-                    const data = localStorage.getItem('srsDeck');
-                    srsState.deck = data ? JSON.parse(data) : (DB.flashcards || []).map(card => ({ id: card.id, interval: 0, repetition: 0, easeFactor: 2.5, dueDate: new Date().toISOString() }));
-                } catch (e) { console.error("Could not access localStorage:", e); }
-                updateSRSCounters();
-            }
-            function saveSRSData() {
-                try { localStorage.setItem('srsDeck', JSON.stringify(srsState.deck)); } catch (e) { console.error("Could not save to localStorage:", e); }
-            }
-            const getDueCards = () => srsState.deck.filter(card => new Date(card.dueDate) <= new Date());
-            
-            function updateSRSCounters() {
-                const dueCards = getDueCards();
-                dueCountEl.textContent = dueCards.length;
-                startBtn.disabled = dueCards.length === 0;
-            }
-            
-            function startReviewSession() {
-                srsState.dueCards = getDueCards().sort(() => Math.random() - 0.5); // Shuffle for variety
-                if (srsState.dueCards.length > 0) {
-                    srsStatsContainer.style.display = 'none';
-                    srsCardContainer.style.display = 'block';
-                    showNextSRSCard();
+                    fileHandle = await window.showSaveFilePicker({ suggestedName: meta.name });
+                } catch(e) {
+                    // User cancelled picker, treat as reject
+                    conn.send({ type: 'REJECT', tid: meta.tid });
+                    return;
                 }
-            }
-            
-            function showNextSRSCard() {
-                if (srsState.dueCards.length === 0) { endReviewSession(); return; }
-                srsState.currentCard = srsState.dueCards.shift();
-                const cardData = DB.flashcards.find(c => c.id === srsState.currentCard.id);
-                if (cardData) {
-                    srsCardFront.textContent = cardData.front;
-                    srsCardBack.innerHTML = `${cardData.back}<br><span class="provenance">[SOURCE: ${cardData.provenance}]</span>`;
-                    srsFlashcard.classList.remove('flipped');
-                } else {
-                    showNextSRSCard(); // Skip if card data not found
-                }
-            }
-            
-            function endReviewSession() {
-                srsStatsContainer.style.display = 'block';
-                srsCardContainer.style.display = 'none';
-                srsState.currentCard = null;
-                updateSRSCounters();
-                showModal('Review session complete!');
-            }
-            
-            function processSRSReview(quality) {
-                const card = srsState.currentCard;
-                if (!card) return;
-                if (quality < 3) {
-                    card.repetition = 0;
-                    card.interval = 1;
-                } else {
-                    card.repetition += 1;
-                    if (card.repetition === 1) card.interval = 1;
-                    else if (card.repetition === 2) card.interval = 6;
-                    else card.interval = Math.round(card.interval * card.easeFactor);
-                }
-                card.easeFactor = Math.max(1.3, card.easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-                const now = new Date();
-                now.setDate(now.getDate() + card.interval);
-                card.dueDate = now.toISOString();
-                const deckIndex = srsState.deck.findIndex(c => c.id === card.id);
-                if(deckIndex > -1) srsState.deck[deckIndex] = card;
-                saveSRSData();
-                showNextSRSCard();
             }
 
-            startBtn.addEventListener('click', startReviewSession);
-            srsFlashcard.addEventListener('click', () => srsFlashcard.classList.toggle('flipped'));
+            state.transfers[meta.peer] = {
+                role: 'receiver',
+                meta: meta,
+                received: 0,
+                chunks: [], // Fallback buffer
+                fileHandle: fileHandle, // Stream handle
+                writable: fileHandle ? await fileHandle.createWritable() : null,
+                tid: meta.tid
+            };
             
-            document.querySelectorAll('.srs-rating-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if (!srsFlashcard.classList.contains('flipped')) { 
-                        showModal('Please reveal the answer before rating.');
-                        return;
-                    }
-                    processSRSReview(parseInt(e.target.dataset.rating, 10));
-                });
-            });
+            wakeLock.request();
+            conn.send({ type: 'ACK', tid: meta.tid });
+            ui.addSysMsg(`Receiving ${meta.name}...`);
+        } else {
+            conn.send({ type: 'REJECT', tid: meta.tid });
+        }
+    },
+
+    receiveChunk: async (peerId, buf) => {
+        const t = state.transfers[peerId];
+        if (!t || t.role !== 'receiver') return;
+
+        // Ensure buffer is ArrayBuffer
+        const data = buf instanceof Uint8Array ? buf.buffer : buf;
+
+        try {
+            if (t.writable) {
+                // Stream directly to disk
+                await t.writable.write(data);
+            } else {
+                // Fallback: Accumulate in memory (Mobile/Firefox)
+                t.chunks.push(data);
+            }
             
-            loadSRSData();
+            t.received += data.byteLength;
+
+            if (t.received >= t.meta.size) {
+                transfer.finalize(peerId);
+            }
+        } catch(e) {
+            console.error('Write error', e);
+            utils.toast('Write error');
+            transfer.cleanup(peerId);
+        }
+    },
+
+    finalize: async (peerId) => {
+        const t = state.transfers[peerId];
+        let url = null;
+        
+        try {
+            if (t.writable) {
+                await t.writable.close();
+                ui.addSysMsg(`Saved: ${t.meta.name}`);
+            } else {
+                const blob = new Blob(t.chunks, { type: t.meta.mime });
+                url = URL.createObjectURL(blob);
+                ui.addSysMsg(`Received: ${t.meta.name}`);
+                
+                // Manual Download Trigger for Blob
+                transfer.renderPreview(peerId, t.meta, url);
+                utils.revoke(url);
+            }
+        } catch(e) {
+            console.error('Finalize error', e);
+        }
+        
+        transfer.cleanup(peerId);
+    },
+
+    renderPreview: (peerId, meta, url) => {
+        const div = document.createElement('div');
+        div.className = 'message msg-in border-all';
+        div.innerHTML = `<div class="mono font-bold mb-4">READY: ${meta.name}</div>`;
+        
+        if (meta.mime.startsWith('image/')) {
+            div.innerHTML += `<img src="${url}" style="max-width:100%; border:1px solid #000; display:block; margin-bottom:8px">`;
+        } else if (meta.mime.startsWith('video/')) {
+            div.innerHTML += `<video src="${url}" controls style="width:100%; display:block; margin-bottom:8px"></video>`;
+        }
+        
+        div.innerHTML += `<a href="${url}" download="${meta.name}" class="btn btn-block" style="text-align:center; text-decoration:none;">SAVE TO DISK</a>`;
+        document.getElementById('chat-history').appendChild(div);
+        div.scrollIntoView();
+    },
+
+    cleanup: (peerId) => {
+        const t = state.transfers[peerId];
+        if (t) {
+            // Close writable if open and error occurred
+            if (t.writable) t.writable.abort().catch(()=>{});
+            t.chunks = null; // Release memory
+        }
+        delete state.transfers[peerId];
+        wakeLock.release();
+    },
+
+    handleFileSelect: (input) => {
+        if (input.files.length) transfer.sendFile(input.files[0]);
+        input.value = '';
+    }
+};
+
+// --- 6. UI Controller ---
+const app = {
+    init: () => {
+        app.renderFriends();
+        
+        // Safe Touch Handling
+        document.body.addEventListener('touchmove', (e) => {
+            // Allow scroll only in scrollable areas
+            if (!e.target.closest('#chat-history') && 
+                !e.target.closest('#friends-list') &&
+                !e.target.closest('.modal-box')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    },
+
+    renderFriends: () => {
+        const list = document.getElementById('friends-list');
+        list.innerHTML = '';
+        Object.keys(state.friends).forEach(id => {
+            const f = state.friends[id];
+            const el = document.createElement('div');
+            el.className = `user-card border-bottom ${state.activePeer === id ? 'active' : ''}`;
+            el.onclick = () => app.selectPeer(id);
+            el.innerHTML = `
+                <img src="https://api.dicebear.com/7.x/identicon/svg?seed=${id}" class="avatar">
+                <div style="flex:1">
+                    <div class="mono font-bold">${f.nick || 'Unknown'}</div>
+                    <div class="mono text-sm dim">${id}</div>
+                </div>
+                <div class="status-dot ${f.online ? 'online' : ''}"></div>
+            `;
+            list.appendChild(el);
+        });
+    },
+
+    selectPeer: (id) => {
+        state.activePeer = id;
+        app.renderFriends();
+        app.updateHeader();
+        document.getElementById('chat-history').innerHTML = '';
+        
+        // UI State
+        const conn = state.conns[id];
+        const ready = conn && conn.open;
+        app.toggleInputs(ready);
+
+        // Connect if needed
+        if (!conn || !conn.open) {
+            net.connect(id);
+            // Inputs remain disabled until 'open' event fires
         }
 
-        init();
-    });
-</script>
+        if (window.innerWidth <= 768) app.switchTab('chat');
+    },
 
+    updateHeader: () => {
+        if (!state.activePeer) return;
+        const f = state.friends[state.activePeer];
+        const conn = state.conns[state.activePeer];
+        document.getElementById('chat-header').innerText = f.nick || state.activePeer;
+        const statusEl = document.getElementById('status-indicator');
+        const ready = conn && conn.open;
+        
+        statusEl.innerText = ready ? 'ONLINE' : 'OFFLINE';
+        statusEl.style.color = ready ? 'black' : '#888';
+        app.toggleInputs(ready);
+    },
+
+    toggleInputs: (enabled) => {
+        document.getElementById('msg-input').disabled = !enabled;
+        document.getElementById('btn-send').disabled = !enabled;
+        document.getElementById('btn-file').disabled = !enabled;
+    },
+
+    addFriendInput: () => {
+        const input = document.getElementById('add-friend-id');
+        const id = input.value.trim();
+        if (id && id !== state.id) {
+            state.friends[id] = { nick: 'Friend', online: false };
+            localStorage.setItem('gd_friends', JSON.stringify(state.friends));
+            app.renderFriends();
+            net.connect(id);
+            input.value = '';
+        }
+    },
+
+    sendMsg: () => {
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        if (!text || !state.activePeer) return;
+        
+        const conn = state.conns[state.activePeer];
+        if (conn && conn.open) {
+            conn.send({ type: 'CHAT', text });
+            ui.addChat(text, true);
+            input.value = '';
+        } else {
+            utils.toast('Not connected');
+        }
+    },
+
+    showQR: () => document.getElementById('modal-qr').classList.add('open'),
+    closeModal: (id) => document.getElementById(id).classList.remove('open'),
+
+    // QR Scanning - Robust Implementation
+    startScan: () => {
+        document.getElementById('modal-scan').classList.add('open');
+        
+        // Prevent multiple instances
+        if (state.scanner) return;
+
+        state.scanner = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        state.scanner.start({ facingMode: "environment" }, config, 
+            (decodedText) => {
+                app.stopScan();
+                document.getElementById('add-friend-id').value = decodedText;
+                app.addFriendInput();
+            },
+            (err) => { /* ignore frame errors */ }
+        ).catch(err => {
+            console.error(err);
+            utils.toast('Camera access denied or error');
+            app.stopScan();
+        });
+    },
+
+    stopScan: () => {
+        if (state.scanner) {
+            state.scanner.stop().then(() => {
+                state.scanner.clear();
+                state.scanner = null;
+            }).catch(err => {
+                console.error('Stop failed', err);
+                state.scanner = null;
+            });
+        }
+        app.closeModal('modal-scan');
+    },
+
+    switchTab: (tab) => {
+        const sidebar = document.getElementById('sidebar');
+        const main = document.getElementById('main-panel');
+        const btns = document.querySelectorAll('.tab-btn');
+        
+        if (tab === 'friends') {
+            sidebar.classList.add('active');
+            main.classList.remove('active');
+            btns[0].classList.add('active');
+            btns[1].classList.remove('active');
+        } else {
+            sidebar.classList.remove('active');
+            main.classList.add('active');
+            btns[0].classList.remove('active');
+            btns[1].classList.add('active');
+        }
+    }
+};
+
+const ui = {
+    addChat: (text, self) => {
+        const h = document.getElementById('chat-history');
+        const d = document.createElement('div');
+        d.className = `message ${self ? 'msg-out' : 'msg-in'}`;
+        // Safe linkify
+        const link = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                         .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+        d.innerHTML = link;
+        h.appendChild(d);
+        d.scrollIntoView();
+    },
+    addSysMsg: (text) => {
+        const h = document.getElementById('chat-history');
+        const d = document.createElement('div');
+        d.className = 'message msg-sys';
+        d.innerText = text;
+        h.appendChild(d);
+        d.scrollIntoView();
+    }
+};
+
+// Bootstrap
+window.onload = () => {
+    net.init();
+    app.init();
+};
+</script>
 </body>
 </html>
+
+
