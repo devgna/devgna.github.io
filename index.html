@@ -2,16 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#ffffff">
-    <meta name="description" content="GhostDrop Social - P2P Secure File Transfer">
+    <meta name="description" content="Secure P2P File Transfer. No Cloud. No Limits.">
+    <title>GhostDrop Social</title>
     
-    <!-- PWA Manifest (Embedded) -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"GhostDrop","short_name":"GhostDrop","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://api.dicebear.com/7.x/shapes/svg?seed=ghost","sizes":"192x192","type":"image/svg+xml"}]}'>
-    <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/shapes/png?seed=ghost">
-
-    <title>GhostDrop Social v2.0</title>
-
     <!-- Dependencies -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -21,53 +16,43 @@
         :root {
             --bg: #ffffff; --fg: #000000; --border: #000000;
             --dim: #666666; --light: #f4f4f4; --accent: #000000;
+            --danger: #ff0000; --success: #008000;
             --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
-            margin: 0; padding: 0;
-            background: var(--bg); color: var(--fg);
+            margin: 0; padding: 0; background: var(--bg); color: var(--fg);
             font-family: var(--font-mono); font-size: 13px;
-            height: 100dvh; overflow: hidden;
-            display: flex; flex-direction: column;
-            user-select: none;
+            height: 100vh; height: 100dvh; overflow: hidden;
+            display: flex; flex-direction: column; user-select: none;
         }
 
         /* LAYOUT */
-        #app {
-            display: grid;
-            grid-template-rows: 50px 1fr;
-            grid-template-columns: 280px 1fr;
-            height: 100%; width: 100%;
-        }
-
-        /* TOP BAR */
+        #app { display: grid; grid-template-rows: 48px 1fr; grid-template-columns: 280px 1fr; height: 100%; width: 100%; }
+        
+        /* HEADER */
         #top-bar {
-            grid-column: 1 / -1; grid-row: 1;
-            border-bottom: 2px solid var(--border);
+            grid-column: 1 / -1; grid-row: 1; border-bottom: 2px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px; background: var(--bg); z-index: 20;
+            padding: 0 16px; background: var(--bg); z-index: 10;
         }
-
+        .brand { font-weight: 900; letter-spacing: -1px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        
         /* SIDEBAR */
         #sidebar {
-            grid-column: 1; grid-row: 2;
-            border-right: 2px solid var(--border);
-            display: flex; flex-direction: column;
-            background: var(--light); overflow: hidden;
+            grid-column: 1; grid-row: 2; border-right: 2px solid var(--border);
+            display: flex; flex-direction: column; background: var(--light); overflow: hidden;
         }
 
-        /* MAIN PANEL */
+        /* MAIN */
         #main-panel {
-            grid-column: 2; grid-row: 2;
-            display: flex; flex-direction: column;
-            background: var(--bg); position: relative;
-            overflow-y: auto; overflow-x: hidden;
+            grid-column: 2; grid-row: 2; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 24px;
+            background: var(--bg); position: relative; overflow-y: auto;
         }
 
-        /* MOBILE */
+        /* RESPONSIVE */
         @media (max-width: 768px) {
             #app { display: flex; flex-direction: column; }
             #sidebar { display: none; flex: 1; border-right: none; }
@@ -76,109 +61,95 @@
             .mobile-nav { display: flex !important; }
         }
 
-        /* UI ELEMENTS */
+        /* COMPONENTS */
         .btn {
-            background: var(--fg); color: var(--bg);
-            border: 2px solid var(--fg); padding: 8px 16px;
-            font-family: inherit; font-weight: bold;
-            cursor: pointer; text-transform: uppercase;
-            display: inline-flex; justify-content: center; align-items: center; gap: 6px;
-            transition: all 0.1s;
+            background: var(--fg); color: var(--bg); border: 2px solid var(--fg);
+            padding: 10px 20px; font-family: inherit; font-weight: bold;
+            cursor: pointer; text-transform: uppercase; display: inline-flex;
+            justify-content: center; align-items: center; gap: 8px; min-width: 100px;
         }
         .btn:active { transform: translateY(1px); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn:disabled { background: var(--dim); border-color: var(--dim); cursor: not-allowed; }
         .btn-outline { background: transparent; color: var(--fg); }
-        .btn-danger { background: #fff; color: #d00; border-color: #d00; }
-        .btn-icon { padding: 8px; min-width: 0; }
-        .btn-small { padding: 4px 8px; font-size: 11px; }
-
+        .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+        .btn-sm { padding: 4px 8px; min-width: auto; font-size: 11px; }
+        
         .input {
-            border: 2px solid var(--border); padding: 10px;
-            font-family: inherit; width: 100%; background: #fff; outline: none;
+            border: 2px solid var(--border); padding: 10px; font-family: inherit;
+            width: 100%; background: var(--bg); outline: none; border-radius: 0;
         }
-        .input:focus { border-color: #000; background: #fff; }
+        .input:focus { border-color: var(--dim); background: #fff; }
 
-        /* TABS */
+        /* LISTS */
         .tab-bar { display: flex; border-bottom: 2px solid var(--border); background: var(--bg); }
         .tab-item { 
             flex: 1; text-align: center; padding: 12px; cursor: pointer; 
-            font-weight: bold; background: var(--light); border-bottom: 3px solid transparent;
+            font-weight: bold; background: var(--light); border-bottom: 2px solid transparent;
         }
-        .tab-item.active { background: var(--bg); border-bottom-color: var(--fg); }
+        .tab-item.active { background: var(--bg); border-bottom: 2px solid var(--bg); margin-bottom: -2px; }
 
-        /* LISTS */
         .list-item {
-            padding: 12px 16px; border-bottom: 1px solid #ddd;
-            cursor: pointer; display: flex; align-items: center; justify-content: space-between;
-            position: relative;
+            padding: 12px 16px; border-bottom: 1px solid #ddd; cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: background 0.2s; position: relative;
         }
         .list-item:hover { background: #fff; }
         .list-item.active { background: var(--fg); color: var(--bg); }
+        .list-item.pressing { background: #eee; animation: pulse 0.5s infinite; }
         
-        .signal-bars {
-            display: flex; align-items: flex-end; gap: 2px; height: 12px;
-        }
-        .bar { width: 3px; background: #ccc; }
-        .bar.on { background: currentColor; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; border: 1px solid #fff; }
+        .status-dot.online { background: #00ff00; border-color: #000; }
+        .status-dot.busy { background: #ffa500; }
 
-        /* STATE VIEWS */
-        .state-view { 
-            padding: 24px; max-width: 600px; margin: 0 auto; width: 100%; text-align: center; 
-        }
-        .hidden { display: none !important; }
-
+        /* STATES */
+        .state-view { text-align: center; max-width: 500px; width: 100%; display: none; }
+        .state-view.active { display: block; animation: fadeIn 0.3s; }
+        
         .stat-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
             margin: 20px 0; text-align: left; border: 2px solid var(--border); padding: 16px;
         }
-        .stat-label { color: var(--dim); font-size: 10px; text-transform: uppercase; }
-        .stat-val { font-size: 14px; font-weight: bold; }
+        .stat-label { color: var(--dim); font-size: 10px; text-transform: uppercase; margin-bottom: 4px; }
+        .stat-val { font-size: 14px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; }
 
-        .progress-wrap {
-            border: 2px solid var(--border); height: 24px; position: relative; margin: 20px 0;
+        .progress-container {
+            width: 100%; height: 28px; border: 2px solid var(--border);
+            margin: 20px 0; position: relative; background: var(--light);
         }
-        .progress-fill {
-            height: 100%; background: var(--fg); width: 0%; transition: width 0.2s;
-        }
-
+        .progress-bar { height: 100%; background: var(--fg); width: 0%; transition: width 0.1s linear; }
+        
         /* CONTEXT MENU */
         #context-menu {
-            position: fixed; background: #fff; border: 2px solid #000;
-            box-shadow: 4px 4px 0 rgba(0,0,0,0.2); z-index: 1000;
-            display: none; flex-direction: column; min-width: 150px;
+            position: absolute; background: var(--bg); border: 2px solid var(--border);
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.2); z-index: 100; display: none; min-width: 150px;
         }
-        .ctx-item { padding: 12px; cursor: pointer; text-align: left; font-weight: bold; }
-        .ctx-item:hover { background: #eee; }
-        .ctx-item.danger { color: #d00; }
+        .ctx-item { padding: 10px 16px; cursor: pointer; font-weight: bold; display: block; width: 100%; text-align: left; border: none; background: none; }
+        .ctx-item:hover { background: var(--light); }
+        .ctx-item.danger { color: var(--danger); }
 
-        /* SETTINGS & MODALS */
+        /* TOAST & MODALS */
+        #toast-box { position: fixed; bottom: 20px; right: 20px; z-index: 9999; pointer-events: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .toast { background: var(--fg); color: var(--bg); padding: 12px 20px; font-weight: bold; border: 1px solid var(--bg); animation: slideUp 0.3s; pointer-events: auto; }
+        
         .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.95); z-index: 2000;
-            display: none; align-items: center; justify-content: center;
+            position: fixed; inset: 0; background: rgba(255,255,255,0.95);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
         }
-        .modal-box {
-            background: #fff; border: 2px solid #000; padding: 24px;
-            width: 90%; max-width: 400px; box-shadow: 8px 8px 0 rgba(0,0,0,0.1);
-        }
+        .modal-box { background: #fff; border: 2px solid #000; padding: 24px; width: 90%; max-width: 360px; box-shadow: 8px 8px 0 rgba(0,0,0,0.1); }
 
-        /* TOAST */
-        #toast-container { position: fixed; bottom: 70px; right: 20px; z-index: 3000; }
-        .toast {
-            background: #000; color: #fff; padding: 12px 20px; margin-top: 10px;
-            border: 1px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            animation: slideIn 0.3s; display: flex; justify-content: space-between; gap: 10px;
-        }
-        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* MOBILE NAV */
         .mobile-nav {
-            display: none; height: 60px; border-top: 2px solid var(--border);
-            background: var(--bg); flex-shrink: 0; z-index: 50;
+            display: none; height: 50px; border-top: 2px solid var(--border);
+            background: var(--bg); flex-shrink: 0; z-index: 20;
         }
-        .nav-btn { flex: 1; border: none; background: transparent; font-weight: bold; }
-        .nav-btn.active { background: #eee; border-top: 3px solid #000; }
+        .nav-btn { flex: 1; border: none; background: var(--bg); font-weight: bold; border-right: 1px solid var(--border); }
+        .nav-btn.active { background: var(--light); text-decoration: underline; }
 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        .hidden { display: none !important; }
+        .mono-box { background: #eee; padding: 8px; font-family: monospace; word-break: break-all; font-size: 11px; margin: 8px 0; }
     </style>
 </head>
 <body>
@@ -186,885 +157,829 @@
 <div id="app">
     <!-- TOP BAR -->
     <header id="top-bar">
-        <div style="font-weight: 900; font-size: 18px; letter-spacing: -1px;">GHOST DROP <span style="font-size:10px; color:var(--dim)">v2.0</span></div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <div id="my-id-display" style="cursor:pointer; font-size:11px; border:1px solid #ccc; padding:4px;">OFFLINE</div>
-            <button class="btn btn-icon btn-outline" onclick="app.toggleSettings()">⚙️</button>
+        <div class="brand">
+            <span>GHOST DROP</span>
+            <span id="conn-status-dot" class="status-dot"></span>
+        </div>
+        <div style="text-align: right; display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-sm btn-outline" onclick="Diagnostics.toggle()">LOGS</button>
+            <div id="my-id-display" class="btn btn-sm" onclick="App.copyId()" style="min-width: 80px;">OFFLINE</div>
         </div>
     </header>
 
     <!-- SIDEBAR -->
     <aside id="sidebar" class="active">
         <div class="tab-bar">
-            <div class="tab-item active" onclick="app.setTab('friends')" id="t-friends">FRIENDS</div>
-            <div class="tab-item" onclick="app.setTab('history')" id="t-history">LOGS</div>
+            <div class="tab-item active" onclick="App.setTab('friends')" id="tab-friends">PEERS</div>
+            <div class="tab-item" onclick="App.setTab('history')" id="tab-history">HISTORY</div>
         </div>
 
         <!-- FRIENDS LIST -->
-        <div id="pane-friends" style="display:flex; flex-direction:column; height:100%;">
-            <div style="padding:12px; border-bottom:2px solid var(--border); background:#fff;">
-                <div style="display:flex; gap:8px;">
-                    <input id="add-input" class="input" placeholder="Peer ID or Nickname">
+        <div id="view-friends" style="display: flex; flex-direction: column; height: 100%;">
+            <div style="padding: 12px; border-bottom: 2px solid var(--border); background: var(--bg);">
+                <div style="display: flex; gap: 8px;">
+                    <input id="add-id" class="input" placeholder="Peer ID (e.g. ghost-1234)">
+                    <button class="btn btn-outline" style="padding: 0 12px;" onclick="App.scanQR()">[O]</button>
                 </div>
-                <div style="display:flex; gap:8px; margin-top:8px;">
-                    <button class="btn btn-outline" style="flex:1" onclick="app.addFriend()">ADD</button>
-                    <button class="btn btn-outline" onclick="app.scanQR()">📷</button>
-                </div>
+                <button class="btn btn-block" style="width: 100%; margin-top: 8px;" onclick="Friends.add()">ADD FRIEND</button>
             </div>
-            <div id="friends-list" style="flex:1; overflow-y:auto;"></div>
+            <div id="friends-list" style="overflow-y: auto; flex: 1;"></div>
         </div>
 
         <!-- HISTORY -->
-        <div id="pane-history" style="display:none; flex-direction:column; height:100%;">
-            <div style="padding:10px; text-align:right; border-bottom:1px solid #ccc;">
-                <button class="btn btn-small btn-outline" onclick="app.clearHistory()">CLEAR</button>
+        <div id="view-history" style="display: none; flex-direction: column; height: 100%;">
+            <div style="padding: 12px; border-bottom: 2px solid var(--border); text-align: right;">
+                <button class="btn btn-sm btn-outline" onclick="History.clear()">CLEAR</button>
             </div>
-            <div id="history-list" style="flex:1; overflow-y:auto;"></div>
+            <div id="history-list" style="overflow-y: auto; flex: 1;"></div>
         </div>
     </aside>
 
     <!-- MAIN PANEL -->
     <main id="main-panel">
+        
         <!-- IDLE -->
-        <div id="view-idle" class="state-view">
-            <h1>READY</h1>
-            <p style="color:#666">Select a friend to begin secure transfer.</p>
-            <div id="stats-widget" class="stat-grid" style="margin-top:40px;">
-                <div><div class="stat-label">TOTAL SENT</div><div id="stat-sent" class="stat-val">0 B</div></div>
-                <div><div class="stat-label">TOTAL RECV</div><div id="stat-recv" class="stat-val">0 B</div></div>
+        <div id="screen-idle" class="state-view active">
+            <h2 style="margin-bottom: 8px;">READY</h2>
+            <p style="color: var(--dim);">Select a friend to begin.</p>
+            <div style="margin-top: 40px; border: 1px dashed #ccc; padding: 20px;">
+                <p style="font-size: 11px; margin: 0;">GHOSTDROP SOCIAL v2.0</p>
+                <p style="font-size: 10px; color: var(--dim);">SECURE • P2P • CLIENT-ONLY</p>
             </div>
         </div>
 
         <!-- CONNECTED -->
-        <div id="view-connected" class="state-view hidden">
-            <h1 id="c-name">FRIEND</h1>
-            <p id="c-id" style="font-size:11px; color:#666; font-family:monospace;">ID</p>
-            <div style="margin:20px 0;">
-                <div class="signal-bars" id="c-signal" style="justify-content:center; height:20px; gap:4px;">
-                    <div class="bar" style="width:6px;"></div><div class="bar" style="width:6px;"></div><div class="bar" style="width:6px;"></div><div class="bar" style="width:6px;"></div>
-                </div>
-                <div id="c-rtt" style="font-size:10px; margin-top:5px;">RTT: -- ms</div>
+        <div id="screen-connected" class="state-view">
+            <h1 id="remote-name" style="font-size: 32px; margin: 0 0 8px 0;">FRIEND</h1>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 32px;">
+                <span id="remote-id" class="mono-box" style="background:transparent; padding:0;"></span>
+                <span id="remote-status" style="font-weight: bold; color: var(--dim);">Offline</span>
             </div>
             
-            <input type="file" id="f-input" multiple class="hidden" onchange="transfer.queueFiles(this)">
-            <button class="btn" onclick="document.getElementById('f-input').click()" style="padding:20px 40px;">SEND FILES</button>
-        </div>
-
-        <!-- TRANSFER -->
-        <div id="view-transfer" class="state-view hidden">
-            <h2 id="t-status">TRANSFERRING</h2>
-            <div id="t-filename" style="font-weight:bold; margin-bottom:10px;">file.ext</div>
-            
-            <div class="progress-wrap">
-                <div id="t-bar" class="progress-fill"></div>
-            </div>
-
-            <div class="stat-grid">
-                <div><div class="stat-label">SPEED</div><div id="t-speed" class="stat-val">0 KB/s</div></div>
-                <div><div class="stat-label">ETA</div><div id="t-eta" class="stat-val">--</div></div>
-                <div><div class="stat-label">QUEUE</div><div id="t-queue" class="stat-val">0</div></div>
-                <div><div class="stat-label">ERRORS</div><div id="t-err" class="stat-val">0</div></div>
-            </div>
-
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button class="btn btn-outline" id="btn-pause" onclick="transfer.togglePause()">PAUSE</button>
-                <button class="btn btn-outline" onclick="transfer.cancel()">CANCEL</button>
+            <input type="file" id="file-input" class="hidden" multiple onchange="Transfer.Sender.queueFiles(this)">
+            <button class="btn" onclick="document.getElementById('file-input').click()" style="padding: 24px 48px; font-size: 16px;">
+                SEND FILES
+            </button>
+            <div style="margin-top: 16px; font-size: 10px; color: var(--dim);">
+                DRAG & DROP SUPPORTED
             </div>
         </div>
 
-        <!-- INCOMING -->
-        <div id="view-incoming" class="state-view hidden">
-            <h2>INCOMING FILE</h2>
+        <!-- INCOMING OFFER -->
+        <div id="screen-incoming" class="state-view">
+            <h2>INCOMING TRANSFER</h2>
             <div class="stat-grid">
-                <div><div class="stat-label">FROM</div><div id="inc-from" class="stat-val">User</div></div>
+                <div><div class="stat-label">FROM</div><div id="inc-sender" class="stat-val">Unknown</div></div>
                 <div><div class="stat-label">SIZE</div><div id="inc-size" class="stat-val">0 MB</div></div>
-                <div style="grid-column:1/-1"><div class="stat-label">FILE</div><div id="inc-name" class="stat-val">file</div></div>
+                <div style="grid-column: 1/-1;"><div class="stat-label">FILENAME</div><div id="inc-name" class="stat-val">file.ext</div></div>
             </div>
-            <div style="display:flex; gap:20px; justify-content:center;">
-                <button class="btn btn-danger" onclick="transfer.respond(false)">REJECT</button>
-                <button class="btn" onclick="transfer.respond(true)">ACCEPT</button>
-            </div>
-            <div style="margin-top:20px;">
-                <label><input type="checkbox" id="chk-auto"> Auto-accept future files from this peer</label>
+            <div style="display: flex; gap: 16px; justify-content: center;">
+                <button class="btn btn-danger" onclick="Transfer.Receiver.respond(false)">REJECT</button>
+                <button class="btn" onclick="Transfer.Receiver.respond(true)">ACCEPT</button>
             </div>
         </div>
+
+        <!-- TRANSFERRING -->
+        <div id="screen-transfer" class="state-view">
+            <h2 id="trans-title">TRANSFERRING</h2>
+            <div class="progress-container">
+                <div id="prog-bar" class="progress-bar"></div>
+            </div>
+            <div class="stat-grid">
+                <div><div class="stat-label">SPEED</div><div id="trans-speed" class="stat-val">0 KB/s</div></div>
+                <div><div class="stat-label">ETA</div><div id="trans-eta" class="stat-val">--</div></div>
+                <div><div class="stat-label">SENT/RECV</div><div id="trans-bytes" class="stat-val">0 / 0</div></div>
+                <div><div class="stat-label">STATUS</div><div id="trans-status" class="stat-val">Active</div></div>
+            </div>
+            <div style="display: flex; gap: 16px; justify-content: center;">
+                <button id="btn-pause" class="btn btn-outline" onclick="Transfer.togglePause()">PAUSE</button>
+                <button class="btn btn-danger" onclick="Transfer.cancel()">CANCEL</button>
+            </div>
+        </div>
+
+        <!-- COMPLETE -->
+        <div id="screen-complete" class="state-view">
+            <h2>COMPLETED</h2>
+            <div id="comp-checksum" class="mono-box" style="margin: 20px 0; background: #000; color: #fff;">HASH CHECKING...</div>
+            <p id="comp-msg">File transferred successfully.</p>
+            <div style="display: flex; gap: 16px; justify-content: center;">
+                <button id="btn-dl" class="btn hidden">DOWNLOAD</button>
+                <button class="btn btn-outline" onclick="App.resetToConnected()">CLOSE</button>
+            </div>
+        </div>
+
     </main>
 
     <!-- MOBILE NAV -->
     <nav class="mobile-nav">
-        <button class="nav-btn active" onclick="app.mobNav('friends')" id="mn-friends">FRIENDS</button>
-        <button class="nav-btn" onclick="app.mobNav('transfer')" id="mn-transfer">TRANSFER</button>
-        <button class="nav-btn" onclick="app.mobNav('history')" id="mn-history">LOGS</button>
+        <button class="nav-btn active" onclick="App.mobileNav('friends')" id="mob-friends">PEERS</button>
+        <button class="nav-btn" onclick="App.mobileNav('transfer')" id="mob-transfer">TRANSFER</button>
+        <button class="nav-btn" onclick="App.mobileNav('history')" id="mob-history">HISTORY</button>
     </nav>
 </div>
 
 <!-- OVERLAYS -->
-<div id="context-menu"></div>
-
-<div id="modal-settings" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
-    <div class="modal-box">
-        <h3>SETTINGS</h3>
-        <div style="margin:20px 0;">
-            <label style="display:block; margin-bottom:10px; font-weight:bold;">Max Speed: <span id="lbl-limit">Unlimited</span></label>
-            <input type="range" id="rng-speed" min="0" max="100" value="0" style="width:100%" oninput="app.updateSettings()">
-            <div style="font-size:10px; color:#666; display:flex; justify-content:space-between;">
-                <span>1 MB/s</span><span>Unlimited</span>
-            </div>
-        </div>
-        <button class="btn btn-outline" style="width:100%" onclick="document.getElementById('modal-settings').style.display='none'">CLOSE</button>
-    </div>
+<div id="context-menu">
+    <button class="ctx-item" onclick="Friends.editCtx()">Edit Nickname</button>
+    <button class="ctx-item" onclick="App.copyCtx()">Copy ID</button>
+    <button class="ctx-item danger" onclick="Friends.removeCtx()">Remove Friend</button>
 </div>
 
-<div id="modal-qr" class="modal-overlay" onclick="if(event.target===this) this.style.display='none'">
-    <div class="modal-box" style="text-align:center;">
-        <h3>IDENTITY</h3>
-        <div id="qrcode" style="margin:20px auto; width:128px;"></div>
-        <button class="btn" onclick="document.getElementById('modal-qr').style.display='none'">DONE</button>
+<div id="modal-qr" class="modal-overlay" onclick="if(event.target===this) App.closeModal('modal-qr')">
+    <div class="modal-box" style="text-align: center;">
+        <h3>MY IDENTITY</h3>
+        <div id="qrcode" style="margin: 16px auto; width: 128px;"></div>
+        <p class="mono-box" id="qr-text"></p>
+        <button class="btn btn-block" onclick="App.closeModal('modal-qr')">CLOSE</button>
     </div>
 </div>
 
 <div id="modal-scan" class="modal-overlay">
     <div class="modal-box">
-        <h3>SCAN CODE</h3>
-        <div id="reader" style="width:100%; height:250px; background:#000;"></div>
-        <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="app.stopScan()">CANCEL</button>
+        <h3>SCAN PEER</h3>
+        <div id="reader" style="width: 100%; height: 250px; background: #eee;"></div>
+        <button class="btn btn-block" style="margin-top: 16px;" onclick="App.stopScan()">CANCEL</button>
     </div>
 </div>
 
-<div id="modal-nickname" class="modal-overlay">
-    <div class="modal-box">
-        <h3>EDIT NICKNAME</h3>
-        <input id="edit-nick" class="input" style="margin:15px 0;">
-        <div style="display:flex; gap:10px;">
-            <button class="btn btn-outline" onclick="document.getElementById('modal-nickname').style.display='none'">CANCEL</button>
-            <button class="btn" onclick="app.saveNickname()">SAVE</button>
+<div id="modal-diagnostics" class="modal-overlay" onclick="if(event.target===this) Diagnostics.toggle()">
+    <div class="modal-box" style="width: 95%; max-width: 600px; height: 80vh; display: flex; flex-direction: column;">
+        <h3>SYSTEM LOGS</h3>
+        <div id="log-container" style="flex: 1; background: #eee; font-family: monospace; padding: 8px; overflow-y: auto; font-size: 10px; margin-bottom: 16px;"></div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-sm btn-outline" onclick="Diagnostics.export()">EXPORT</button>
+            <button class="btn btn-sm" onclick="Diagnostics.clear()">CLEAR</button>
+            <button class="btn btn-sm" onclick="Diagnostics.toggle()">CLOSE</button>
         </div>
     </div>
 </div>
 
-<div id="toast-container"></div>
+<div id="toast-box"></div>
 
+<!-- LOGIC -->
 <script>
 /**
  * GHOST DROP SOCIAL v2.0
- * Architecture:
- * - Store: LocalStorage wrapper with migrations
- * - Network: PeerJS + Resilience (Backoff, RTT)
- * - Transfer: Chunk pipeline, Queue, Pause/Resume, Verify
- * - UI: Rendering & Event Handling
+ * Architecture: Modules (App, Net, Transfer, Friends, History, UI, Utils)
  */
 
-const CONST = {
-    CHUNK_SIZE: 16 * 1024,
-    VERIFY_INTERVAL: 64, // Verify every 64 chunks (~1MB)
-    MAX_RETRIES: 5
-};
-
-// --- STORE & MIGRATION ---
-const Store = {
-    data: {
-        id: null,
-        friends: {}, // { id: { nick, added, trusted } }
-        history: [],
-        stats: { sent: 0, recv: 0 },
-        settings: { speedLimit: 0 } // 0 = unlimited (MB/s)
+// --- UTILS ---
+const Utils = {
+    id: localStorage.getItem('gd_id') || 'gd-' + Math.random().toString(36).substr(2, 6),
+    now: () => Date.now(),
+    fmtSize: (b) => {
+        const u = ['B','KB','MB','GB']; let i=0;
+        while(b >= 1024 && i < u.length-1){ b/=1024; i++; }
+        return b.toFixed(1)+u[i];
     },
-    init() {
-        const raw = localStorage.getItem('gd_store');
-        if (raw) {
-            try {
-                const old = JSON.parse(raw);
-                // Migration logic could go here
-                this.data = { ...this.data, ...old };
-            } catch(e) { console.error('Store corrupted', e); }
-        } else {
-            // Check legacy keys
-            this.data.id = localStorage.getItem('gd_id') || 'ghost-' + Math.floor(Math.random()*10000);
-            const legFriends = JSON.parse(localStorage.getItem('gd_friends') || '{}');
-            Object.keys(legFriends).forEach(k => {
-                this.data.friends[k] = { nick: legFriends[k].name || 'Friend', added: Date.now() };
-            });
-            this.save();
-        }
+    toast: (msg, type='info') => {
+        const d = document.createElement('div');
+        d.className = 'toast'; d.innerText = msg;
+        if(type==='err') d.style.borderColor = 'red';
+        document.getElementById('toast-box').appendChild(d);
+        setTimeout(() => d.remove(), 3000);
     },
-    save() {
-        localStorage.setItem('gd_store', JSON.stringify(this.data));
-    },
-    addHistory(entry) {
-        this.data.history.unshift(entry);
-        if(this.data.history.length > 50) this.data.history.pop();
-        if(entry.status === 'SUCCESS') {
-            if(entry.type === 'sent') this.data.stats.sent += entry.size;
-            else this.data.stats.recv += entry.size;
-        }
-        this.save();
-        UI.renderHistory();
-        UI.renderStats();
+    // Inline Worker for Checksum (FNV-1a)
+    createWorker: () => {
+        const code = `
+            self.onmessage = function(e) {
+                let h = e.data.seed || 0x811c9dc5;
+                const d = new Uint8Array(e.data.chunk);
+                for(let i=0; i<d.length; i++) {
+                    h ^= d[i]; h = Math.imul(h, 0x01000193);
+                }
+                self.postMessage({ hash: h >>> 0 });
+            };
+        `;
+        return new Worker(URL.createObjectURL(new Blob([code], {type: 'application/javascript'})));
     }
 };
 
-// --- NETWORK LAYER ---
+// --- LOGGING ---
+const Diagnostics = {
+    logs: [],
+    log: (msg, type='INFO') => {
+        const entry = `[${new Date().toLocaleTimeString()}] [${type}] ${msg}`;
+        console.log(entry);
+        Diagnostics.logs.unshift(entry);
+        if(Diagnostics.logs.length > 200) Diagnostics.logs.pop();
+        const c = document.getElementById('log-container');
+        if(c) c.innerHTML = Diagnostics.logs.join('<br>');
+    },
+    toggle: () => {
+        const el = document.getElementById('modal-diagnostics');
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        Diagnostics.render();
+    },
+    render: () => document.getElementById('log-container').innerHTML = Diagnostics.logs.join('<br>'),
+    clear: () => { Diagnostics.logs = []; Diagnostics.render(); },
+    export: () => {
+        const blob = new Blob([Diagnostics.logs.join('\n')], {type: 'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'ghostdrop-logs.txt';
+        a.click();
+    }
+};
+
+// --- DATA ---
+const Data = {
+    friends: JSON.parse(localStorage.getItem('gd_friends') || '{}'),
+    history: JSON.parse(localStorage.getItem('gd_history') || '[]'),
+    saveFriends: () => localStorage.setItem('gd_friends', JSON.stringify(Data.friends)),
+    saveHistory: () => localStorage.setItem('gd_history', JSON.stringify(Data.history))
+};
+
+// --- NETWORK ---
 const Net = {
     peer: null,
     conns: {},
-    backoffs: {},
+    backoff: 1000,
+    heartbeatInt: null,
     
-    init() {
-        this.peer = new Peer(Store.data.id, { debug: 1 });
-        this.peer.on('open', id => {
+    init: () => {
+        localStorage.setItem('gd_id', Utils.id);
+        Net.connectPeer();
+        // Manifest Injection for PWA
+        const manifest = {
+            name: "GhostDrop", short_name: "GhostDrop", start_url: ".", display: "standalone",
+            background_color: "#ffffff", theme_color: "#ffffff",
+            icons: [{ src: "https://unpkg.com/feather-icons/dist/icons/box.svg", sizes: "192x192", type: "image/svg+xml" }]
+        };
+        const link = document.createElement('link'); link.rel = 'manifest';
+        link.href = 'data:application/json;base64,' + btoa(JSON.stringify(manifest));
+        document.head.appendChild(link);
+    },
+
+    connectPeer: () => {
+        if(Net.peer) Net.peer.destroy();
+        Diagnostics.log(`Init Peer: ${Utils.id}`);
+        Net.peer = new Peer(Utils.id, { debug: 1 });
+        
+        Net.peer.on('open', (id) => {
             document.getElementById('my-id-display').innerText = id;
-            new QRCode(document.getElementById('qrcode'), { text: id, width: 128, height: 128 });
-            this.reconnectAll();
-        });
-        this.peer.on('connection', conn => this.handleConn(conn));
-        this.peer.on('error', err => {
-            UI.toast(`Net: ${err.type}`);
-            if (err.type === 'peer-unavailable') Transfer.handleError('Peer unavailable');
-        });
-        this.peer.on('disconnected', () => {
-            document.getElementById('my-id-display').innerText = "RECONNECTING...";
-            setTimeout(() => this.peer.reconnect(), 2000);
+            document.getElementById('conn-status-dot').classList.add('online');
+            Net.backoff = 1000;
+            Net.reconnectFriends();
+            Net.startHeartbeat();
         });
         
-        // RTT Pinger
-        setInterval(() => this.pingAll(), 2000);
-    },
-
-    connect(id) {
-        if (this.conns[id] && this.conns[id].open) return;
-        const conn = this.peer.connect(id, { reliable: true });
-        this.handleConn(conn);
-    },
-
-    reconnectAll() {
-        Object.keys(Store.data.friends).forEach(id => this.connect(id));
-    },
-
-    handleConn(conn) {
-        if (this.conns[conn.peer]) this.conns[conn.peer].close();
-        this.conns[conn.peer] = conn;
+        Net.peer.on('error', (err) => {
+            Diagnostics.log(`Peer Err: ${err.type}`);
+            document.getElementById('conn-status-dot').classList.remove('online');
+            if(['network-disconnected', 'peer-unavailable', 'server-error'].includes(err.type)) {
+                setTimeout(Net.connectPeer, Net.backoff);
+                Net.backoff = Math.min(Net.backoff * 2, 30000);
+            }
+        });
         
-        conn.lastPing = Date.now();
-        conn.rtt = 0;
+        Net.peer.on('connection', Net.handleConn);
+    },
+
+    handleConn: (conn) => {
+        Diagnostics.log(`Connected: ${conn.peer}`);
+        if(Net.conns[conn.peer]) Net.conns[conn.peer].close();
+        Net.conns[conn.peer] = conn;
 
         conn.on('open', () => {
-            if(conn.dataChannel) conn.dataChannel.bufferedAmountLowThreshold = 65536;
-            this.backoffs[conn.peer] = 0;
-            UI.updateFriendStatus(conn.peer, true);
+            Friends.updateStatus(conn.peer, 'online');
+            conn.send({ type: 'PING' }); // Immediate ping
+        });
+        
+        conn.on('data', (data) => {
+            if(data.constructor === ArrayBuffer || data instanceof Uint8Array) {
+                Transfer.Receiver.ingest(data);
+            } else {
+                try {
+                    const msg = (typeof data === 'string') ? JSON.parse(data) : data;
+                    Transfer.router(conn.peer, msg);
+                } catch(e) { Diagnostics.log('Msg Parse Err'); }
+            }
         });
         
         conn.on('close', () => {
-            UI.updateFriendStatus(conn.peer, false);
-            this.retry(conn.peer);
-            if (Transfer.active && Transfer.active.peer === conn.peer) {
-                Transfer.pause('Connection Lost');
-            }
+            Diagnostics.log(`Closed: ${conn.peer}`);
+            Friends.updateStatus(conn.peer, 'offline');
+            Transfer.abortIfPeer(conn.peer);
         });
-
-        conn.on('data', data => {
-            if (data.constructor === ArrayBuffer || data instanceof Uint8Array) {
-                Transfer.receiveChunk(data);
-            } else {
-                this.handleMsg(conn.peer, data);
-            }
-        });
+        
+        conn.on('error', (e) => Diagnostics.log(`Conn Err ${conn.peer}: ${e}`));
     },
 
-    retry(id) {
-        const fails = this.backoffs[id] || 0;
-        if (fails > 5) return; // Give up temporarily
-        const delay = Math.pow(2, fails) * 1000;
-        this.backoffs[id] = fails + 1;
-        setTimeout(() => this.connect(id), delay);
+    connectTo: (id) => {
+        if(!id || id === Utils.id) return;
+        if(Net.conns[id] && Net.conns[id].open) return;
+        const conn = Net.peer.connect(id, { reliable: true });
+        Net.handleConn(conn);
     },
 
-    pingAll() {
-        Object.values(this.conns).forEach(c => {
-            if(c.open) {
-                c.send({ type: 'PING', ts: Date.now() });
-            }
-        });
+    reconnectFriends: () => Object.keys(Data.friends).forEach(Net.connectTo),
+
+    startHeartbeat: () => {
+        if(Net.heartbeatInt) clearInterval(Net.heartbeatInt);
+        Net.heartbeatInt = setInterval(() => {
+            Object.values(Net.conns).forEach(c => {
+                if(c.open) c.send({ type: 'PING' });
+            });
+        }, 10000); // 10s Ping
+    },
+    
+    send: (peerId, data) => {
+        const conn = Net.conns[peerId];
+        if(conn && conn.open) conn.send(data);
+    }
+};
+
+// --- FRIENDS ---
+const Friends = {
+    active: null,
+    
+    add: () => {
+        const inp = document.getElementById('add-id');
+        const id = inp.value.trim();
+        if(!id || id === Utils.id) return Utils.toast('Invalid ID', 'err');
+        if(Data.friends[id]) return Utils.toast('Already added');
+        
+        Data.friends[id] = { name: 'Friend', added: Utils.now(), status: 'offline' };
+        Data.saveFriends();
+        Net.connectTo(id);
+        Friends.render();
+        inp.value = '';
+        Utils.toast('Friend Added');
+    },
+    
+    remove: (id) => {
+        delete Data.friends[id];
+        Data.saveFriends();
+        if(Net.conns[id]) Net.conns[id].close();
+        if(Friends.active === id) App.setTab('friends'); // Reset view
+        Friends.render();
     },
 
-    handleMsg(peer, msg) {
-        switch(msg.type) {
-            case 'PING': 
-                if(this.conns[peer]) this.conns[peer].send({ type: 'PONG', ts: msg.ts });
-                break;
-            case 'PONG':
-                if(this.conns[peer]) {
-                    const rtt = Date.now() - msg.ts;
-                    this.conns[peer].rtt = rtt;
-                    UI.updateSignal(peer, rtt);
-                }
-                break;
-            default: Transfer.router(peer, msg);
+    updateStatus: (id, status) => {
+        if(Data.friends[id]) {
+            Data.friends[id].status = status;
+            Data.friends[id].lastSeen = Utils.now();
+            Friends.render();
+            if(Friends.active === id) App.renderMain();
         }
+    },
+
+    rename: (id, newName) => {
+        if(Data.friends[id] && newName) {
+            Data.friends[id].name = newName.substr(0, 20);
+            Data.saveFriends();
+            Friends.render();
+            if(Friends.active === id) document.getElementById('remote-name').innerText = newName;
+        }
+    },
+
+    select: (id) => {
+        Friends.active = id;
+        Friends.render();
+        App.renderMain();
+        App.mobileNav('transfer');
+    },
+
+    render: () => {
+        const list = document.getElementById('friends-list');
+        list.innerHTML = '';
+        Object.keys(Data.friends).forEach(id => {
+            const f = Data.friends[id];
+            const div = document.createElement('div');
+            div.className = `list-item ${Friends.active === id ? 'active' : ''}`;
+            
+            // Interaction logic
+            const setupInteraction = (el) => {
+                let timer;
+                const start = (e) => {
+                    el.classList.add('pressing');
+                    timer = setTimeout(() => {
+                        el.classList.remove('pressing');
+                        Friends.showCtx(e, id);
+                    }, 600); // Long press
+                };
+                const end = () => { clearTimeout(timer); el.classList.remove('pressing'); };
+                
+                el.onmousedown = start; el.onmouseup = end; el.onmouseleave = end;
+                el.ontouchstart = start; el.ontouchend = end;
+                el.onclick = () => {
+                    if(!timer) return; // Prevent click if long-press fired
+                    Friends.select(id);
+                }
+                el.oncontextmenu = (e) => { e.preventDefault(); Friends.showCtx(e, id); };
+            };
+
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight:bold;">${f.name}</div>
+                    <div style="font-size:10px; opacity:0.7; font-family:monospace;">${id}</div>
+                </div>
+                <div class="status-dot ${f.status}"></div>
+            `;
+            setupInteraction(div);
+            list.appendChild(div);
+        });
+    },
+
+    // Context Menu Logic
+    ctxTarget: null,
+    showCtx: (e, id) => {
+        Friends.ctxTarget = id;
+        const ctx = document.getElementById('context-menu');
+        const x = e.pageX || e.touches[0].pageX;
+        const y = e.pageY || e.touches[0].pageY;
+        ctx.style.display = 'block';
+        ctx.style.left = Math.min(x, window.innerWidth - 160) + 'px';
+        ctx.style.top = Math.min(y, window.innerHeight - 120) + 'px';
+        
+        // Close on click elsewhere
+        const closer = () => { ctx.style.display = 'none'; document.removeEventListener('click', closer); };
+        setTimeout(() => document.addEventListener('click', closer), 100);
+    },
+    editCtx: () => {
+        const name = prompt("New Nickname:", Data.friends[Friends.ctxTarget].name);
+        if(name) Friends.rename(Friends.ctxTarget, name);
+    },
+    removeCtx: () => {
+        if(confirm(`Remove ${Data.friends[Friends.ctxTarget].name}?`)) Friends.remove(Friends.ctxTarget);
     }
 };
 
 // --- TRANSFER ENGINE ---
 const Transfer = {
-    active: null, // { type, peer, file/meta, offset, queue: [], paused, startTs, ... }
-    
-    queueFiles(input) {
-        if(!input.files.length) return;
-        const peer = UI.activePeer;
-        if(!peer || !Net.conns[peer]?.open) return UI.toast('Peer Offline');
+    session: null, // { type: 'sender'|'receiver', peerId, ... }
+    worker: null,
 
-        const queue = Array.from(input.files).map(f => ({ file: f, id: Math.random().toString(36) }));
-        input.value = '';
+    router: (peerId, msg) => {
+        if(msg.type === 'PING') return; // Heartbeat handled silently
+        if(msg.type === 'OFFER') Transfer.Receiver.handleOffer(peerId, msg);
+        if(msg.type === 'ACCEPT') Transfer.Sender.startStream(msg);
+        if(msg.type === 'REJECT' || msg.type === 'CANCEL') Transfer.handleCancel(peerId);
+        if(msg.type === 'PAUSE') Transfer.handlePause(msg.state);
+        if(msg.type === 'DONE') Transfer.Sender.finalize();
+    },
 
-        if (this.active) {
-            this.active.queue.push(...queue);
-            UI.renderTransfer();
-        } else {
-            this.startSender(peer, queue);
+    togglePause: () => {
+        if(!Transfer.session) return;
+        const newState = !Transfer.session.paused;
+        Transfer.session.paused = newState;
+        document.getElementById('btn-pause').innerText = newState ? "RESUME" : "PAUSE";
+        document.getElementById('trans-status').innerText = newState ? "Paused" : "Active";
+        Net.send(Transfer.session.peerId, { type: 'PAUSE', state: newState });
+    },
+
+    handlePause: (state) => {
+        if(Transfer.session) {
+            Transfer.session.paused = state;
+            document.getElementById('trans-status').innerText = state ? "Peer Paused" : "Active";
         }
     },
 
-    startSender(peer, queue) {
-        const item = queue.shift();
-        if(!item) {
-            this.active = null;
-            UI.renderMain();
-            return;
+    handleCancel: (peerId) => {
+        if(Transfer.session && Transfer.session.peerId === peerId) {
+            Utils.toast('Transfer Cancelled');
+            Transfer.reset();
         }
-
-        this.active = {
-            type: 'sender',
-            peer,
-            file: item.file,
-            tid: item.id,
-            queue,
-            offset: 0,
-            paused: false,
-            startTs: Date.now(),
-            bytesSinceStart: 0,
-            checksum: 0
-        };
-
-        Net.conns[peer].send({
-            type: 'OFFER',
-            name: item.file.name,
-            size: item.file.size,
-            mime: item.file.type,
-            tid: item.id
-        });
-
-        UI.renderTransfer();
     },
 
-    async senderLoop() {
-        const t = this.active;
-        if (!t || t.type !== 'sender' || t.paused) return;
-
-        const conn = Net.conns[t.peer];
-        if (!conn || !conn.open) return this.pause('Connection Lost');
-
-        // Throttling
-        if (Store.data.settings.speedLimit > 0) {
-            const limitBytesPerMs = (Store.data.settings.speedLimit * 1024 * 1024) / 1000;
-            const elapsed = Date.now() - t.startTs;
-            const expected = elapsed * limitBytesPerMs;
-            if (t.offset > expected) {
-                setTimeout(() => this.senderLoop(), 20);
-                return;
-            }
+    cancel: () => {
+        if(Transfer.session) {
+            Net.send(Transfer.session.peerId, { type: 'CANCEL' });
+            History.add(Transfer.session.type, Transfer.session.meta.name, Transfer.session.meta.size, Transfer.session.peerId, 'CANCELLED');
         }
+        Transfer.reset();
+    },
 
-        // Backpressure
-        if (conn.dataChannel.bufferedAmount > 65536) {
-            await new Promise(r => {
-                const h = () => { conn.dataChannel.removeEventListener('bufferedamountlow', h); r(); };
-                conn.dataChannel.addEventListener('bufferedamountlow', h);
+    abortIfPeer: (peerId) => {
+        if(Transfer.session && Transfer.session.peerId === peerId) {
+            Utils.toast('Connection Lost', 'err');
+            Transfer.reset();
+        }
+    },
+
+    reset: () => {
+        if(Transfer.worker) { Transfer.worker.terminate(); Transfer.worker = null; }
+        Transfer.session = null;
+        App.renderMain();
+    },
+
+    Sender: {
+        queue: [],
+        queueFiles: (input) => {
+            const files = Array.from(input.files);
+            input.value = '';
+            if(!files.length) return;
+            if(!Friends.active || !Net.conns[Friends.active]?.open) return Utils.toast('Peer not ready', 'err');
+            
+            // For now, process one at a time. Multi-queue logic would go here.
+            Transfer.Sender.offer(files[0]);
+        },
+
+        offer: (file) => {
+            if(Transfer.session) return Utils.toast('Busy');
+            
+            Transfer.session = {
+                type: 'sender', peerId: Friends.active, file: file,
+                paused: false, offset: 0, startTime: 0, hash: 0x811c9dc5,
+                meta: { name: file.name, size: file.size, type: file.type }
+            };
+            
+            Net.send(Friends.active, { 
+                type: 'OFFER', name: file.name, size: file.size, mime: file.type 
             });
-        }
+            App.showScreen('screen-transfer'); // Actually show waiting state? Reusing transfer screen for simplicity
+            document.getElementById('trans-status').innerText = "Waiting for Accept...";
+            Transfer.worker = Utils.createWorker();
+        },
 
-        if (t.offset >= t.file.size) {
-            conn.send({ type: 'END', tid: t.tid, checksum: t.checksum });
-            return; // Wait for FIN_ACK
-        }
+        startStream: async (msg) => {
+            if(!Transfer.session || Transfer.session.type !== 'sender') return;
+            Transfer.session.startTime = Utils.now();
+            document.getElementById('trans-status').innerText = "Sending...";
+            
+            const CHUNK_SIZE = 16 * 1024; // 16KB Safe Chunk
+            const s = Transfer.session;
+            const conn = Net.conns[s.peerId];
 
-        const slice = t.file.slice(t.offset, t.offset + CONST.CHUNK_SIZE);
-        const reader = new FileReader();
-        reader.onload = e => {
-            if (!this.active || this.active.paused) return;
-            const buff = e.target.result;
+            // Setup Worker for Hashing
+            Transfer.worker.onmessage = (e) => { s.hash = e.data.hash; };
+
+            const readAndSend = async () => {
+                while (s.offset < s.file.size) {
+                    if(!Transfer.session) return; // Cancelled
+                    
+                    if(s.paused) {
+                        await new Promise(r => setTimeout(r, 500));
+                        continue; 
+                    }
+
+                    // Backpressure
+                    if(conn.dataChannel.bufferedAmount > 64 * 1024) {
+                        await new Promise(r => setTimeout(r, 50));
+                        continue;
+                    }
+
+                    const slice = s.file.slice(s.offset, s.offset + CHUNK_SIZE);
+                    const buff = await slice.arrayBuffer();
+
+                    // Async Hash update
+                    Transfer.worker.postMessage({ seed: s.hash, chunk: buff });
+                    
+                    try {
+                        conn.send(buff);
+                    } catch(e) {
+                        Diagnostics.log('Send Error');
+                        return Transfer.cancel();
+                    }
+
+                    s.offset += buff.byteLength;
+                    UI.updateProgress(s.offset, s.file.size, s.startTime);
+                }
+                
+                // Done Sending
+                // Wait a tick for last hash
+                setTimeout(() => {
+                    Net.send(s.peerId, { type: 'DONE', hash: s.hash });
+                    document.getElementById('trans-status').innerText = "Verifying...";
+                }, 500);
+            };
+
+            readAndSend();
+        },
+
+        finalize: () => {
+            const s = Transfer.session;
+            History.add('sent', s.file.name, s.file.size, s.peerId, 'SUCCESS');
+            App.showScreen('screen-complete');
+            document.getElementById('comp-msg').innerText = "File sent successfully.";
+            document.getElementById('comp-checksum').innerText = "HASH: " + s.hash.toString(16).toUpperCase();
+            document.getElementById('btn-dl').classList.add('hidden');
+            Transfer.worker.terminate();
+            Transfer.session = null;
+        }
+    },
+
+    Receiver: {
+        chunks: [],
+        
+        handleOffer: (peerId, msg) => {
+            if(Transfer.session) { Net.send(peerId, { type: 'BUSY' }); return; }
+            Transfer.session = {
+                type: 'receiver', peerId: peerId, meta: msg,
+                received: 0, startTime: 0, hash: 0x811c9dc5, paused: false,
+                blobUrl: null
+            };
+            
+            document.getElementById('inc-sender').innerText = Data.friends[peerId]?.name || "Unknown";
+            document.getElementById('inc-name').innerText = msg.name;
+            document.getElementById('inc-size').innerText = Utils.fmtSize(msg.size);
+            App.showScreen('screen-incoming');
+            App.mobileNav('transfer');
+        },
+
+        respond: (accept) => {
+            const s = Transfer.session;
+            Net.send(s.peerId, { type: accept ? 'ACCEPT' : 'REJECT' });
+            if(!accept) Transfer.reset();
+            else {
+                s.startTime = Utils.now();
+                Transfer.worker = Utils.createWorker();
+                Transfer.worker.onmessage = (e) => { s.hash = e.data.hash; };
+                App.showScreen('screen-transfer');
+            }
+        },
+
+        ingest: (buff) => {
+            const s = Transfer.session;
+            if(!s || s.type !== 'receiver') return;
+            
             const arr = new Uint8Array(buff);
+            s.received += arr.byteLength;
+            s.chunks.push(arr); // In-memory. Large files will hit RAM limits. FS API needed for >500MB
             
-            // Calc Checksum
-            for(let i=0; i<arr.length; i++) t.checksum = (t.checksum + arr[i]) % 65535;
-
-            try {
-                conn.send(buff);
-                t.offset += buff.byteLength;
-                t.bytesSinceStart += buff.byteLength;
-                UI.updateProgress();
-                this.senderLoop(); // Recursive
-            } catch(e) {
-                this.handleError('Send Failed');
-            }
-        };
-        reader.readAsArrayBuffer(slice);
-    },
-
-    router(peer, msg) {
-        switch(msg.type) {
-            case 'OFFER':
-                if (this.active) return Net.conns[peer].send({ type: 'BUSY', tid: msg.tid });
-                // Check Auto-Accept
-                const friend = Store.data.friends[peer];
-                if (friend && friend.trusted) {
-                    this.initReceiver(peer, msg);
-                    this.respond(true);
-                } else {
-                    this.initReceiver(peer, msg); // Shows UI
-                }
-                break;
-            case 'ACCEPT':
-                if (this.active?.tid === msg.tid) {
-                    this.active.startTs = Date.now(); // Reset stats
-                    this.senderLoop();
-                }
-                break;
-            case 'REJECT':
-            case 'BUSY':
-                UI.toast(`Peer ${msg.type.toLowerCase()}`);
-                this.cancel();
-                break;
-            case 'END':
-                this.finalize(msg);
-                break;
-            case 'FIN_ACK':
-                if (this.active?.type === 'sender') {
-                    Store.addHistory({ type: 'sent', name: this.active.file.name, size: this.active.file.size, peer: this.active.peer, status: 'SUCCESS', date: Date.now() });
-                    // Next file
-                    const nextQueue = this.active.queue;
-                    const nextPeer = this.active.peer;
-                    this.active = null;
-                    this.startSender(nextPeer, nextQueue);
-                }
-                break;
-            case 'PAUSE':
-                if (this.active) this.active.paused = true;
-                UI.renderTransfer();
-                UI.toast('Peer paused transfer');
-                break;
-            case 'RESUME':
-                if (this.active) {
-                    this.active.paused = false;
-                    if (this.active.type === 'sender') this.senderLoop();
-                }
-                UI.renderTransfer();
-                break;
-            case 'CANCEL':
-                UI.toast('Peer cancelled');
-                this.cancel(true);
-                break;
-        }
-    },
-
-    initReceiver(peer, meta) {
-        this.active = {
-            type: 'receiver', peer, meta, tid: meta.tid,
-            received: 0, checksum: 0, chunks: [],
-            startTs: Date.now(), bytesSinceStart: 0,
-            paused: false, queue: []
-        };
-        // If not trusted, UI shows accept modal
-        if (!Store.data.friends[peer]?.trusted) UI.renderIncoming();
-    },
-
-    respond(accept) {
-        if (!this.active) return;
-        const conn = Net.conns[this.active.peer];
-        conn.send({ type: accept ? 'ACCEPT' : 'REJECT', tid: this.active.tid });
-        
-        if (accept) {
-            const auto = document.getElementById('chk-auto')?.checked;
-            if(auto) {
-                Store.data.friends[this.active.peer].trusted = true;
-                Store.save();
-            }
+            // Offload hashing
+            Transfer.worker.postMessage({ seed: s.hash, chunk: buff });
             
-            // FS API attempt
-            if (window.showSaveFilePicker) {
-                window.showSaveFilePicker({ suggestedName: this.active.meta.name })
-                .then(h => h.createWritable())
-                .then(w => { this.active.writable = w; UI.renderTransfer(); })
-                .catch(() => { this.active.writable = null; UI.renderTransfer(); });
-            } else {
-                UI.renderTransfer();
+            UI.updateProgress(s.received, s.meta.size, s.startTime);
+
+            if(s.received >= s.meta.size) {
+                 document.getElementById('trans-status').innerText = "Finalizing...";
             }
-        } else {
-            this.active = null;
-            UI.renderMain();
-        }
-    },
+        },
 
-    receiveChunk(data) {
-        const t = this.active;
-        if (!t || t.type !== 'receiver' || t.paused) return;
+        finalize: (msg) => {
+            // Called by router on DONE msg
+            const s = Transfer.session;
+            const valid = (s.hash === msg.hash);
+            
+            const status = valid ? 'SUCCESS' : 'CORRUPT';
+            History.add('recv', s.meta.name, s.meta.size, s.peerId, status);
+            
+            App.showScreen('screen-complete');
+            const chk = document.getElementById('comp-checksum');
+            chk.innerText = valid ? `VERIFIED: ${s.hash.toString(16).toUpperCase()}` : "INTEGRITY CHECK FAILED";
+            chk.style.background = valid ? "#000" : "#ff0000";
 
-        const arr = new Uint8Array(data);
-        for(let i=0; i<arr.length; i++) t.checksum = (t.checksum + arr[i]) % 65535;
-        
-        t.received += arr.length;
-        t.bytesSinceStart += arr.length;
-
-        if (t.writable) t.writable.write(arr);
-        else t.chunks.push(arr);
-
-        UI.updateProgress();
-    },
-
-    async finalize(msg) {
-        const t = this.active;
-        if (!t || t.tid !== msg.tid) return;
-
-        const valid = t.checksum === msg.checksum && t.received === t.meta.size;
-        const status = valid ? 'SUCCESS' : 'CORRUPT';
-
-        if (valid) {
-            if (t.writable) {
-                await t.writable.close();
-            } else {
-                const blob = new Blob(t.chunks, { type: t.meta.mime });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = t.meta.name; a.click();
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            if(valid) {
+                const blob = new Blob(s.chunks, { type: s.meta.mime });
+                s.blobUrl = URL.createObjectURL(blob);
+                const btn = document.getElementById('btn-dl');
+                btn.classList.remove('hidden');
+                btn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = s.blobUrl; a.download = s.meta.name;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                };
             }
+            Transfer.worker.terminate();
+            s.chunks = []; // clear RAM
         }
-
-        Store.addHistory({ type: 'recv', name: t.meta.name, size: t.meta.size, peer: t.peer, status, date: Date.now() });
-        Net.conns[t.peer].send({ type: 'FIN_ACK', tid: t.tid });
-        
-        this.active = null;
-        UI.toast(`Transfer ${status}`);
-        UI.renderMain();
-    },
-
-    togglePause() {
-        if (!this.active) return;
-        this.active.paused = !this.active.paused;
-        Net.conns[this.active.peer].send({ type: this.active.paused ? 'PAUSE' : 'RESUME', tid: this.active.tid });
-        if (!this.active.paused && this.active.type === 'sender') this.senderLoop();
-        UI.renderTransfer();
-    },
-    
-    pause(reason) {
-        if(this.active && !this.active.paused) {
-            this.active.paused = true;
-            UI.toast(reason);
-            UI.renderTransfer();
-        }
-    },
-
-    cancel(silent) {
-        if (this.active) {
-            if (!silent) Net.conns[this.active.peer].send({ type: 'CANCEL', tid: this.active.tid });
-            if (this.active.writable) this.active.writable.abort().catch(()=>{});
-        }
-        this.active = null;
-        UI.renderMain();
-    },
-    
-    handleError(msg) {
-        UI.toast(msg);
-        this.cancel();
     }
 };
 
-// --- UI ---
-const UI = {
-    activePeer: null,
-    longPressTimer: null,
-
-    init() {
-        Store.init();
-        Net.init();
-        this.renderFriends();
-        this.renderHistory();
-        this.renderStats();
-        
-        // Settings sliders
-        const r = document.getElementById('rng-speed');
-        r.value = Store.data.settings.speedLimit;
-        this.updateSettings();
-
-        // Global Gestures
-        document.body.addEventListener('touchstart', () => { if(navigator.vibrate) navigator.vibrate(5); });
+// --- HISTORY ---
+const History = {
+    add: (type, name, size, peer, status) => {
+        Data.history.unshift({ type, name, size, peer, status, date: Utils.now() });
+        if(Data.history.length > 50) Data.history.pop();
+        Data.saveHistory();
+        History.render();
     },
-
-    toast(msg) {
-        const t = document.createElement('div');
-        t.className = 'toast';
-        t.innerHTML = `<span>${msg}</span><span style="cursor:pointer" onclick="this.parentElement.remove()">✕</span>`;
-        document.getElementById('toast-container').appendChild(t);
-        setTimeout(() => t.remove(), 4000);
-    },
-
-    // Navigation
-    setTab(tab) {
-        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('t-'+tab).classList.add('active');
-        document.getElementById('pane-friends').style.display = tab === 'friends' ? 'flex' : 'none';
-        document.getElementById('pane-history').style.display = tab === 'history' ? 'flex' : 'none';
-    },
-
-    mobNav(tab) {
-        const sb = document.getElementById('sidebar');
-        const mp = document.getElementById('main-panel');
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('mn-'+tab).classList.add('active');
-        
-        if (tab === 'transfer') {
-            sb.style.display = 'none'; mp.style.display = 'flex';
-        } else {
-            sb.style.display = 'flex'; mp.style.display = 'none';
-            this.setTab(tab);
-        }
-    },
-
-    // Friend Management
-    renderFriends() {
-        const l = document.getElementById('friends-list');
-        l.innerHTML = '';
-        Object.keys(Store.data.friends).forEach(id => {
-            const f = Store.data.friends[id];
-            const div = document.createElement('div');
-            div.className = `list-item ${this.activePeer === id ? 'active' : ''}`;
-            div.innerHTML = `
-                <div>
-                    <div style="font-weight:bold">${f.nick}</div>
-                    <div style="font-size:10px; opacity:0.7">${id}</div>
-                </div>
-                <div style="text-align:right">
-                    <div class="signal-bars" id="sig-${id}">
-                        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-                    </div>
-                </div>
-            `;
-            
-            // Events
-            div.onclick = () => this.selectFriend(id);
-            div.oncontextmenu = (e) => this.showContext(e, id);
-            
-            // Long Press
-            div.ontouchstart = (e) => { 
-                this.longPressTimer = setTimeout(() => this.showContext(e.touches[0], id), 600); 
-            };
-            div.ontouchend = () => clearTimeout(this.longPressTimer);
-            
-            l.appendChild(div);
-        });
-    },
-
-    selectFriend(id) {
-        this.activePeer = id;
-        this.renderFriends();
-        this.renderMain();
-        if(window.innerWidth <= 768) this.mobNav('transfer');
-    },
-
-    updateSignal(id, rtt) {
-        const el = document.getElementById('sig-'+id);
-        if(!el) return;
-        const bars = el.children;
-        const quality = rtt < 100 ? 4 : rtt < 300 ? 3 : rtt < 1000 ? 2 : 1;
-        for(let i=0; i<4; i++) {
-            bars[i].className = i < quality ? 'bar on' : 'bar';
-        }
-        if(this.activePeer === id) {
-            document.getElementById('c-rtt').innerText = `RTT: ${rtt} ms`;
-            const mainSig = document.getElementById('c-signal').children;
-            for(let i=0; i<4; i++) mainSig[i].className = i < quality ? 'bar on' : 'bar';
-        }
-    },
-
-    updateFriendStatus(id, online) {
-        if(online) this.toast(`${Store.data.friends[id].nick} Online`);
-    },
-
-    addFriend() {
-        const inp = document.getElementById('add-input');
-        const raw = inp.value.trim();
-        if(!raw) return;
-        const id = raw.split(' ')[0]; // Basic parse if they pasted full string
-        if(id !== Store.data.id) {
-            Store.data.friends[id] = { nick: 'Friend', added: Date.now() };
-            Store.save();
-            this.renderFriends();
-            Net.connect(id);
-            inp.value = '';
-        }
-    },
-
-    // Context Menu
-    showContext(e, id) {
-        e.preventDefault();
-        const menu = document.getElementById('context-menu');
-        menu.style.display = 'flex';
-        menu.style.left = Math.min(e.clientX, window.innerWidth - 160) + 'px';
-        menu.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
-        
-        menu.innerHTML = `
-            <div class="ctx-item" onclick="app.editNick('${id}')">Edit Nickname</div>
-            <div class="ctx-item" onclick="navigator.clipboard.writeText('${id}'); app.hideContext()">Copy ID</div>
-            <div class="ctx-item danger" onclick="app.removeFriend('${id}')">Remove Friend</div>
-        `;
-        
-        const close = () => { menu.style.display = 'none'; document.removeEventListener('click', close); };
-        setTimeout(() => document.addEventListener('click', close), 100);
-    },
-    hideContext() { document.getElementById('context-menu').style.display='none'; },
-
-    editNick(id) {
-        document.getElementById('modal-nickname').style.display = 'flex';
-        const inp = document.getElementById('edit-nick');
-        inp.value = Store.data.friends[id].nick;
-        inp.dataset.id = id;
-    },
-    saveNickname() {
-        const inp = document.getElementById('edit-nick');
-        const id = inp.dataset.id;
-        if(id && inp.value) {
-            Store.data.friends[id].nick = inp.value;
-            Store.save();
-            this.renderFriends();
-            if(this.activePeer === id) this.renderMain();
-            document.getElementById('modal-nickname').style.display = 'none';
-        }
-    },
-    removeFriend(id) {
-        if(confirm('Remove this friend?')) {
-            delete Store.data.friends[id];
-            Store.save();
-            if(Net.conns[id]) Net.conns[id].close();
-            if(this.activePeer === id) this.activePeer = null;
-            this.renderFriends();
-            this.renderMain();
-        }
-    },
-
-    // Views
-    renderMain() {
-        if(Transfer.active) return this.renderTransfer();
-        document.querySelectorAll('.state-view').forEach(e => e.classList.add('hidden'));
-        
-        if(!this.activePeer) {
-            document.getElementById('view-idle').classList.remove('hidden');
-        } else {
-            const f = Store.data.friends[this.activePeer];
-            if(!f) { this.activePeer = null; return this.renderMain(); }
-            
-            document.getElementById('view-connected').classList.remove('hidden');
-            document.getElementById('c-name').innerText = f.nick;
-            document.getElementById('c-id').innerText = this.activePeer;
-        }
-    },
-
-    renderIncoming() {
-        document.querySelectorAll('.state-view').forEach(e => e.classList.add('hidden'));
-        document.getElementById('view-incoming').classList.remove('hidden');
-        const m = Transfer.active.meta;
-        const f = Store.data.friends[Transfer.active.peer];
-        document.getElementById('inc-from').innerText = f ? f.nick : 'Unknown';
-        document.getElementById('inc-name').innerText = m.name;
-        document.getElementById('inc-size').innerText = (m.size/1024/1024).toFixed(1) + ' MB';
-    },
-
-    renderTransfer() {
-        document.querySelectorAll('.state-view').forEach(e => e.classList.add('hidden'));
-        document.getElementById('view-transfer').classList.remove('hidden');
-        
-        const t = Transfer.active;
-        document.getElementById('t-status').innerText = t.paused ? 'PAUSED' : (t.type === 'sender' ? 'SENDING...' : 'RECEIVING...');
-        document.getElementById('t-filename').innerText = t.type === 'sender' ? t.file.name : t.meta.name;
-        document.getElementById('btn-pause').innerText = t.paused ? 'RESUME' : 'PAUSE';
-        document.getElementById('t-queue').innerText = t.queue.length;
-        
-        this.updateProgress();
-    },
-
-    updateProgress() {
-        const t = Transfer.active;
-        if(!t) return;
-        
-        const total = t.type === 'sender' ? t.file.size : t.meta.size;
-        const pct = (t.offset || t.received) / total * 100;
-        document.getElementById('t-bar').style.width = pct + '%';
-
-        // Speed / ETA
-        const now = Date.now();
-        const diff = (now - t.startTs) / 1000;
-        if (diff > 0.5) {
-            const speed = t.bytesSinceStart / diff;
-            const remaining = total - (t.offset || t.received);
-            const eta = speed > 0 ? remaining / speed : 0;
-            
-            document.getElementById('t-speed').innerText = (speed/1024).toFixed(0) + ' KB/s';
-            document.getElementById('t-eta').innerText = eta.toFixed(0) + 's';
-        }
-    },
-
-    renderHistory() {
-        const l = document.getElementById('history-list');
-        l.innerHTML = '';
-        Store.data.history.forEach(h => {
+    render: () => {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        Data.history.forEach(h => {
             const div = document.createElement('div');
             div.className = 'list-item';
-            div.style.display = 'block';
             div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:11px;">
-                    <span>${h.type==='sent'?'↑':'↓'} ${h.name}</span>
-                    <span style="color:${h.status==='SUCCESS'?'green':'red'}">${h.status}</span>
+                <div>
+                    <div style="font-weight:bold;">${h.type==='sent'?'↑':'↓'} ${h.name}</div>
+                    <div style="font-size:10px; color:${h.status==='SUCCESS'?'green':'red'}">${h.status}</div>
                 </div>
-                <div style="font-size:10px; color:#999; margin-top:4px;">
-                    ${(h.size/1024/1024).toFixed(1)} MB • ${new Date(h.date).toLocaleTimeString()}
+                <div style="text-align:right; font-size:10px; color:var(--dim);">
+                    <div>${Utils.fmtSize(h.size)}</div>
+                    <div>${new Date(h.date).toLocaleDateString()}</div>
                 </div>
             `;
-            l.appendChild(div);
+            list.appendChild(div);
         });
     },
+    clear: () => { Data.history = []; Data.saveHistory(); History.render(); }
+};
 
-    renderStats() {
-        document.getElementById('stat-sent').innerText = (Store.data.stats.sent/1024/1024).toFixed(1) + ' MB';
-        document.getElementById('stat-recv').innerText = (Store.data.stats.recv/1024/1024).toFixed(1) + ' MB';
-    },
+// --- UI CONTROLLER ---
+const UI = {
+    updateProgress: (curr, total, start) => {
+        const pct = (curr/total)*100;
+        const now = Utils.now();
+        const duration = (now - start) / 1000;
+        const speed = duration > 0 ? curr / duration : 0;
+        const rem = total - curr;
+        const eta = speed > 0 ? rem / speed : 0;
 
-    clearHistory() { Store.data.history = []; Store.save(); this.renderHistory(); },
-
-    // Settings
-    toggleSettings() { document.getElementById('modal-settings').style.display='flex'; },
-    updateSettings() {
-        const val = document.getElementById('rng-speed').value;
-        Store.data.settings.speedLimit = parseInt(val);
-        Store.save();
-        document.getElementById('lbl-limit').innerText = val == 0 ? 'Unlimited' : val + ' MB/s';
-    },
-
-    // QR
-    scanQR() {
-        document.getElementById('modal-scan').style.display='flex';
-        if(this.scanner) return;
-        this.scanner = new Html5Qrcode("reader");
-        this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-            txt => { this.stopScan(); document.getElementById('add-input').value = txt; this.addFriend(); }
-        );
-    },
-    stopScan() {
-        if(this.scanner) this.scanner.stop().then(() => this.scanner.clear());
-        this.scanner = null;
-        document.getElementById('modal-scan').style.display='none';
+        document.getElementById('prog-bar').style.width = pct + '%';
+        document.getElementById('trans-speed').innerText = Utils.fmtSize(speed) + '/s';
+        document.getElementById('trans-bytes').innerText = `${Utils.fmtSize(curr)} / ${Utils.fmtSize(total)}`;
+        document.getElementById('trans-eta').innerText = eta < 1 ? 'Done' : Math.ceil(eta) + 's';
     }
 };
 
-window.onload = () => UI.init();
+const App = {
+    init: () => {
+        Net.init();
+        Friends.render();
+        History.render();
+        
+        // Drag Drop
+        const dropZone = document.body;
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.background = '#f0f0f0'; };
+        dropZone.ondragleave = () => dropZone.style.background = '#fff';
+        dropZone.ondrop = (e) => {
+            e.preventDefault(); dropZone.style.background = '#fff';
+            if(e.dataTransfer.files.length && Friends.active) {
+                Transfer.Sender.offer(e.dataTransfer.files[0]);
+            }
+        };
+    },
+
+    setTab: (tab) => {
+        document.querySelectorAll('.tab-item').forEach(e => e.classList.remove('active'));
+        document.getElementById('tab-'+tab).classList.add('active');
+        document.getElementById('view-friends').style.display = tab==='friends' ? 'flex' : 'none';
+        document.getElementById('view-history').style.display = tab==='history' ? 'flex' : 'none';
+    },
+
+    showScreen: (id) => {
+        document.querySelectorAll('.state-view').forEach(e => e.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    },
+
+    renderMain: () => {
+        if(Transfer.session) return; // Don't interrupt transfer
+        if(!Friends.active) return App.showScreen('screen-idle');
+        
+        const f = Data.friends[Friends.active];
+        if(!f) { Friends.active = null; return App.renderMain(); }
+        
+        App.showScreen('screen-connected');
+        document.getElementById('remote-name').innerText = f.name;
+        document.getElementById('remote-id').innerText = Friends.active;
+        document.getElementById('remote-status').innerText = f.status.toUpperCase();
+        document.getElementById('remote-status').style.color = f.status === 'online' ? 'green' : 'gray';
+    },
+
+    resetToConnected: () => {
+        Transfer.reset();
+        App.renderMain();
+    },
+
+    // Mobile
+    mobileNav: (tab) => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('mob-'+tab).classList.add('active');
+        
+        const sb = document.getElementById('sidebar');
+        const main = document.getElementById('main-panel');
+        
+        if(tab === 'transfer') {
+            sb.style.display = 'none'; main.style.display = 'flex';
+        } else {
+            sb.style.display = 'flex'; main.style.display = 'none';
+            App.setTab(tab);
+        }
+    },
+
+    // QR & Modals
+    copyId: () => { navigator.clipboard.writeText(Utils.id); Utils.toast('ID Copied'); },
+    copyCtx: () => { navigator.clipboard.writeText(Friends.ctxTarget); Utils.toast('Copied'); },
+    
+    scanQR: () => {
+        App.openModal('modal-scan');
+        const scanner = new Html5Qrcode("reader");
+        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
+            scanner.stop().then(() => scanner.clear());
+            App.closeModal('modal-scan');
+            document.getElementById('add-id').value = txt;
+            Friends.add();
+        }).catch(err => Diagnostics.log('Cam Error'));
+        App.scanner = scanner;
+    },
+    stopScan: () => {
+        if(App.scanner) App.scanner.stop().then(() => App.scanner.clear());
+        App.closeModal('modal-scan');
+    },
+    
+    openModal: (id) => document.getElementById(id).style.display = 'flex',
+    closeModal: (id) => document.getElementById(id).style.display = 'none'
+};
+
+// Event Listeners for PWA
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); App.deferredPrompt = e; });
+window.onload = App.init;
+
+// Expose for context menu debug
+window.Friends = Friends; window.App = App; window.Transfer = Transfer; window.Diagnostics = Diagnostics;
 </script>
 </body>
 </html>
-
 
