@@ -2,1040 +2,1012 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OPTICAL_LINK // PROTOCOL_V1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPTILINK v1.1 // ROBUST TRANSPORT</title>
     
-    <!-- External Libraries (CDN) -->
-    <!-- QRCode for generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
-    <!-- jsQR for scanning -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <!-- PeerJS for signaling (GitHub Pages compatible) -->
+    <!-- External Libraries (CDNs) -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
     <style>
         :root {
-            --bg-color: #050505;
-            --panel-bg: #0a0a0a;
-            --primary: #00ff41;
-            --secondary: #008F11;
-            --alert: #ff003c;
-            --dim: #333;
-            --grid-line: rgba(0, 255, 65, 0.1);
+            --bg: #020202;
+            --term-green: #0aff0a;
+            --term-cyan: #00f0ff;
+            --term-red: #ff003c;
+            --term-amber: #ffb000;
+            --term-dim: #003333;
+            --scan-line: rgba(0, 255, 255, 0.05);
             --font-mono: 'Courier New', Courier, monospace;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
+        * { box-sizing: border-box; }
+
         body {
-            background-color: var(--bg-color);
-            color: var(--primary);
-            font-family: var(--font-mono);
             margin: 0;
             padding: 0;
+            background-color: var(--bg);
+            color: var(--term-green);
+            font-family: var(--font-mono);
             overflow: hidden;
-            /* Dynamic Viewport Height for Mobile Browsers */
             height: 100vh;
-            height: 100dvh; 
             width: 100vw;
             display: flex;
             flex-direction: column;
         }
 
-        /* CRT Effect Overlay */
+        /* Cyberpunk FX */
         .scanlines {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
+            background: linear-gradient(to bottom, rgba(18, 16, 16, 0), rgba(0, 0, 0, 0.25) 50%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.25));
+            background-size: 100% 4px;
             pointer-events: none;
-            z-index: 9999;
-            opacity: 0.6;
+            z-index: 999;
+        }
+        
+        .glow { text-shadow: 0 0 5px var(--term-green); }
+        .glow-cyan { text-shadow: 0 0 5px var(--term-cyan); color: var(--term-cyan); }
+        .glow-red { text-shadow: 0 0 5px var(--term-red); color: var(--term-red); }
+        .glow-amber { text-shadow: 0 0 5px var(--term-amber); color: var(--term-amber); }
+
+        /* UI Structure */
+        #app {
+            display: grid;
+            grid-template-rows: 60px 1fr 50px;
+            height: 100%;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
         }
 
-        /* Layout */
         header {
-            border-bottom: 1px solid var(--secondary);
-            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--panel-bg);
-            z-index: 10;
-            height: 60px;
-            flex-shrink: 0;
+            border-bottom: 1px solid var(--term-dim);
+            padding-bottom: 10px;
         }
 
-        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; text-shadow: 0 0 5px var(--primary); }
-        .status-badge { font-size: 0.75rem; background: var(--dim); padding: 4px 8px; border-radius: 2px; white-space: nowrap; }
-        .status-badge.connected { background: var(--secondary); color: #000; font-weight: bold; box-shadow: 0 0 10px var(--secondary); }
+        .status-badge {
+            padding: 5px 10px;
+            background: rgba(0, 51, 51, 0.3);
+            border: 1px solid var(--term-green);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            min-width: 120px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .status-badge.error { border-color: var(--term-red); color: var(--term-red); }
+        .status-badge.active { border-color: var(--term-cyan); color: var(--term-cyan); box-shadow: 0 0 10px var(--term-dim); }
 
         main {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2px;
-            background: var(--dim);
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             overflow: hidden;
         }
 
-        /* Panels */
-        .panel {
-            background: var(--bg-color);
-            position: relative;
-            overflow: hidden;
-            display: flex;
+        /* Screens */
+        .screen {
+            display: none;
             flex-direction: column;
-        }
-
-        .panel-header {
-            position: absolute;
-            top: 0; left: 0;
-            background: rgba(0,0,0,0.8);
-            color: var(--secondary);
-            padding: 5px 10px;
-            font-size: 0.7rem;
-            border-bottom: 1px solid var(--secondary);
+            align-items: center;
+            justify-content: center;
             width: 100%;
-            z-index: 5;
-            display: flex;
-            justify-content: space-between;
-            pointer-events: none;
+            height: 100%;
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        /* Sender UI */
-        #qr-display {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fff; /* QR requires contrast */
-            padding: 20px;
-        }
-        #qr-canvas { width: 100%; height: auto; max-height: 100%; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
+        .screen.active { display: flex; }
 
-        /* Receiver UI */
-        #camera-feed {
-            flex: 1;
-            background: #000;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        video { 
-            width: 100%; height: 100%; object-fit: cover; 
-            /* transform: scaleX(-1); removed for rear camera usability */
-        }
-        #reconstruction-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-        }
-        
-        /* Controls & Stats */
-        .control-deck {
-            grid-column: 1 / -1;
-            height: 200px;
-            background: var(--panel-bg);
-            border-top: 1px solid var(--secondary);
-            display: grid;
-            grid-template-columns: 300px 1fr 300px;
-            font-size: 0.9rem;
-            flex-shrink: 0;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .deck-col { padding: 15px; border-right: 1px solid var(--dim); overflow-y: auto; }
-        
-        button {
-            background: transparent;
-            border: 1px solid var(--primary);
-            color: var(--primary);
-            padding: 12px 16px; /* Larger touch target */
-            font-family: var(--font-mono);
-            cursor: pointer;
-            margin-bottom: 10px;
-            width: 100%;
-            text-transform: uppercase;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-        }
-        button:active { background: var(--secondary); color: #000; }
-        button:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
-        button:disabled { border-color: var(--dim); color: var(--dim); cursor: not-allowed; box-shadow: none; }
-        button.action-btn { background: var(--secondary); color: #000; font-weight: bold; border: none; }
-
-        input[type="file"] { display: none; }
-        .file-label {
-            display: block;
-            border: 1px dashed var(--dim);
-            padding: 15px;
-            text-align: center;
-            color: var(--dim);
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .file-label:hover { border-color: var(--primary); color: var(--primary); }
-
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        .stat-val { color: #fff; }
-
-        /* Connection Modal - REFACTORED */
-        #modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-        .modal {
-            background: var(--panel-bg);
-            border: 1px solid var(--primary);
-            padding: 20px;
-            width: 500px;
-            max-width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
-            text-align: center;
-        }
-        .modal h2 { margin-top: 0; border-bottom: 1px solid var(--dim); padding-bottom: 10px; margin-bottom: 20px; font-size: 1.2rem;}
-        
-        .identity-box {
-            font-size: 2rem;
-            color: #fff;
-            letter-spacing: 5px;
-            margin: 20px 0;
-            font-weight: bold;
-            text-shadow: 0 0 10px var(--primary);
-            cursor: pointer;
-            word-break: break-all;
-        }
-        
+        /* Connect Screen */
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        @media (min-width: 600px) {
-            .input-group { flex-direction: row; }
+            gap: 15px;
+            background: rgba(0, 20, 20, 0.85);
+            padding: 40px;
+            border: 1px solid var(--term-cyan);
+            box-shadow: 0 0 15px var(--term-dim);
+            width: 100%;
+            max-width: 400px;
         }
 
-        .input-group input {
+        input {
             background: #000;
-            border: 1px solid var(--secondary);
-            color: var(--primary);
-            padding: 15px;
+            border: 1px solid var(--term-green);
+            color: var(--term-green);
+            padding: 12px;
             font-family: var(--font-mono);
             font-size: 1.2rem;
-            text-transform: uppercase;
-            flex: 1;
             text-align: center;
-            border-radius: 0;
+            text-transform: uppercase;
+            outline: none;
+        }
+        input:focus { border-color: var(--term-cyan); box-shadow: 0 0 8px var(--term-dim); }
+
+        button {
+            background: rgba(0, 51, 51, 0.5);
+            border: 1px solid var(--term-green);
+            color: var(--term-green);
+            padding: 12px 20px;
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .qr-identity-preview {
+        button:hover { background: var(--term-green); color: #000; box-shadow: 0 0 10px var(--term-green); }
+        button:disabled { border-color: #333; color: #555; cursor: not-allowed; background: #000; box-shadow: none; }
+
+        .or-divider { font-size: 0.8rem; opacity: 0.7; margin: 10px 0; text-align: center; letter-spacing: 2px;}
+
+        /* Sender UI */
+        #qr-wrapper {
+            position: relative;
+            padding: 5px;
+            border: 2px solid var(--term-dim);
+            background: #000;
+        }
+        #qr-wrapper.transmitting { border-color: var(--term-cyan); box-shadow: 0 0 20px var(--term-dim); }
+        
+        #qr-display {
+            width: 400px;
+            height: 400px;
             background: #fff;
-            padding: 10px;
-            display: inline-block;
-            margin: 10px 0;
-        }
-
-        .hidden { display: none !important; }
-
-        /* Visualizer */
-        #vis-canvas {
-            width: 100%; height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             image-rendering: pixelated;
         }
         
-        .role-select-btn {
-            height: 120px;
-            font-size: 1.2rem;
-            margin: 0;
+        #qr-display img { width: 100%; height: 100%; display: block; }
+        
+        #qr-overlay-stats {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.8);
+            color: var(--term-cyan);
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 5px;
         }
 
-        /* --- MOBILE RESPONSIVE --- */
-        @media (max-width: 900px) {
-            h1 { font-size: 1rem; }
-            
-            main {
-                /* Stack panels vertically on mobile */
-                grid-template-columns: 1fr;
-                grid-template-rows: 1fr 1fr; 
-            }
-            
-            /* Logic to hide panels based on role to save space */
-            body.mode-sender #camera-panel { display: none; }
-            body.mode-sender main { grid-template-rows: 1fr; }
+        .file-drop {
+            border: 2px dashed var(--term-dim);
+            padding: 40px;
+            margin-bottom: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .file-drop:hover { border-color: var(--term-cyan); background: rgba(0, 255, 255, 0.05); }
 
-            body.mode-receiver main { grid-template-rows: 40% 60%; } /* Camera smaller, Vis larger */
-
-            .control-deck {
-                height: auto;
-                max-height: 40vh;
-                grid-template-columns: 1fr; /* Stack controls */
-                overflow-y: auto;
-            }
-            
-            .deck-col {
-                border-right: none;
-                border-bottom: 1px solid var(--dim);
-                padding: 10px;
-            }
-            .deck-col:last-child { border-bottom: none; }
-
-            /* Hide logs on mobile to save space */
-            #log-panel { display: none; }
+        /* Receiver UI */
+        #scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            border: 2px solid var(--term-cyan);
+            background: #000;
+            overflow: hidden;
         }
 
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+        }
+
+        #visualizer-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: grid;
+            /* Grid cols set via JS based on aspect */
+            gap: 1px;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            z-index: 10;
+        }
+
+        .vis-cell { 
+            background: rgba(0, 20, 20, 0.3); 
+            border: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        .vis-cell.done { 
+            background: rgba(0, 255, 0, 0.4); 
+            border-color: var(--term-green);
+            box-shadow: 0 0 5px var(--term-green);
+        }
+        .vis-cell.missing { 
+            background: rgba(255, 0, 60, 0.2); 
+            border-color: var(--term-red);
+        }
+        
+        /* Stats Footer */
+        footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            border-top: 1px solid var(--term-dim);
+            padding-top: 10px;
+            align-items: center;
+            background: #020202;
+        }
+
+        .stats-group { display: flex; gap: 15px; }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-label { color: #666; font-size: 0.6rem; }
+        .stat-value { color: var(--term-cyan); font-weight: bold; }
+        .stat-value.warn { color: var(--term-amber); }
+        .stat-value.bad { color: var(--term-red); }
+
+        /* Complete View */
+        #result-container {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        #complete-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border: 2px solid var(--term-green);
+            box-shadow: 0 0 30px rgba(10, 255, 10, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .hidden { display: none !important; }
+        
+        /* Utility */
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
-
     <div class="scanlines"></div>
+    
+    <div id="app">
+        <header>
+            <div class="logo glow">OPTILINK <span style="font-size:0.5em; color:var(--term-cyan)">v1.1</span></div>
+            <div id="connection-status" class="status-badge">SYSTEM INIT</div>
+        </header>
 
-    <!-- Connection Modal -->
-    <div id="modal-overlay">
-        <div class="modal">
-            <h2>// NEURAL_LINK_INIT</h2>
-            
-            <!-- Step 1: Identity & Mode Selection -->
-            <div id="view-mode-select">
-                <p>ESTABLISHING IDENTITY...</p>
-                <div id="my-identity" class="identity-box">...</div>
-                
-                <p>SELECT OPERATIONAL MODE</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button class="role-select-btn" onclick="app.selectSender()">
-                        TRANSMIT<br>DATA
-                    </button>
-                    <button class="role-select-btn" onclick="app.selectReceiver()">
-                        RECEIVE<br>DATA
-                    </button>
-                </div>
-                <p id="https-warning" style="color: var(--alert); font-size: 0.8rem; display: none;">
-                    WARNING: HTTPS REQUIRED FOR CAMERA ACCESS
-                </p>
-            </div>
-
-            <!-- Step 2: Sender Waiting -->
-            <div id="view-sender-wait" class="hidden">
-                <p>WAITING FOR UPLINK</p>
-                <div class="qr-identity-preview">
-                    <canvas id="canvas-identity-qr"></canvas>
-                </div>
-                <p>Ask receiver to scan this or enter code:</p>
-                <div id="display-identity-code" class="identity-box" style="font-size: 2rem;"></div>
-                <button onclick="app.resetMode()">CANCEL</button>
-            </div>
-
-            <!-- Step 3: Receiver Connect -->
-            <div id="view-receiver-join" class="hidden">
-                <p>ESTABLISH UPLINK</p>
+        <main>
+            <!-- Screen 1: Connection -->
+            <div id="screen-connect" class="screen active">
                 <div class="input-group">
-                    <input type="text" id="input-remote-id" placeholder="CODE" maxlength="5">
-                    <button onclick="app.manualConnect()">CONNECT</button>
+                    <h2 class="glow-cyan" style="margin:0; text-align:center">UPLINK CONFIG</h2>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 0.7rem; color: #666;">LOCAL IDENTITY</span><br>
+                        <span id="my-token" class="glow" style="font-size: 2.5rem; letter-spacing: 5px;">...</span>
+                    </div>
+                    
+                    <div class="or-divider">-- REMOTE TARGET --</div>
+
+                    <input type="text" id="target-token" placeholder="ENTER TOKEN" maxlength="5">
+                    <button id="btn-connect">ESTABLISH LINK</button>
+                    <div id="connect-msg" style="text-align: center; font-size: 0.7rem; color: var(--term-amber); height: 1em;"></div>
                 </div>
-                <p>- OR -</p>
-                <button class="action-btn" onclick="app.startIdentityScan()">SCAN IDENTITY QR</button>
-                <button onclick="app.resetMode()">CANCEL</button>
+            </div>
+
+            <!-- Screen 2: Sender -->
+            <div id="screen-sender" class="screen">
+                <div id="file-select-area">
+                    <div class="file-drop" id="drop-zone">
+                        <div class="glow-cyan" style="font-size: 1.5rem; margin-bottom: 10px;">LOAD PAYLOAD</div>
+                        <span style="font-size:0.8rem; color:#888">DRAG FILE OR CLICK TO BROWSE</span><br>
+                        <span style="font-size:0.7rem; color:#444">OPTIMIZED FOR < 10MB</span>
+                        <input type="file" id="file-input" hidden>
+                    </div>
+                </div>
+
+                <div id="sender-interface" class="hidden">
+                    <div id="qr-wrapper">
+                        <div id="qr-display"></div>
+                        <div id="qr-overlay-stats">
+                            <span id="sender-seq">SEQ: 0</span>
+                            <span id="sender-win">WIN: 10</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <div class="glow-cyan blink">OPTICAL TRANSMISSION ACTIVE</div>
+                        <div style="font-size: 0.8rem; color: #666">ENSURE LINE OF SIGHT</div>
+                        <button id="btn-pause" style="margin-top:10px; padding: 5px 10px; font-size: 0.8rem;">PAUSE</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 3: Receiver -->
+            <div id="screen-receiver" class="screen">
+                <div id="scanner-container">
+                    <video id="scan-video" playsinline></video>
+                    <canvas id="scan-canvas" hidden></canvas>
+                    <div id="visualizer-overlay"></div>
+                </div>
+                <div style="margin-top: 10px; text-align:center">
+                    <div class="glow-cyan">OPTICAL SENSOR ACTIVE</div>
+                    <div style="font-size: 0.8rem; color: #666">ALIGN QR WITHIN FRAME</div>
+                </div>
+            </div>
+
+            <!-- Screen 4: Complete -->
+            <div id="screen-complete" class="screen">
+                <h1 class="glow-green">PAYLOAD RECONSTRUCTED</h1>
+                <div id="result-container"></div>
+                <button id="btn-reset" style="margin-top: 20px;">RESET LINK</button>
+            </div>
+        </main>
+
+        <footer>
+            <div class="stats-group">
+                <div class="stat-item">
+                    <span class="stat-label">STATUS</span>
+                    <span id="stat-state" class="stat-value">IDLE</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">SPEED</span>
+                    <span id="stat-speed" class="stat-value">0 KB/s</span>
+                </div>
             </div>
             
-            <div id="connection-status" style="margin-top: 15px; color: #888; font-size: 0.8rem;">
-                > INITIALIZING NETWORK...
-            </div>
-        </div>
-    </div>
-
-    <header>
-        <div>
-            <h1>OPTICAL_LINK <span style="font-size:0.6em; opacity: 0.7;">// V2.1</span></h1>
-        </div>
-        <div>
-            <span id="role-badge" class="status-badge">IDLE</span>
-            <span id="conn-badge" class="status-badge">DISCONNECTED</span>
-            <span id="id-badge" class="status-badge" style="background: #222; color: #888; display: none;"></span>
-        </div>
-    </header>
-
-    <main>
-        <!-- Left: Transmitter / Reconstructor -->
-        <div class="panel" id="vis-panel">
-            <div class="panel-header">
-                <span>VISUAL_PLANE</span>
-                <span id="vis-status">STANDBY</span>
-            </div>
-            <!-- Sender sees QR, Receiver sees File Reconstruct -->
-            <div id="sender-view" class="hidden" style="width: 100%; height: 100%;">
-                <div id="qr-display">
-                    <canvas id="qr-canvas"></canvas>
+            <div class="stats-group">
+                <div class="stat-item">
+                    <span class="stat-label">PROGRESS</span>
+                    <span id="stat-seq" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">FPS/WIN</span>
+                    <span id="stat-fps" class="stat-value">15/10</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">DROP/NACK</span>
+                    <span id="stat-loss" class="stat-value">0</span>
                 </div>
             </div>
-            <div id="receiver-view" class="hidden" style="width: 100%; height: 100%; background: #111;">
-                <canvas id="vis-canvas"></canvas>
-            </div>
-        </div>
-
-        <!-- Right: Camera / Source -->
-        <div class="panel" id="camera-panel">
-            <div class="panel-header">
-                <span>OPTICAL_INPUT</span>
-                <span id="cam-status">OFFLINE</span>
-            </div>
-            <div id="camera-feed">
-                <video id="video-el" playsinline autoplay muted></video>
-                <canvas id="reconstruction-overlay"></canvas>
-                <div id="cam-placeholder" style="position: absolute; color: var(--dim);">
-                    [ CAMERA FEED ]
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div class="control-deck">
-        <div class="deck-col">
-            <h3>// CONTROLS</h3>
-            
-            <!-- Sender Controls -->
-            <div id="sender-controls" class="hidden">
-                <label for="file-input" class="file-label" id="file-label-text">Select File Payload</label>
-                <input type="file" id="file-input">
-                <button id="btn-transmit" disabled onclick="sender.startTransmission()">INITIATE TRANSFER</button>
-                <div style="margin-top: 10px;">
-                    <label>
-                        <input type="checkbox" id="turbo-mode"> TURBO MODE (High FPS)
-                    </label>
-                </div>
-            </div>
-
-            <!-- Receiver Controls -->
-            <div id="receiver-controls" class="hidden">
-                <button id="btn-scan" onclick="receiver.startScanning()">ACTIVATE SENSORS</button>
-                <button id="btn-save" disabled onclick="receiver.downloadFile()">EXTRACT DATA</button>
-            </div>
-        </div>
-
-        <div class="deck-col" id="log-panel">
-            <h3>// LOGS</h3>
-            <div id="log-console" style="font-size: 0.75rem; color: #888; font-family: monospace;">
-                > System initialized...<br>
-            </div>
-        </div>
-
-        <div class="deck-col">
-            <h3>// TELEMETRY</h3>
-            <div class="stat-row"><span>FPS:</span> <span id="stat-fps" class="stat-val">0</span></div>
-            <div class="stat-row"><span>RTT:</span> <span id="stat-rtt" class="stat-val">0ms</span></div>
-            <div class="stat-row"><span>Loss:</span> <span id="stat-loss" class="stat-val">0%</span></div>
-            <div class="stat-row"><span>Progress:</span> <span id="stat-prog" class="stat-val">0%</span></div>
-            <div class="stat-row"><span>Rate:</span> <span id="stat-bits" class="stat-val">0 kbps</span></div>
-        </div>
+        </footer>
     </div>
 
     <script>
-        // --- UTILS ---
-        const $ = id => document.getElementById(id);
-        const log = msg => {
-            const el = $('log-console');
-            const time = new Date().toLocaleTimeString().split(' ')[0];
-            el.innerHTML += `> [${time}] ${msg}<br>`;
-            el.scrollTop = el.scrollHeight;
+        /**
+         * OPTILINK v1.1 - ROBUST OPTICAL TRANSPORT
+         * Features: Sliding Window, NACKs, Adaptive FPS, Connection Hardening
+         */
+
+        // --- CONFIGURATION ---
+        const CONFIG = {
+            APP_PREFIX: 'optilink-v1.1-',
+            CHUNK_SIZE: 700,         // Reduced slightly for better QR density/readability
+            QR_CORRECTION: 'L',      // Low EC (rely on app layer CRC)
+            MIN_FPS: 5,
+            MAX_FPS: 30,
+            DEFAULT_FPS: 15,
+            MIN_WINDOW: 5,
+            MAX_WINDOW: 50,          // Max packets in flight
+            NACK_INTERVAL_MS: 500,   // How often receiver checks for gaps
+            RTT_ALPHA: 0.125,        // For RTT smoothing
+            TIMEOUT_FACTOR: 2.0      // Retransmit after RTT * Factor
         };
 
-        // HTTPS Check
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-            $('https-warning').style.display = 'block';
-            log("WARNING: Camera access requires HTTPS.");
-        }
+        const STATES = {
+            INIT: 'INIT',
+            WAITING: 'WAITING',
+            CONNECTING: 'CONNECTING',
+            CONNECTED: 'CONNECTED',
+            TRANSMITTING: 'TRANSMITTING',
+            RECEIVING: 'RECEIVING',
+            PAUSED: 'PAUSED',
+            COMPLETED: 'COMPLETED',
+            ERROR: 'ERROR'
+        };
 
-        // Simple CRC32 implementation for integrity check
+        const MSG = {
+            META: 'META',
+            ACK: 'ACK',
+            NACK: 'NACK',
+            FIN: 'FIN'
+        };
+
+        // --- UTILS ---
+        
+        // Optimized CRC32
         const crc32 = (function() {
             let table = new Uint32Array(256);
             for(let i=0; i<256; i++) {
                 let c = i;
-                for(let k=0; k<8; k++) c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+                for(let k=0; k<8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
                 table[i] = c;
             }
-            return function(str) {
+            return function(arr) {
                 let crc = -1;
-                for(let i=0, l=str.length; i<l; i++) {
-                    crc = (crc >>> 8) ^ table[(crc ^ str.charCodeAt(i)) & 0xFF];
-                }
-                return (crc ^ (-1)) >>> 0;
-            }
+                for(let i=0; i<arr.length; i++) crc = (crc >>> 8) ^ table[(crc ^ arr[i]) & 0xFF];
+                return (crc ^ -1) >>> 0;
+            };
         })();
 
-        // --- PROTOCOL CONFIG ---
-        const CHUNK_SIZE = 800; // Safe size for QR V10-V20
-        const PROTOCOL_HEADER = "OPT"; // Magic bytes
-
-        // --- CONNECTION MANAGER (PeerJS) ---
-        class ConnectionManager {
-            constructor() {
-                this.peer = null;
-                this.conn = null;
-                this.id = this.generateId();
-                this.role = null;
-                this.onConnect = null;
-                this.onMsg = null;
-            }
-
-            generateId() {
-                // Generate 5-char code (avoiding ambiguous chars)
-                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-                let result = '';
-                for (let i = 0; i < 5; i++) {
-                    result += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                return result;
-            }
-
-            init() {
-                $('my-identity').innerText = this.id;
-                $('id-badge').innerText = `ID: ${this.id}`;
-                $('id-badge').style.display = 'inline-block';
-                
-                // Prefix ID to namespace it on public server
-                const namespacedId = `opt-link-v1-${this.id}`;
-                
-                this.peer = new Peer(namespacedId, {
-                    debug: 1,
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' },
-                            { urls: 'stun:stun2.l.google.com:19302' },
-                            { urls: 'stun:stun3.l.google.com:19302' }
-                        ]
-                    }
-                });
-
-                this.peer.on('open', (id) => {
-                    log(`Network Identity: ${this.id}`);
-                    $('connection-status').innerText = "> NETWORK READY. SELECT MODE.";
-                    $('connection-status').style.color = "#00ff41";
-                });
-
-                this.peer.on('connection', (conn) => {
-                    log(`Incoming connection...`);
-                    this.handleConnection(conn);
-                });
-
-                this.peer.on('error', (err) => {
-                    log(`Network Error: ${err.type}`);
-                    $('connection-status').innerText = `> ERROR: ${err.type}`;
-                    $('connection-status').style.color = "#ff003c";
-                });
-            }
-
-            connect(remoteId) {
-                const namespacedRemote = `opt-link-v1-${remoteId.toUpperCase()}`;
-                log(`Connecting to ${remoteId}...`);
-                const conn = this.peer.connect(namespacedRemote);
-                this.handleConnection(conn);
-            }
-
-            handleConnection(conn) {
-                this.conn = conn;
-                
-                this.conn.on('open', () => {
-                    log("Control Plane ESTABLISHED");
-                    $('conn-badge').innerText = "CONNECTED";
-                    $('conn-badge').classList.add('connected');
-                    $('modal-overlay').classList.add('hidden'); // Close modal on success
-                    
-                    if (this.onConnect) this.onConnect();
-                });
-
-                this.conn.on('data', (data) => {
-                    if (this.onMsg) this.onMsg(data);
-                });
-
-                this.conn.on('close', () => {
-                    log("Control Plane LOST");
-                    $('conn-badge').innerText = "DISCONNECTED";
-                    $('conn-badge').classList.remove('connected');
-                });
-            }
-
-            send(data) {
-                if (this.conn && this.conn.open) {
-                    this.conn.send(data);
-                }
-            }
+        function generateToken() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
+            let res = '';
+            for(let i=0; i<5; i++) res += chars.charAt(Math.floor(Math.random()*chars.length));
+            return res;
         }
 
-        // --- SENDER ---
-        class Sender {
-            constructor() {
-                this.file = null;
-                this.chunks = [];
-                this.windowSize = 8;
-                this.windowStart = 0;
-                this.isTransmitting = false;
-                this.lastAckTime = 0;
-                this.acksReceived = new Set();
-                this.fps = 10;
-                this.loopId = null;
-            }
-
-            setFile(file) {
-                this.file = file;
-                $('file-label-text').innerText = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-                $('btn-transmit').disabled = false;
-            }
-
-            // Optimized Chunking using FileReader (Fast & supports all types)
-            async chunkFile() {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const dataUrl = e.target.result;
-                        // The result is "data:<mime>;base64,<payload>"
-                        const b64 = dataUrl.split(',')[1];
-                        
-                        this.chunks = [];
-                        const total = Math.ceil(b64.length / CHUNK_SIZE);
-                        
-                        for (let i = 0; i < total; i++) {
-                            const chunk = b64.substr(i * CHUNK_SIZE, CHUNK_SIZE);
-                            const payload = `${i}|${total}|${chunk}`;
-                            const checksum = crc32(payload);
-                            // Packet Format: SEQ|TOTAL|DATA|CRC
-                            this.chunks.push(`${payload}|${checksum}`);
-                        }
-                        log(`File chunked into ${total} packets.`);
-                        resolve();
-                    };
-                    reader.onerror = (err) => {
-                        log("File Read Error: " + err);
-                        reject(err);
-                    };
-                    reader.readAsDataURL(this.file);
-                });
-            }
-
-            onControlPlaneReady() {
-                // Can trigger auto-send if file selected
-            }
-
-            async startTransmission() {
-                if (!this.file) return;
-                await this.chunkFile();
-                this.isTransmitting = true;
-                this.windowStart = 0;
-                this.acksReceived.clear();
-                $('vis-status').innerText = "TRANSMITTING";
-                
-                // Initial metadata packet to prepare receiver
-                connection.send({ type: 'META', name: this.file.name, size: this.file.size, type: this.file.type, total: this.chunks.length });
-
-                this.transmitLoop();
-            }
-
-            transmitLoop() {
-                if (!this.isTransmitting) return;
-
-                const now = performance.now();
-                const turbo = $('turbo-mode').checked;
-                const targetFPS = turbo ? 30 : 10;
-                
-                // Strategy: Round robin within sliding window
-                let packetsInWindow = [];
-                for (let i = 0; i < this.windowSize; i++) {
-                    let seq = this.windowStart + i;
-                    if (seq < this.chunks.length && !this.acksReceived.has(seq)) {
-                        packetsInWindow.push(seq);
-                    }
-                }
-
-                if (packetsInWindow.length === 0) {
-                    if (this.windowStart >= this.chunks.length) {
-                        this.finish();
-                        return;
-                    }
-                } else {
-                    const rotateIdx = Math.floor((now / 100) % packetsInWindow.length);
-                    const sendSeq = packetsInWindow[rotateIdx];
-                    this.renderQR(this.chunks[sendSeq]);
-                    $('stat-prog').innerText = `${Math.floor((this.acksReceived.size / this.chunks.length)*100)}%`;
-                }
-
-                this.loopId = setTimeout(() => this.transmitLoop(), 1000 / targetFPS);
-            }
-
-            renderQR(data) {
-                // Ensure canvas is clear before draw
-                const cvs = $('qr-canvas');
-                
-                QRCode.toCanvas(cvs, data, { 
-                    width: 600, // High res for better scanning
-                    margin: 2,
-                    color: { dark: "#000000", light: "#ffffff" },
-                    errorCorrectionLevel: 'L'
-                }, error => {
-                    if (error) console.error(error);
-                });
-            }
-
-            handleControlMessage(msg) {
-                if (msg.type === 'ACK') {
-                    msg.seqs.forEach(s => this.acksReceived.add(s));
-                    while (this.acksReceived.has(this.windowStart) && this.windowStart < this.chunks.length) {
-                        this.windowStart++;
-                    }
-                    if (msg.ts) {
-                         const rtt = Math.round(performance.now() - msg.ts);
-                         $('stat-rtt').innerText = rtt + "ms";
-                    }
-                }
-            }
-
-            finish() {
-                this.isTransmitting = false;
-                $('vis-status').innerText = "COMPLETE";
-                this.renderQR("END");
-                connection.send({ type: 'FIN' });
-                log("Transmission complete.");
-            }
+        function formatBytes(bytes) {
+            if(bytes === 0) return '0 B';
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return parseFloat((bytes / Math.pow(1024, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
-        // --- RECEIVER ---
-        class Receiver {
-            constructor() {
-                this.packets = []; 
-                this.receivedMask = new Set();
-                this.totalPackets = 0;
-                this.meta = null;
-                this.isScanning = false;
-                this.video = $('video-el');
-                this.canvas = document.createElement('canvas'); // decode canvas
-                this.ctx = this.canvas.getContext('2d');
-                this.lastAckTime = 0;
-                this.pendingAcks = [];
-                this.visCanvas = $('vis-canvas');
-                this.visCtx = this.visCanvas.getContext('2d');
-                
-                // Mode: 'DATA' or 'IDENTITY'
-                this.scanMode = 'DATA'; 
-            }
+        // --- GLOBAL STATE ---
 
-            onControlPlaneReady() {
-                // UI update already handled by connection manager
-            }
-
-            async startScanning(mode = 'DATA') {
-                this.scanMode = mode;
-                // Stop existing streams first to prevent conflict
-                this.stopScanning();
-
-                try {
-                    // Try to get specific "Environment" (rear) camera first
-                    let stream;
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia({ 
-                            video: { 
-                                facingMode: { exact: "environment" },
-                                width: { ideal: 1280 } 
-                            } 
-                        });
-                    } catch (e) {
-                        log("Rear camera specific request failed, falling back...");
-                        // Fallback to "ideal" environment or just any video
-                        stream = await navigator.mediaDevices.getUserMedia({ 
-                            video: { facingMode: "environment" } 
-                        });
-                    }
-                    
-                    this.video.srcObject = stream;
-                    this.video.setAttribute("playsinline", true); // Required for iOS Safari
-                    
-                    // Wait for the video to actually be ready to play
-                    await this.video.play();
-                    
-                    requestAnimationFrame(() => this.tick());
-                    $('cam-status').innerText = mode === 'IDENTITY' ? "SCANNING ID" : "ACTIVE";
-                    this.isScanning = true;
-                } catch (e) {
-                    log("Camera Error: " + e.message);
-                    if (e.name === 'NotAllowedError') {
-                        alert("Camera permission denied. Please allow camera access in your browser settings.");
-                    } else if (e.name === 'NotFoundError') {
-                         alert("No camera found on this device.");
-                    } else {
-                        // Attempt one last generic fallback
-                        try {
-                             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                             this.video.srcObject = stream;
-                             this.video.setAttribute("playsinline", true);
-                             await this.video.play();
-                             requestAnimationFrame(() => this.tick());
-                             this.isScanning = true;
-                        } catch(err2) {
-                            alert("Fatal Camera Error: " + e.message + "\nEnsure you are using HTTPS.");
-                        }
-                    }
-                }
-            }
+        const state = {
+            current: STATES.INIT,
+            peer: null,
+            conn: null,
+            myToken: null,
+            role: null, // 'SENDER', 'RECEIVER'
             
-            stopScanning() {
-                this.isScanning = false;
-                if(this.video.srcObject) {
-                    this.video.srcObject.getTracks().forEach(t => t.stop());
-                    this.video.srcObject = null;
-                }
-            }
-
-            tick() {
-                if (this.video.readyState === this.video.HAVE_ENOUGH_DATA && this.isScanning) {
-                    this.canvas.height = this.video.videoHeight;
-                    this.canvas.width = this.video.videoWidth;
-                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
-                    
-                    const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                        inversionAttempts: "dontInvert",
-                    });
-
-                    if (code && code.data) {
-                        if (this.scanMode === 'IDENTITY') {
-                             this.processIdentity(code.data);
-                        } else {
-                             this.processCode(code.data);
-                        }
-                    }
-                }
-                if (this.isScanning) requestAnimationFrame(() => this.tick());
-            }
+            // Transfer Data
+            file: null,
+            chunks: [],     // Array of Uint8Array packets
+            totalChunks: 0,
             
-            processIdentity(raw) {
-                // Expected format: "OPTLINK:ABCDE"
-                if (raw.startsWith('OPTLINK:')) {
-                    const remoteId = raw.split(':')[1];
-                    if (remoteId && remoteId.length === 5) {
-                        log(`Identity found: ${remoteId}`);
-                        this.stopScanning();
-                        $('input-remote-id').value = remoteId;
-                        connection.connect(remoteId);
-                    }
-                }
-            }
-
-            processCode(raw) {
-                if (raw === "END") {
-                    this.finalize();
-                    return;
-                }
-
-                const parts = raw.split('|');
-                if (parts.length < 4) return;
-
-                const checksum = parseInt(parts.pop());
-                const payloadStr = parts.join('|');
-                
-                if (crc32(payloadStr) !== checksum) return;
-
-                const seq = parseInt(parts[0]);
-                const total = parseInt(parts[1]);
-                const data = parts[2];
-
-                if (!this.meta) {
-                    this.totalPackets = total;
-                    this.initVisualizer();
-                }
-
-                if (!this.receivedMask.has(seq)) {
-                    this.receivedMask.add(seq);
-                    this.packets[seq] = data;
-                    this.pendingAcks.push(seq);
-                    this.updateVisualizer(seq);
-                    
-                    if (this.pendingAcks.length >= 1 || (Date.now() - this.lastAckTime > 100)) {
-                        connection.send({
-                            type: 'ACK',
-                            seqs: this.pendingAcks,
-                            ts: performance.now()
-                        });
-                        this.pendingAcks = [];
-                        this.lastAckTime = Date.now();
-                    }
-
-                    $('stat-prog').innerText = `${Math.floor((this.receivedMask.size / total)*100)}%`;
-                    if (this.receivedMask.size === total) {
-                        log("All packets received. Awaiting FIN.");
-                        this.finalize();
-                    }
-                }
-            }
-
-            initVisualizer() {
-                const w = this.visCanvas.width = this.visCanvas.offsetWidth;
-                const h = this.visCanvas.height = this.visCanvas.offsetHeight;
-                this.visCtx.fillStyle = "#000";
-                this.visCtx.fillRect(0,0,w,h);
-                this.gridCols = Math.ceil(Math.sqrt(this.totalPackets));
-                this.gridRows = Math.ceil(this.totalPackets / this.gridCols);
-                this.cellW = w / this.gridCols;
-                this.cellH = h / this.gridRows;
-            }
-
-            updateVisualizer(seq) {
-                const r = Math.floor(seq / this.gridCols);
-                const c = seq % this.gridCols;
-                const green = 100 + Math.random() * 155;
-                this.visCtx.fillStyle = `rgb(0, ${green}, 50)`;
-                this.visCtx.fillRect(c * this.cellW, r * this.cellH, this.cellW - 1, this.cellH - 1);
-            }
-
-            finalize() {
-                if (!this.isScanning) return;
-                this.isScanning = false;
-                $('btn-save').disabled = false;
-                $('vis-status').innerText = "RECONSTRUCTED";
-                log("Data stream ended. File ready.");
-                
-                this.visCtx.fillStyle = "#00ff41";
-                this.visCtx.fillRect(0,0,this.visCanvas.width, this.visCanvas.height);
-                setTimeout(() => {
-                   if (this.meta && this.meta.type.startsWith('image/')) {
-                       this.renderImagePreview();
-                   }
-                }, 200);
-            }
-
-            renderImagePreview() {
-                const b64 = this.packets.join('');
-                const img = new Image();
-                img.onload = () => {
-                    this.visCtx.drawImage(img, 0, 0, this.visCanvas.width, this.visCanvas.height);
-                };
-                img.src = `data:${this.meta.type};base64,${b64}`;
-            }
-
-            downloadFile() {
-                const b64 = this.packets.join('');
-                const byteCharacters = atob(b64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], {type: this.meta ? this.meta.type : 'application/octet-stream'});
-                
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = this.meta ? this.meta.name : 'download.bin';
-                link.click();
-            }
-        }
-
-        // --- APP LOGIC ---
-        const connection = new ConnectionManager();
-        const sender = new Sender();
-        const receiver = new Receiver();
-        
-        // Init Identity on Load
-        connection.init();
-        
-        const app = {
-            selectSender: () => {
-                connection.role = 'sender';
-                document.body.classList.add('mode-sender'); // Add class for mobile CSS logic
-                $('role-badge').innerText = "SENDER";
-                $('view-mode-select').classList.add('hidden');
-                $('view-sender-wait').classList.remove('hidden');
-                
-                // Show Identity QR
-                const identityString = `OPTLINK:${connection.id}`;
-                $('display-identity-code').innerText = connection.id;
-                QRCode.toCanvas($('canvas-identity-qr'), identityString, { width: 250, margin: 1 }, (err)=>{});
-                
-                // Setup UI for post-connect
-                $('sender-view').classList.remove('hidden');
-                $('sender-controls').classList.remove('hidden');
-                $('cam-placeholder').innerText = "[ PREVIEW DISABLED ]";
-                
-                connection.onConnect = () => {
-                     // Auto-bind sender logic
-                     sender.onControlPlaneReady();
-                };
-                connection.onMsg = (msg) => sender.handleControlMessage(msg);
-            },
+            // Sender State
+            windowBase: 0,    // Oldest unacked packet
+            windowSize: 10,
+            fps: CONFIG.DEFAULT_FPS,
+            sentPackets: new Map(), // seq -> timestamp
+            priorityQueue: [],      // NACK'd packets to resend immediately
+            rtt: 200,               // Estimated Round Trip Time (ms)
             
-            selectReceiver: () => {
-                connection.role = 'receiver';
-                document.body.classList.add('mode-receiver'); // Add class for mobile CSS logic
-                $('role-badge').innerText = "RECEIVER";
-                $('view-mode-select').classList.add('hidden');
-                $('view-receiver-join').classList.remove('hidden');
-                
-                // Setup UI for post-connect
-                $('receiver-view').classList.remove('hidden');
-                $('receiver-controls').classList.remove('hidden');
-                
-                connection.onConnect = () => {
-                    receiver.onControlPlaneReady();
-                    // Stop any ID scanning if active
-                    receiver.stopScanning(); 
-                };
-                connection.onMsg = (msg) => {
-                    // Handle Metadata
-                    if(msg.type === 'META') {
-                        receiver.meta = msg;
-                        log(`File Incoming: ${msg.name} (${msg.size} bytes)`);
-                        $('vis-status').innerText = "RECEIVING...";
-                    }
-                    if(msg.type === 'FIN') {
-                        receiver.finalize();
-                    }
-                };
-            },
-            
-            manualConnect: () => {
-                const code = $('input-remote-id').value;
-                if(code && code.length === 5) {
-                    connection.connect(code);
-                }
-            },
-            
-            startIdentityScan: () => {
-                // Temporarily use the main receiver camera to scan ID
-                $('modal-overlay').classList.add('hidden'); // hide modal to see camera
-                // We need a temporary UI to say "Scanning ID..."
-                $('cam-status').innerText = "SCANNING IDENTITY";
-                receiver.startScanning('IDENTITY');
-            },
-            
-            resetMode: () => {
-                $('view-mode-select').classList.remove('hidden');
-                $('view-sender-wait').classList.add('hidden');
-                $('view-receiver-join').classList.add('hidden');
-                document.body.classList.remove('mode-sender', 'mode-receiver');
-            },
-            
-            copyToClipboard: (id) => {
-                const el = $(id);
-                el.select();
-                document.execCommand('copy');
+            // Receiver State
+            receivedChunks: new Map(),
+            highestContiguous: -1,
+            missing: new Set(),
+            lastNackTime: 0,
+
+            // Telemetry
+            startTime: 0,
+            bytesTransferred: 0,
+            totalNacks: 0,
+            lastFrameHash: '' // Debounce
+        };
+
+        const ui = {
+            screens: document.querySelectorAll('.screen'),
+            status: document.getElementById('connection-status'),
+            myToken: document.getElementById('my-token'),
+            targetToken: document.getElementById('target-token'),
+            btnConnect: document.getElementById('btn-connect'),
+            connectMsg: document.getElementById('connect-msg'),
+            qrDisplay: document.getElementById('qr-display'),
+            qrWrapper: document.getElementById('qr-wrapper'),
+            overlaySeq: document.getElementById('sender-seq'),
+            overlayWin: document.getElementById('sender-win'),
+            video: document.getElementById('scan-video'),
+            canvas: document.getElementById('scan-canvas'),
+            visualizer: document.getElementById('visualizer-overlay'),
+            stats: {
+                state: document.getElementById('stat-state'),
+                speed: document.getElementById('stat-speed'),
+                seq: document.getElementById('stat-seq'),
+                fps: document.getElementById('stat-fps'),
+                loss: document.getElementById('stat-loss')
             }
         };
 
-        // File Input Handler
-        $('file-input').addEventListener('change', (e) => {
-            if (e.target.files.length > 0) sender.setFile(e.target.files[0]);
+        // --- CORE STATE MACHINE ---
+
+        function setState(newState, msg) {
+            console.log(`[STATE] ${state.current} -> ${newState}`);
+            state.current = newState;
+            ui.status.innerText = msg || newState;
+            ui.stats.state.innerText = newState;
+
+            ui.status.className = 'status-badge ' + 
+                (newState === STATES.ERROR ? 'error' : 
+                 (newState === STATES.TRANSMITTING || newState === STATES.RECEIVING) ? 'active' : '');
+
+            // Screen Routing
+            if (newState === STATES.CONNECTED) {
+                showScreen(state.role === 'SENDER' ? 'screen-sender' : 'screen-receiver');
+            } else if (newState === STATES.COMPLETED) {
+                showScreen('screen-complete');
+            } else if (newState === STATES.PAUSED) {
+                ui.status.innerText = "LINK PAUSED";
+            }
+        }
+
+        function showScreen(id) {
+            ui.screens.forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // --- NETWORK LAYER (WebRTC) ---
+
+        function initNetwork() {
+            state.myToken = generateToken();
+            ui.myToken.innerText = state.myToken;
+
+            state.peer = new Peer(CONFIG.APP_PREFIX + state.myToken, { debug: 1 });
+
+            state.peer.on('open', () => {
+                setState(STATES.WAITING, "READY TO LINK");
+                ui.btnConnect.disabled = false;
+            });
+
+            state.peer.on('connection', (conn) => {
+                if (state.conn) { conn.close(); return; } // Single peer only
+                handleConnection(conn, 'RECEIVER');
+            });
+
+            state.peer.on('error', (err) => {
+                console.error(err);
+                ui.connectMsg.innerText = "NET ERROR: " + err.type;
+                ui.status.className = 'status-badge error';
+            });
+        }
+
+        function connectToPeer(target) {
+            if (!target) return;
+            ui.btnConnect.disabled = true;
+            ui.connectMsg.innerText = "SEARCHING...";
+            const conn = state.peer.connect(CONFIG.APP_PREFIX + target.toUpperCase(), { reliable: true });
+            handleConnection(conn, 'SENDER');
+        }
+
+        function handleConnection(conn, role) {
+            state.conn = conn;
+            state.role = role;
+
+            conn.on('open', () => {
+                setState(STATES.CONNECTED);
+                ui.connectMsg.innerText = "";
+                if (role === 'RECEIVER') startReceiverLoop();
+            });
+
+            conn.on('data', (data) => handleControlMsg(data));
+
+            conn.on('close', () => {
+                setState(STATES.ERROR, "LINK LOST");
+                alert("Peer Connection Lost. Check Network.");
+                location.reload();
+            });
+        }
+
+        function sendControl(msg) {
+            if (state.conn && state.conn.open) {
+                state.conn.send(msg);
+            }
+        }
+
+        function handleControlMsg(msg) {
+            if (msg.type === MSG.ACK) {
+                handleAck(msg.seq);
+            } else if (msg.type === MSG.NACK) {
+                handleNack(msg.seqs);
+            } else if (msg.type === MSG.META) {
+                prepareReceiver(msg);
+            } else if (msg.type === MSG.FIN) {
+                finishReceiver();
+            }
+        }
+
+        // --- DATA PLANE: SENDER ---
+
+        function processFile(file) {
+            state.file = file;
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const buffer = new Uint8Array(e.target.result);
+                state.chunks = [];
+                state.totalChunks = Math.ceil(buffer.length / CONFIG.CHUNK_SIZE);
+                state.windowBase = 0;
+                
+                // Pre-chunking
+                for (let i = 0; i < state.totalChunks; i++) {
+                    const start = i * CONFIG.CHUNK_SIZE;
+                    const end = Math.min(start + CONFIG.CHUNK_SIZE, buffer.length);
+                    state.chunks.push(createPacket(i, state.totalChunks, buffer.slice(start, end)));
+                }
+
+                // Send Meta
+                sendControl({
+                    type: MSG.META,
+                    name: file.name,
+                    size: file.size,
+                    mime: file.type,
+                    total: state.totalChunks
+                });
+
+                startSenderLoop();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function createPacket(seq, total, payload) {
+            // Header: 12 bytes [SEQ(4), TOTAL(4), CRC(4)]
+            // We concat header + payload
+            const packet = new Uint8Array(12 + payload.length);
+            const view = new DataView(packet.buffer);
+            view.setUint32(0, seq);
+            view.setUint32(4, total);
+            view.setUint32(8, crc32(payload));
+            packet.set(payload, 12);
+            return packet; // Store Uint8Array directly
+        }
+
+        function startSenderLoop() {
+            setState(STATES.TRANSMITTING);
+            document.getElementById('file-select-area').classList.add('hidden');
+            document.getElementById('sender-interface').classList.remove('hidden');
+            
+            state.startTime = Date.now();
+            let lastFrameTime = 0;
+            let currentSeqToSend = 0;
+
+            function loop(timestamp) {
+                if (state.current !== STATES.TRANSMITTING) {
+                    if (state.current === STATES.PAUSED) {
+                         // Idle wait
+                         requestAnimationFrame(loop);
+                         return;
+                    }
+                    return; // Stop if completed or error
+                }
+
+                const interval = 1000 / state.fps;
+
+                if (timestamp - lastFrameTime > interval) {
+                    let packetData = null;
+                    let seq = -1;
+
+                    // 1. Priority: NACK Queue
+                    if (state.priorityQueue.length > 0) {
+                        seq = state.priorityQueue.shift();
+                        packetData = state.chunks[seq];
+                        ui.qrWrapper.style.borderColor = 'var(--term-red)'; // Visual cue for retransmit
+                    } 
+                    // 2. Normal Window
+                    else if (currentSeqToSend < state.windowBase + state.windowSize && currentSeqToSend < state.totalChunks) {
+                        seq = currentSeqToSend;
+                        packetData = state.chunks[seq];
+                        currentSeqToSend++;
+                        ui.qrWrapper.style.borderColor = 'var(--term-cyan)';
+                    }
+                    // 3. Window Full or Done? Loop unacked logic or wait
+                    else if (state.windowBase < state.totalChunks) {
+                         // Window full, maybe resend oldest unacked if timeout?
+                         // For now, we wait for ACKs or NACKs.
+                         // Optional: Resend windowBase periodically to unstick
+                         if (Math.random() > 0.95) { // Occasional probe
+                             seq = state.windowBase;
+                             packetData = state.chunks[seq];
+                         }
+                    } else {
+                        // All chunks sent, send FIN via QR too? No, Control Plane handles FIN.
+                        // Just pulse last packet to ensure receipt
+                        if (Math.random() > 0.9) sendControl({ type: MSG.FIN });
+                    }
+
+                    if (packetData) {
+                        renderQR(packetData);
+                        state.sentPackets.set(seq, Date.now());
+                        lastFrameTime = timestamp;
+                        
+                        // Stats Update
+                        ui.overlaySeq.innerText = `SEQ: ${seq}`;
+                        ui.overlayWin.innerText = `WIN: ${state.windowSize}`;
+                        updateSenderStats();
+                    }
+                }
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        function renderQR(data) {
+            // qrcode.js needs string. We use Base64.
+            // Optimized buffer to b64
+            let binary = '';
+            const len = data.byteLength;
+            for (let i = 0; i < len; i++) binary += String.fromCharCode(data[i]);
+            const b64 = btoa(binary);
+
+            ui.qrDisplay.innerHTML = '';
+            // Lower error correction level allows larger data chunks
+            new QRCode(ui.qrDisplay, {
+                text: b64,
+                width: 380,
+                height: 380,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel[CONFIG.QR_CORRECTION]
+            });
+        }
+
+        function handleAck(seq) {
+            // Adaptive Window (TCP Reno-ish)
+            if (seq > state.windowBase) {
+                // Good cumulative ACK
+                const jumped = seq - state.windowBase;
+                state.windowBase = seq + 1;
+                state.windowSize = Math.min(state.windowSize + 1, CONFIG.MAX_WINDOW);
+                state.fps = Math.min(state.fps + 0.5, CONFIG.MAX_FPS);
+            }
+        }
+
+        function handleNack(seqs) {
+            state.totalNacks += seqs.length;
+            // Adaptive Decrease
+            state.windowSize = Math.max(Math.floor(state.windowSize * 0.7), CONFIG.MIN_WINDOW);
+            state.fps = Math.max(state.fps - 2, CONFIG.MIN_FPS);
+
+            // Add to priority queue (unique)
+            seqs.forEach(s => {
+                if (!state.priorityQueue.includes(s)) state.priorityQueue.push(s);
+            });
+        }
+
+        function updateSenderStats() {
+            const elapsed = (Date.now() - state.startTime) / 1000;
+            const bytes = state.windowBase * CONFIG.CHUNK_SIZE;
+            const speed = bytes / elapsed;
+            
+            ui.stats.speed.innerText = formatBytes(speed) + '/s';
+            ui.stats.seq.innerText = `${Math.floor((state.windowBase / state.totalChunks)*100)}%`;
+            ui.stats.fps.innerText = `${Math.floor(state.fps)} / W:${state.windowSize}`;
+            ui.stats.loss.innerText = state.totalNacks;
+        }
+
+        // --- DATA PLANE: RECEIVER ---
+
+        function prepareReceiver(meta) {
+            state.fileMeta = meta;
+            state.totalChunks = meta.total;
+            state.receivedChunks = new Map();
+            state.highestContiguous = -1;
+            state.startTime = Date.now();
+            
+            // Build visualizer grid
+            ui.visualizer.innerHTML = '';
+            // Aspect ratio estimation based on total packets (assuming square filling)
+            // CSS Grid dynamic cols
+            const cols = Math.ceil(Math.sqrt(meta.total));
+            ui.visualizer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            for(let i=0; i<meta.total; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'vis-cell';
+                cell.id = `cell-${i}`;
+                ui.visualizer.appendChild(cell);
+            }
+
+            setState(STATES.RECEIVING);
+        }
+
+        function startReceiverLoop() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(stream => {
+                    ui.video.srcObject = stream;
+                    ui.video.play();
+                    requestAnimationFrame(receiverTick);
+                })
+                .catch(err => {
+                    console.error("Camera error", err);
+                    setState(STATES.ERROR, "CAM BLOCKED");
+                });
+        }
+
+        function receiverTick() {
+            if (state.current !== STATES.RECEIVING && state.current !== STATES.CONNECTED) {
+                if (state.current !== STATES.COMPLETED) requestAnimationFrame(receiverTick);
+                return;
+            }
+
+            if (ui.video.readyState === ui.video.HAVE_ENOUGH_DATA) {
+                const cvs = ui.canvas;
+                const ctx = cvs.getContext('2d');
+                // Use a smaller internal resolution for performance if needed, 
+                // but JSQR likes full res for density.
+                cvs.width = ui.video.videoWidth;
+                cvs.height = ui.video.videoHeight;
+                ctx.drawImage(ui.video, 0, 0);
+
+                const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
+                // Heavy operation, might want to run every other frame on low-end mobile
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code && code.data && code.data !== state.lastFrameHash) {
+                    state.lastFrameHash = code.data; // Simple debounce
+                    processQrData(code.data);
+                }
+            }
+
+            // Periodic NACK check
+            const now = Date.now();
+            if (now - state.lastNackTime > CONFIG.NACK_INTERVAL_MS && state.highestContiguous < state.totalChunks - 1) {
+                sendNacks();
+                state.lastNackTime = now;
+            }
+
+            requestAnimationFrame(receiverTick);
+        }
+
+        function processQrData(b64) {
+            try {
+                // Decode
+                const binary = atob(b64);
+                const bytes = new Uint8Array(binary.length);
+                for(let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+                const view = new DataView(bytes.buffer);
+                if (bytes.length < 12) return; // Too short
+
+                const seq = view.getUint32(0);
+                const total = view.getUint32(4);
+                const crc = view.getUint32(8);
+                const payload = bytes.slice(12);
+
+                if (crc32(payload) !== crc) {
+                    console.warn("CRC ERR", seq);
+                    return;
+                }
+
+                if (!state.receivedChunks.has(seq)) {
+                    state.receivedChunks.set(seq, payload);
+                    state.bytesTransferred += payload.length;
+                    
+                    updateVisualizer(seq);
+                    updateReceiverStats();
+
+                    // Update contiguous pointer
+                    while (state.receivedChunks.has(state.highestContiguous + 1)) {
+                        state.highestContiguous++;
+                    }
+
+                    // Send ACK occasionally or on gap fill
+                    if (seq % 5 === 0 || seq === state.highestContiguous) {
+                        sendControl({ type: MSG.ACK, seq: state.highestContiguous });
+                    }
+
+                    if (state.receivedChunks.size === state.totalChunks) {
+                        sendControl({ type: MSG.FIN });
+                        finishReceiver();
+                    }
+                }
+            } catch(e) {
+                // Ignore non-protocol QRs
+            }
+        }
+
+        function sendNacks() {
+            if (!state.receivedChunks.size) return;
+            
+            const nacks = [];
+            // Look ahead from highestContiguous
+            // Cap at a reasonable lookahead (e.g. 50 packets) to avoid massive NACK lists
+            const lookahead = 50;
+            const end = Math.min(state.totalChunks, state.highestContiguous + lookahead);
+            
+            for(let i = state.highestContiguous + 1; i < end; i++) {
+                if (!state.receivedChunks.has(i)) {
+                    nacks.push(i);
+                    // Visual feedback for missing
+                    const cell = document.getElementById(`cell-${i}`);
+                    if (cell) cell.classList.add('missing');
+                }
+            }
+
+            if (nacks.length > 0) {
+                sendControl({ type: MSG.NACK, seqs: nacks });
+                ui.stats.loss.innerText = parseInt(ui.stats.loss.innerText) + nacks.length;
+            }
+        }
+
+        function updateVisualizer(seq) {
+            const cell = document.getElementById(`cell-${seq}`);
+            if (cell) {
+                cell.className = 'vis-cell done';
+            }
+        }
+
+        function updateReceiverStats() {
+            const elapsed = (Date.now() - state.startTime) / 1000;
+            const speed = state.bytesTransferred / elapsed;
+            
+            ui.stats.speed.innerText = formatBytes(speed) + '/s';
+            ui.stats.seq.innerText = `${Math.floor((state.receivedChunks.size / state.totalChunks)*100)}%`;
+        }
+
+        function finishReceiver() {
+            if (state.current === STATES.COMPLETED) return;
+            setState(STATES.COMPLETED);
+
+            // Assemble
+            const sortedChunks = [];
+            for(let i=0; i<state.totalChunks; i++) {
+                sortedChunks.push(state.receivedChunks.get(i));
+            }
+            
+            const blob = new Blob(sortedChunks, { type: state.fileMeta.mime });
+            const url = URL.createObjectURL(blob);
+            
+            const container = document.getElementById('result-container');
+            container.innerHTML = '';
+
+            if (state.fileMeta.mime.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = url;
+                img.id = 'complete-preview';
+                container.appendChild(img);
+            } else {
+                const msg = document.createElement('div');
+                msg.innerHTML = `<h3 class="glow-cyan">${state.fileMeta.name}</h3><p>${formatBytes(state.fileMeta.size)}</p>`;
+                container.appendChild(msg);
+            }
+
+            const btn = document.createElement('a');
+            btn.href = url;
+            btn.download = state.fileMeta.name;
+            btn.innerHTML = `<button>SAVE FILE TO DISK</button>`;
+            container.appendChild(btn);
+        }
+
+        // --- EVENTS ---
+
+        ui.btnConnect.addEventListener('click', () => {
+            const val = ui.targetToken.value;
+            if (val.length === 5) connectToPeer(val);
         });
+
+        document.getElementById('btn-pause').addEventListener('click', (e) => {
+            if (state.current === STATES.TRANSMITTING) {
+                setState(STATES.PAUSED);
+                e.target.innerText = "RESUME";
+                ui.qrWrapper.style.opacity = 0.2;
+            } else if (state.current === STATES.PAUSED) {
+                setState(STATES.TRANSMITTING);
+                e.target.innerText = "PAUSE";
+                ui.qrWrapper.style.opacity = 1;
+            }
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => location.reload());
+
+        // File Input Logic
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
         
-        // Window Resize Handler to fix canvas scaling on mobile rotate
-        window.addEventListener('resize', () => {
-            if(receiver.meta) receiver.initVisualizer();
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--term-cyan)'; });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--term-dim)'; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if(e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
         });
+        fileInput.addEventListener('change', (e) => {
+            if(e.target.files.length) processFile(e.target.files[0]);
+        });
+
+        // Start
+        initNetwork();
 
     </script>
 </body>
