@@ -2,600 +2,685 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GhostShare | Anonymous P2P Transfer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GhostShare | Secure P2P Link</title>
+    
+    <!-- Dependencies (CDN) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         :root {
             --bg: #000000;
             --fg: #ffffff;
-            --dim: #444444;
-            --accent: #ffffff;
-            --err: #ff3333;
-            --font-mono: 'Courier New', Courier, monospace;
+            --dim: #666666;
+            --border: #333333;
+            --highlight: #ffffff;
+            --font-stack: 'SF Mono', 'Segoe UI Mono', 'Roboto Mono', Menlo, monospace;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        /* RESET & BASE */
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: var(--bg);
             color: var(--fg);
-            font-family: var(--font-mono);
+            font-family: var(--font-stack);
+            font-size: 14px;
             line-height: 1.5;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            padding: 1rem;
+            overflow-x: hidden;
         }
 
-        /* Typography */
-        h1, h2, h3 { font-weight: normal; text-transform: uppercase; letter-spacing: 1px; }
-        h1 { font-size: 1.5rem; border-bottom: 2px solid var(--fg); padding-bottom: 0.5rem; margin-bottom: 2rem; }
-        p { margin-bottom: 1rem; font-size: 0.9rem; }
-        small { color: #888; display: block; margin-top: 0.5rem; font-size: 0.75rem; }
+        /* LAYOUT UTILS */
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
 
-        /* Layout */
-        .container { max-width: 600px; margin: 0 auto; width: 100%; }
+        .flex-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .flex-col { display: flex; flex-direction: column; gap: 15px; }
+        .center { text-align: center; justify-content: center; }
         .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Components */
-        .btn {
-            background: transparent;
-            color: var(--fg);
-            border: 1px solid var(--fg);
-            padding: 12px 20px;
-            font-family: var(--font-mono);
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            transition: all 0.2s;
-            font-size: 1rem;
-        }
-        .btn:hover { background: var(--fg); color: var(--bg); }
-        .btn:disabled { border-color: var(--dim); color: var(--dim); cursor: not-allowed; }
-        .btn-small { width: auto; padding: 5px 10px; font-size: 0.8rem; margin: 0; }
-
-        .card { border: 1px solid var(--dim); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
         
-        .input-group { margin-bottom: 1rem; }
-        input[type="text"] {
-            width: 100%;
-            background: #111;
-            border: 1px solid var(--dim);
-            color: var(--fg);
-            padding: 12px;
-            font-family: var(--font-mono);
-            font-size: 1.2rem;
-            text-align: center;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+        /* TYPOGRAPHY */
+        h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        h2 { font-size: 14px; font-weight: 600; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        p { color: var(--dim); font-size: 13px; margin-bottom: 10px; }
+        .mono-stat { font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
 
-        .qr-container { 
-            background: white; 
-            padding: 10px; 
-            display: inline-block; 
-            margin: 1rem 0;
-            border-radius: 4px;
+        /* COMPONENTS */
+        .card {
+            border: 1px solid var(--border);
+            background: var(--bg);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s var(--ease);
         }
-        .qr-container canvas { display: block; }
+        .card:hover { border-color: var(--dim); }
 
-        /* Scanner */
-        #reader {
-            width: 100%;
-            background: #000;
-            border: 1px solid var(--dim);
-            margin-bottom: 1rem;
-            display: none; /* hidden by default, toggled via JS */
-        }
-        #reader.active { display: block; }
-        #reader video { object-fit: cover; width: 100% !important; border-radius: 4px; }
-
-        /* ID Badge */
-        .id-badge {
-            font-size: 2rem;
-            letter-spacing: 3px;
-            border: 1px dashed var(--dim);
-            padding: 1rem;
-            margin: 1rem 0;
-            word-break: break-all;
-            background: #111;
-        }
-
-        /* File Transfer UI */
-        .progress-bar {
-            height: 4px;
-            background: var(--dim);
-            margin-top: 0.5rem;
-            width: 100%;
-            position: relative;
-        }
-        .progress-fill {
-            height: 100%;
-            background: var(--fg);
-            width: 0%;
-            transition: width 0.1s linear;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border: 1px solid var(--fg);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            margin-left: 0.5rem;
-        }
-        .status-connected { background: var(--fg); color: var(--bg); }
-        .status-disconnected { border-color: var(--dim); color: var(--dim); }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+        .btn {
             background: var(--fg);
             color: var(--bg);
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            z-index: 100;
+            border: 1px solid var(--fg);
+            padding: 14px;
+            font-family: var(--font-stack);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: transform 0.1s;
         }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background: var(--border); border-color: var(--border); color: var(--dim); cursor: not-allowed; }
+        .btn.outline { background: transparent; color: var(--fg); }
+        .btn.outline:hover { background: rgba(255,255,255,0.1); }
+        .btn.danger { border-color: #ff3333; color: #ff3333; background: transparent; }
 
-        /* Utilities */
-        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        input[type="text"] {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            color: var(--fg);
+            padding: 15px;
+            font-family: var(--font-stack);
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        input[type="text"]:focus { border-color: var(--fg); }
+
+        /* SPECIFIC MODULES */
+        /* Status Badge */
+        .status-dot { width: 8px; height: 8px; background: var(--dim); border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .status-dot.active { background: #00ff00; box-shadow: 0 0 10px rgba(0,255,0,0.5); }
+        .status-dot.error { background: #ff3333; }
+
+        /* ID Badge */
+        .my-id { font-size: 32px; font-weight: 700; letter-spacing: 4px; margin: 10px 0; word-break: break-all; }
+
+        /* QR Area */
+        #qr-target { background: white; padding: 10px; display: inline-block; margin: 15px auto; }
+        #qr-target img { display: block; }
         
-        /* Mobile specific */
+        /* Scanner */
+        #reader { width: 100%; border: 1px solid var(--border); overflow: hidden; margin-bottom: 15px; }
+        #reader video { object-fit: cover; }
+
+        /* Transfer UI */
+        .transfer-item { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); }
+        .progress-track { background: var(--border); height: 4px; width: 100%; margin: 10px 0; overflow: hidden; }
+        .progress-fill { background: var(--fg); height: 100%; width: 0%; transition: width 0.2s linear; }
+        
+        /* Drag Overlay */
+        #drag-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            border: 2px dashed var(--fg);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            pointer-events: none; /* Let events pass through initially */
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        #drag-overlay.active { opacity: 1; pointer-events: all; }
+        .drop-icon { font-size: 48px; margin-bottom: 20px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--fg); color: var(--bg);
+            padding: 12px 24px; font-weight: 600;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            z-index: 1000; text-align: center; min-width: 200px;
+        }
+        .toast.show { opacity: 1; }
+
         @media (max-width: 480px) {
-            h1 { font-size: 1.2rem; }
-            .card { padding: 1rem; }
-            .id-badge { font-size: 1.5rem; }
+            .container { padding: 15px; }
+            .my-id { font-size: 24px; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header class="flex-row">
-        <h1>GhostShare</h1>
-        <div id="connectionStatus" class="status-badge status-disconnected">Disconnected</div>
-    </header>
+    <!-- DRAG DROP OVERLAY -->
+    <div id="drag-overlay">
+        <div class="drop-icon">⇩</div>
+        <h1>Drop files to send</h1>
+    </div>
 
-    <!-- VIEW: SETUP -->
-    <div id="view-setup" class="fade-in">
-        <div class="card" style="text-align: center;">
-            <p>YOUR ID</p>
-            <div id="my-id-display" class="id-badge">...</div>
-            <small>Share this ID with your peer</small>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="flex-row">
+            <div>
+                GHOSTSHARE <span style="color: var(--dim); font-size: 10px;">v2.0</span>
+            </div>
+            <div class="flex-row">
+                <div id="status-dot" class="status-dot"></div>
+                <span id="status-text" class="mono-stat" style="font-size: 10px; text-transform: uppercase;">Initializing</span>
+            </div>
+        </header>
+
+        <!-- VIEW: IDENTITY -->
+        <div id="view-identity" class="card center fade-in">
+            <h2>Your Identity</h2>
+            <div id="my-id" class="my-id">...</div>
+            <p>Share this ID to receive files.</p>
             
-            <div id="qr-container" class="qr-container hidden"></div>
-            
-            <div style="margin-top: 1rem;">
-                <button class="btn btn-small" onclick="app.copyId()">Copy ID</button>
-                <button class="btn btn-small" onclick="app.toggleQR()">Show QR</button>
+            <div id="qr-target" class="hidden"></div>
+
+            <div class="flex-row" style="margin-top: 15px;">
+                <button class="btn outline" onclick="app.copyId()">Copy</button>
+                <button class="btn outline" onclick="app.toggleQr()">QR Code</button>
             </div>
         </div>
 
-        <div class="card">
-            <p>CONNECT TO PEER</p>
+        <!-- VIEW: CONNECT -->
+        <div id="view-connect" class="card fade-in">
+            <h2>Establish Link</h2>
             
-            <div id="reader"></div>
+            <!-- Scanner View -->
+            <div id="reader-container" class="hidden">
+                <div id="reader"></div>
+                <button class="btn outline" onclick="app.stopScanner()" style="margin-bottom: 10px;">Cancel Scan</button>
+            </div>
 
-            <div class="input-group">
-                <input type="text" id="peer-id-input" placeholder="ENTER PEER ID" maxlength="6">
+            <!-- Manual Input -->
+            <div id="input-container">
+                <input type="text" id="peer-id-input" placeholder="PEER ID" maxlength="6" autocomplete="off" autocorrect="off">
+                <div class="flex-row">
+                    <button class="btn" id="btn-connect" onclick="app.connect()">Connect</button>
+                    <button class="btn outline" onclick="app.startScanner()" style="width: auto;" aria-label="Scan QR">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                            <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                            <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                            <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                            <rect x="7" y="7" width="10" height="10"></rect>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            
-            <div class="flex-row" style="gap: 10px;">
-                <button class="btn" id="connect-btn" onclick="app.connectToPeer()" style="margin-bottom: 0;">Connect</button>
-                <button class="btn" id="scan-btn" onclick="app.toggleScanner()" style="margin-bottom: 0; width: auto;">Scan QR</button>
-            </div>
-            
-            <small style="text-align: center; margin-top: 1rem;">Connection establishes a direct P2P tunnel.</small>
         </div>
 
-        <div style="margin-top: 2rem; text-align: center; font-size: 0.8rem; color: #666;">
-            <p>Files are transferred directly between devices.</p>
-            <p>No servers. No history.</p>
+        <!-- VIEW: TRANSFER ZONE (Hidden until connected) -->
+        <div id="view-transfer" class="card hidden fade-in">
+            <div class="flex-row">
+                <h2>Secure Channel Active</h2>
+                <button class="btn outline" style="width: auto; padding: 5px 10px; font-size: 10px;" onclick="app.disconnect()">Disconnect</button>
+            </div>
+            
+            <div class="center" style="border: 2px dashed var(--border); padding: 30px; margin: 20px 0; cursor: pointer;" onclick="document.getElementById('file-input').click()">
+                <p><strong>Click to Select</strong> or Drag Files Here</p>
+                <input type="file" id="file-input" style="display: none" multiple onchange="app.handleFiles(this.files)">
+            </div>
+
+            <div id="transfer-list" class="flex-col">
+                <!-- Transfers injected via JS -->
+            </div>
+        </div>
+
+        <div style="margin-top: auto; text-align: center;">
+            <p style="font-size: 10px;">End-to-End Encrypted via WebRTC. No Server Storage.</p>
         </div>
     </div>
 
-    <!-- VIEW: TRANSFER -->
-    <div id="view-transfer" class="hidden fade-in">
-        <div class="card">
-            <h3>Send File</h3>
-            <input type="file" id="fileInput" style="display: none" onchange="app.handleFileSelect(this)">
-            <button class="btn" onclick="document.getElementById('fileInput').click()">Select File</button>
-            <small>Supports any file type. Secure P2P Pipeline.</small>
-        </div>
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast">Notification</div>
 
-        <div id="transfers-list">
-            <!-- Transfers injected here -->
-        </div>
-    </div>
+    <script>
+        /**
+         * GHOSTSHARE CORE LOGIC
+         * Architecture: Single Class Controller
+         * Protocol: PeerJS (Signaling) -> WebRTC DataChannel (Transfer)
+         */
 
-</div>
-
-<script>
-/**
- * GHOSTSHARE 2.0
- * Uses PeerJS for lightweight signaling (free seeding) to enable Short ID connections.
- * Data transfer remains strictly Peer-to-Peer via WebRTC DataChannels.
- */
-
-const CHUNK_SIZE = 16384; // 16KB chunks for reliable progress tracking
-
-// Utility: Visual toast
-function showToast(msg) {
-    const el = document.createElement('div');
-    el.className = 'toast fade-in';
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 3000);
-}
-
-// Utility: Byte formatting
-function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-class GhostShare {
-    constructor() {
-        this.peer = null;
-        this.conn = null;
-        this.myId = '';
-        this.transfers = {}; // id -> transferObj
-        this.scanner = null; // Html5Qrcode instance
-        this.isScanning = false;
-        
-        this.el = {
-            status: document.getElementById('connectionStatus'),
-            myId: document.getElementById('my-id-display'),
-            peerInput: document.getElementById('peer-id-input'),
-            qr: document.getElementById('qr-container'),
-            transfersList: document.getElementById('transfers-list'),
-            connectBtn: document.getElementById('connect-btn'),
-            scanBtn: document.getElementById('scan-btn'),
-            reader: document.getElementById('reader')
+        // CONFIGURATION
+        const CONFIG = {
+            CHUNK_SIZE: 16 * 1024, // 16KB (Safe for all browsers)
+            BUFFER_THRESHOLD: 1024 * 1024, // 1MB Backpressure limit
+            ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }] // Public Google STUN
         };
 
-        this.initPeer();
-    }
-
-    // --- INITIALIZATION & ID GENERATION ---
-
-    generateShortId() {
-        // Generate a random 6-character alphanumeric ID
-        return Math.random().toString(36).substr(2, 6).toUpperCase();
-    }
-
-    initPeer() {
-        this.myId = this.generateShortId();
-        this.el.myId.textContent = this.myId;
-        this.generateQR(this.myId);
-
-        // Initialize PeerJS with public free signaling server
-        this.peer = new Peer(this.myId, {
-            debug: 2,
-            config: {
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            }
-        });
-
-        this.peer.on('open', (id) => {
-            console.log('My ID:', id);
-            this.el.status.textContent = 'Ready';
-        });
-
-        this.peer.on('connection', (conn) => {
-            this.handleConnection(conn);
-        });
-
-        this.peer.on('error', (err) => {
-            console.error(err);
-            if (err.type === 'peer-unavailable') {
-                showToast("Peer ID not found or offline.");
-                this.resetUI();
-            } else {
-                showToast("Connection Error: " + err.type);
-            }
-        });
-    }
-
-    // --- CONNECTION HANDLING ---
-
-    connectToPeer() {
-        const peerId = this.el.peerInput.value.trim().toUpperCase();
-        if (!peerId) return showToast("Enter a Peer ID");
-        if (peerId === this.myId) return showToast("Cannot connect to yourself");
-
-        this.el.connectBtn.disabled = true;
-        this.el.connectBtn.textContent = "Connecting...";
-
-        const conn = this.peer.connect(peerId, {
-            reliable: true
-        });
-
-        this.handleConnection(conn);
-    }
-
-    handleConnection(conn) {
-        this.conn = conn;
-
-        this.conn.on('open', () => {
-            this.el.status.className = 'status-badge status-connected';
-            this.el.status.textContent = 'Connected';
-            showToast("Connected to " + this.conn.peer);
-            
-            // Switch view
-            document.getElementById('view-setup').classList.add('hidden');
-            document.getElementById('view-transfer').classList.remove('hidden');
-        });
-
-        this.conn.on('data', (data) => this.handleData(data));
-        
-        this.conn.on('close', () => {
-            showToast("Connection Closed");
-            this.resetApp();
-        });
-    }
-
-    resetApp() {
-        location.reload();
-    }
-
-    resetUI() {
-        this.el.connectBtn.disabled = false;
-        this.el.connectBtn.textContent = "Connect";
-    }
-
-    // --- UI HELPERS ---
-
-    copyId() {
-        navigator.clipboard.writeText(this.myId).then(() => showToast("ID Copied"));
-    }
-
-    toggleQR() {
-        this.el.qr.classList.toggle('hidden');
-    }
-
-    toggleScanner() {
-        if (this.isScanning) {
-            this.stopScanner();
-        } else {
-            this.startScanner();
-        }
-    }
-
-    startScanner() {
-        this.el.reader.classList.add('active');
-        this.el.scanBtn.textContent = "Stop Scan";
-        this.isScanning = true;
-
-        this.scanner = new Html5Qrcode("reader");
-        
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-        
-        this.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
-            // Success callback
-            this.el.peerInput.value = decodedText;
-            this.stopScanner();
-            showToast("ID Scanned");
-        }, (errorMessage) => {
-            // Parse error, ignore to avoid console spam
-        }).catch(err => {
-            console.error(err);
-            showToast("Camera access failed");
-            this.stopScanner();
-        });
-    }
-
-    stopScanner() {
-        if (this.scanner) {
-            this.scanner.stop().then(() => {
-                this.scanner.clear();
-                this.el.reader.classList.remove('active');
-                this.el.scanBtn.textContent = "Scan QR";
-                this.isScanning = false;
+        class GhostShare {
+            constructor() {
+                this.peer = null;
+                this.conn = null;
+                this.myId = null;
+                this.transfers = {}; // Map<id, TransferObject>
                 this.scanner = null;
-            }).catch(err => console.error("Failed to stop scanner", err));
-        }
-    }
 
-    generateQR(text) {
-        this.el.qr.innerHTML = '';
-        try {
-            new QRCode(this.el.qr, {
-                text: text,
-                width: 128,
-                height: 128,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.L
-            });
-        } catch(e) {
-            this.el.qr.innerHTML = '<small>QR Error</small>';
-        }
-    }
+                // DOM Elements
+                this.dom = {
+                    statusDot: document.getElementById('status-dot'),
+                    statusText: document.getElementById('status-text'),
+                    myId: document.getElementById('my-id'),
+                    peerInput: document.getElementById('peer-id-input'),
+                    qrTarget: document.getElementById('qr-target'),
+                    viewIdentity: document.getElementById('view-identity'),
+                    viewConnect: document.getElementById('view-connect'),
+                    viewTransfer: document.getElementById('view-transfer'),
+                    transferList: document.getElementById('transfer-list'),
+                    dragOverlay: document.getElementById('drag-overlay'),
+                    toast: document.getElementById('toast'),
+                    btnConnect: document.getElementById('btn-connect')
+                };
 
-    // --- FILE TRANSFER ---
-
-    handleFileSelect(input) {
-        const file = input.files[0];
-        if (!file) return;
-        this.sendFile(file);
-        input.value = '';
-    }
-
-    sendFile(file) {
-        if (!this.conn || !this.conn.open) return showToast("Connection lost");
-
-        const fileId = Date.now().toString();
-        this.createTransferUI(fileId, file.name, file.size, true);
-
-        // 1. Send Metadata
-        this.conn.send({
-            type: 'meta',
-            id: fileId,
-            name: file.name,
-            size: file.size,
-            mime: file.type
-        });
-
-        // 2. Chunked sending
-        const fileReader = new FileReader();
-        let offset = 0;
-
-        fileReader.onload = (e) => {
-            if (!this.transfers[fileId].active) return;
-            
-            // Send chunk wrapped in object to distinguish from control messages
-            // PeerJS handles serialization
-            this.conn.send({
-                type: 'chunk',
-                id: fileId,
-                data: e.target.result // ArrayBuffer
-            });
-
-            offset += e.target.result.byteLength;
-            this.updateProgress(fileId, offset, file.size);
-
-            if (offset < file.size) {
-                // Simple flow control: wait a tick
-                // For a robust app, we'd check bufferedAmount, but PeerJS abstracts this.
-                // We use setTimeout to prevent freezing the UI on large files.
-                setTimeout(readSlice, 5); 
-            } else {
-                this.updateStatus(fileId, "Sent");
+                this.init();
+                this.setupDragDrop();
             }
-        };
 
-        const readSlice = () => {
-            const slice = file.slice(offset, offset + CHUNK_SIZE);
-            fileReader.readAsArrayBuffer(slice);
-        };
+            // --- INITIALIZATION ---
 
-        readSlice();
-    }
+            init() {
+                // Generate short ID
+                this.myId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                this.dom.myId.innerText = this.myId;
+                this.generateQr(this.myId);
 
-    handleData(data) {
-        if (data.type === 'meta') {
-            this.transfers[data.id] = {
-                fileName: data.name,
-                fileSize: data.size,
-                fileType: data.mime,
-                receivedSize: 0,
-                buffer: [],
-                active: true
-            };
-            this.createTransferUI(data.id, data.name, data.size, false);
-        
-        } else if (data.type === 'chunk') {
-            const t = this.transfers[data.id];
-            if (t && t.active) {
-                t.buffer.push(data.data);
-                t.receivedSize += data.data.byteLength;
+                // Init PeerJS
+                this.peer = new Peer(this.myId, {
+                    debug: 1,
+                    config: { iceServers: CONFIG.ICE_SERVERS }
+                });
+
+                this.peer.on('open', (id) => {
+                    this.setStatus('Ready', 'active');
+                });
+
+                this.peer.on('connection', (conn) => {
+                    if(this.conn) {
+                        conn.close(); // Only one peer allowed
+                        return;
+                    }
+                    this.handleConnection(conn);
+                });
+
+                this.peer.on('error', (err) => {
+                    console.error(err);
+                    this.notify(`Error: ${err.type}`);
+                    this.setStatus('Error', 'error');
+                    this.dom.btnConnect.disabled = false;
+                    this.dom.btnConnect.innerText = "Connect";
+                });
+            }
+
+            // --- CONNECTION HANDLING ---
+
+            connect() {
+                const peerId = this.dom.peerInput.value.trim().toUpperCase();
+                if (!peerId) return this.notify("Please enter a Peer ID");
+                if (peerId === this.myId) return this.notify("Cannot connect to yourself");
+
+                this.dom.btnConnect.disabled = true;
+                this.dom.btnConnect.innerText = "Connecting...";
+                this.setStatus('Connecting...', 'active');
+
+                const conn = this.peer.connect(peerId, { reliable: true });
+                this.handleConnection(conn);
+            }
+
+            handleConnection(conn) {
+                this.conn = conn;
                 
-                this.updateProgress(data.id, t.receivedSize, t.fileSize);
+                // Connection Events
+                conn.on('open', () => {
+                    this.setStatus('Connected', 'active');
+                    this.notify(`Linked with ${conn.peer}`);
+                    this.switchView(true);
+                    this.dom.btnConnect.innerText = "Connect"; // Reset for future
+                    this.dom.btnConnect.disabled = false;
+                });
 
-                if (t.receivedSize >= t.fileSize) {
-                    this.finalizeDownload(data.id);
+                conn.on('data', (data) => this.handleData(data));
+
+                conn.on('close', () => {
+                    this.notify("Peer Disconnected");
+                    this.disconnect();
+                });
+
+                conn.on('error', () => {
+                    this.notify("Connection Error");
+                    this.disconnect();
+                });
+            }
+
+            disconnect() {
+                if (this.conn) {
+                    this.conn.close();
+                    this.conn = null;
+                }
+                this.switchView(false);
+                this.setStatus('Ready', 'active');
+                this.dom.transferList.innerHTML = '';
+                this.transfers = {};
+            }
+
+            // --- DATA TRANSFER PROTOCOL ---
+
+            handleFiles(fileList) {
+                if (!this.conn) return this.notify("Not connected");
+                
+                Array.from(fileList).forEach(file => {
+                    this.startUpload(file);
+                });
+            }
+
+            async startUpload(file) {
+                const transferId = Date.now() + Math.random().toString(36);
+                
+                // 1. Create UI
+                this.createTransferUI(transferId, file.name, file.size, 'upload');
+
+                // 2. Send Metadata
+                this.conn.send({
+                    type: 'meta',
+                    id: transferId,
+                    name: file.name,
+                    size: file.size,
+                    mime: file.type
+                });
+
+                // 3. Start Chunked Upload
+                const reader = new FileReader();
+                let offset = 0;
+                
+                const readNextChunk = () => {
+                    // Check cancellation
+                    if (!this.transfers[transferId] || this.transfers[transferId].cancelled) return;
+
+                    // Backpressure Check (Flow Control)
+                    if (this.conn.dataChannel.bufferedAmount > CONFIG.BUFFER_THRESHOLD) {
+                        setTimeout(readNextChunk, 50); // Wait for buffer to drain
+                        return;
+                    }
+
+                    const slice = file.slice(offset, offset + CONFIG.CHUNK_SIZE);
+                    reader.readAsArrayBuffer(slice);
+                };
+
+                reader.onload = (e) => {
+                    const chunk = e.target.result;
+                    
+                    // Send chunk wrapper
+                    this.conn.send({
+                        type: 'chunk',
+                        id: transferId,
+                        data: chunk
+                    });
+
+                    offset += chunk.byteLength;
+                    this.updateProgress(transferId, offset, file.size);
+
+                    if (offset < file.size) {
+                        readNextChunk();
+                    } else {
+                        // Complete
+                        this.finishTransfer(transferId);
+                    }
+                };
+
+                readNextChunk();
+            }
+
+            handleData(pkg) {
+                // Route packet based on type
+                if (pkg.type === 'meta') {
+                    this.transfers[pkg.id] = {
+                        name: pkg.name,
+                        size: pkg.size,
+                        mime: pkg.mime,
+                        received: 0,
+                        buffer: [],
+                        startTime: Date.now(),
+                        lastUpdate: Date.now(),
+                        lastBytes: 0
+                    };
+                    this.createTransferUI(pkg.id, pkg.name, pkg.size, 'download');
+                
+                } else if (pkg.type === 'chunk') {
+                    const t = this.transfers[pkg.id];
+                    if (!t || t.cancelled) return;
+
+                    t.buffer.push(pkg.data);
+                    t.received += pkg.data.byteLength;
+                    
+                    this.updateProgress(pkg.id, t.received, t.size);
+
+                    if (t.received >= t.size) {
+                        this.assembleFile(pkg.id);
+                    }
+                
+                } else if (pkg.type === 'cancel') {
+                    this.markCancelled(pkg.id);
                 }
             }
-        
-        } else if (data.type === 'cancel') {
-            if (this.transfers[data.id]) {
-                this.transfers[data.id].active = false;
-                this.updateStatus(data.id, "Cancelled by peer");
+
+            assembleFile(id) {
+                const t = this.transfers[id];
+                const blob = new Blob(t.buffer, { type: t.mime });
+                const url = URL.createObjectURL(blob);
+                
+                // Auto Download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = t.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Cleanup Memory
+                t.buffer = null; // Free array buffer
+                this.finishTransfer(id);
+                setTimeout(() => URL.revokeObjectURL(url), 30000);
+            }
+
+            // --- UI RENDERING ---
+
+            createTransferUI(id, name, size, type) {
+                this.transfers[id] = this.transfers[id] || {};
+                this.transfers[id].startTime = Date.now();
+                this.transfers[id].lastUpdate = Date.now();
+                this.transfers[id].lastBytes = 0;
+
+                const div = document.createElement('div');
+                div.className = 'transfer-item fade-in';
+                div.id = `ui-${id}`;
+                div.innerHTML = `
+                    <div class="flex-row">
+                        <strong>${type === 'upload' ? '↑ SENT' : '↓ RECV'}</strong>
+                        <span style="font-size: 12px; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${name}</span>
+                        <span class="mono-stat">${this.formatBytes(size)}</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="bar-${id}"></div>
+                    </div>
+                    <div class="flex-row">
+                        <span id="speed-${id}" class="mono-stat" style="font-size: 10px; color: var(--dim);">Calculating...</span>
+                        <button class="btn danger" style="padding: 4px 8px; font-size: 10px; width: auto;" onclick="app.cancelTransfer('${id}')">CANCEL</button>
+                    </div>
+                `;
+                this.dom.transferList.prepend(div);
+            }
+
+            updateProgress(id, current, total) {
+                const pct = Math.min(100, (current / total) * 100);
+                const bar = document.getElementById(`bar-${id}`);
+                const speedLabel = document.getElementById(`speed-${id}`);
+                
+                if (bar) bar.style.width = `${pct}%`;
+
+                // Update Speed every 500ms
+                const now = Date.now();
+                const t = this.transfers[id];
+                if (t && now - t.lastUpdate > 500) {
+                    const deltaBytes = current - t.lastBytes;
+                    const deltaTime = (now - t.lastUpdate) / 1000;
+                    const speed = deltaBytes / deltaTime; // bytes per sec
+                    
+                    if (speedLabel) speedLabel.innerText = `${this.formatBytes(speed)}/s`;
+                    
+                    t.lastUpdate = now;
+                    t.lastBytes = current;
+                }
+            }
+
+            finishTransfer(id) {
+                const speedLabel = document.getElementById(`speed-${id}`);
+                if (speedLabel) {
+                    speedLabel.innerText = "Completed";
+                    speedLabel.style.color = "#00ff00";
+                }
+                // Cleanup ref
+                if(this.transfers[id]) this.transfers[id].cancelled = true; // prevent further chunks
+            }
+
+            cancelTransfer(id) {
+                if (this.conn) this.conn.send({ type: 'cancel', id });
+                this.markCancelled(id);
+            }
+
+            markCancelled(id) {
+                if (this.transfers[id]) {
+                    this.transfers[id].cancelled = true;
+                    this.transfers[id].buffer = null; // Free memory
+                }
+                const el = document.getElementById(`ui-${id}`);
+                if (el) {
+                    el.style.opacity = '0.5';
+                    const label = document.getElementById(`speed-${id}`);
+                    if(label) label.innerText = "Cancelled";
+                }
+            }
+
+            // --- UTILITIES ---
+
+            switchView(isConnected) {
+                if (isConnected) {
+                    this.dom.viewIdentity.classList.add('hidden');
+                    this.dom.viewConnect.classList.add('hidden');
+                    this.dom.viewTransfer.classList.remove('hidden');
+                } else {
+                    this.dom.viewIdentity.classList.remove('hidden');
+                    this.dom.viewConnect.classList.remove('hidden');
+                    this.dom.viewTransfer.classList.add('hidden');
+                }
+            }
+
+            setupDragDrop() {
+                // Global Drag events
+                window.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if(this.conn) this.dom.dragOverlay.classList.add('active');
+                });
+
+                this.dom.dragOverlay.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    this.dom.dragOverlay.classList.remove('active');
+                });
+
+                this.dom.dragOverlay.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.dom.dragOverlay.classList.remove('active');
+                    if(e.dataTransfer.files.length > 0) {
+                        this.handleFiles(e.dataTransfer.files);
+                    }
+                });
+            }
+
+            // QR & Camera
+            generateQr(text) {
+                this.dom.qrTarget.innerHTML = '';
+                try {
+                    new QRCode(this.dom.qrTarget, {
+                        text: text, width: 128, height: 128,
+                        colorDark : "#000000", colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.L
+                    });
+                } catch(e) {}
+            }
+
+            toggleQr() {
+                this.dom.qrTarget.classList.toggle('hidden');
+            }
+
+            copyId() {
+                navigator.clipboard.writeText(this.myId);
+                this.notify("ID Copied");
+            }
+
+            startScanner() {
+                const readerDiv = document.getElementById('reader-container');
+                readerDiv.classList.remove('hidden');
+                
+                this.scanner = new Html5Qrcode("reader");
+                this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+                    (decoded) => {
+                        this.dom.peerInput.value = decoded;
+                        this.stopScanner();
+                        this.notify("QR Scanned");
+                        this.connect();
+                    }
+                ).catch(err => this.notify("Camera access denied"));
+            }
+
+            stopScanner() {
+                if(this.scanner) {
+                    this.scanner.stop().then(() => {
+                        this.scanner.clear();
+                        document.getElementById('reader-container').classList.add('hidden');
+                    });
+                } else {
+                    document.getElementById('reader-container').classList.add('hidden');
+                }
+            }
+
+            // Helpers
+            notify(msg) {
+                this.dom.toast.innerText = msg;
+                this.dom.toast.classList.add('show');
+                setTimeout(() => this.dom.toast.classList.remove('show'), 3000);
+            }
+
+            setStatus(text, type) {
+                this.dom.statusText.innerText = text;
+                this.dom.statusDot.className = `status-dot ${type}`;
+            }
+
+            formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
         }
-    }
 
-    finalizeDownload(id) {
-        const t = this.transfers[id];
-        t.active = false;
-        const blob = new Blob(t.buffer, { type: t.fileType });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = t.fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        this.updateStatus(id, "Downloaded");
-        setTimeout(() => URL.revokeObjectURL(url), 10000); 
-    }
+        // BOOT
+        window.app = new GhostShare();
 
-    // --- TRANSFER UI ---
+        // Safety Prompt
+        window.onbeforeunload = () => window.app.conn ? "Transfer in progress" : undefined;
 
-    createTransferUI(id, name, size, isSender) {
-        this.transfers[id] = this.transfers[id] || {};
-        this.transfers[id].active = true;
-
-        const el = document.createElement('div');
-        el.className = 'card fade-in';
-        el.id = `ui-${id}`;
-        el.innerHTML = `
-            <div class="flex-row">
-                <strong>${isSender ? 'Sending:' : 'Receiving:'} ${name}</strong>
-                <small>${formatBytes(size)}</small>
-            </div>
-            <div class="progress-bar"><div class="progress-fill" id="bar-${id}"></div></div>
-            <div class="flex-row" style="margin-top: 5px;">
-                <small id="stat-${id}">Preparing...</small>
-                <button class="btn btn-small" onclick="app.cancelTransfer('${id}')" style="width: auto;">Cancel</button>
-            </div>
-        `;
-        this.el.transfersList.prepend(el);
-    }
-
-    updateProgress(id, current, total) {
-        const pct = Math.round((current / total) * 100);
-        const bar = document.getElementById(`bar-${id}`);
-        const stat = document.getElementById(`stat-${id}`);
-        if (bar) bar.style.width = `${pct}%`;
-        if (stat) stat.textContent = `${pct}%`;
-    }
-
-    updateStatus(id, msg) {
-        const stat = document.getElementById(`stat-${id}`);
-        if (stat) stat.textContent = msg;
-    }
-
-    cancelTransfer(id) {
-        if (this.transfers[id]) {
-            this.transfers[id].active = false;
-            this.updateStatus(id, "Cancelled");
-            if (this.conn && this.conn.open) {
-                this.conn.send({ type: 'cancel', id: id });
-            }
-        }
-    }
-}
-
-// Init App
-const app = new GhostShare();
-
-// Prevent accidental navigation
-window.onbeforeunload = function() {
-    if (app.conn && app.conn.open) {
-        return "Active connection will be lost.";
-    }
-};
-</script>
+    </script>
 </body>
 </html>
-
 
 
