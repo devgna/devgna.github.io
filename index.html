@@ -6,6 +6,7 @@
     <title>GhostShare | Anonymous P2P Transfer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --bg: #000000;
@@ -84,6 +85,17 @@
             border-radius: 4px;
         }
         .qr-container canvas { display: block; }
+
+        /* Scanner */
+        #reader {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--dim);
+            margin-bottom: 1rem;
+            display: none; /* hidden by default, toggled via JS */
+        }
+        #reader.active { display: block; }
+        #reader video { object-fit: cover; width: 100% !important; border-radius: 4px; }
 
         /* ID Badge */
         .id-badge {
@@ -171,11 +183,19 @@
 
         <div class="card">
             <p>CONNECT TO PEER</p>
+            
+            <div id="reader"></div>
+
             <div class="input-group">
                 <input type="text" id="peer-id-input" placeholder="ENTER PEER ID" maxlength="6">
             </div>
-            <button class="btn" id="connect-btn" onclick="app.connectToPeer()">Connect</button>
-            <small style="text-align: center;">Connection establishes a direct P2P tunnel.</small>
+            
+            <div class="flex-row" style="gap: 10px;">
+                <button class="btn" id="connect-btn" onclick="app.connectToPeer()" style="margin-bottom: 0;">Connect</button>
+                <button class="btn" id="scan-btn" onclick="app.toggleScanner()" style="margin-bottom: 0; width: auto;">Scan QR</button>
+            </div>
+            
+            <small style="text-align: center; margin-top: 1rem;">Connection establishes a direct P2P tunnel.</small>
         </div>
 
         <div style="margin-top: 2rem; text-align: center; font-size: 0.8rem; color: #666;">
@@ -234,6 +254,8 @@ class GhostShare {
         this.conn = null;
         this.myId = '';
         this.transfers = {}; // id -> transferObj
+        this.scanner = null; // Html5Qrcode instance
+        this.isScanning = false;
         
         this.el = {
             status: document.getElementById('connectionStatus'),
@@ -241,7 +263,9 @@ class GhostShare {
             peerInput: document.getElementById('peer-id-input'),
             qr: document.getElementById('qr-container'),
             transfersList: document.getElementById('transfers-list'),
-            connectBtn: document.getElementById('connect-btn')
+            connectBtn: document.getElementById('connect-btn'),
+            scanBtn: document.getElementById('scan-btn'),
+            reader: document.getElementById('reader')
         };
 
         this.initPeer();
@@ -342,6 +366,49 @@ class GhostShare {
 
     toggleQR() {
         this.el.qr.classList.toggle('hidden');
+    }
+
+    toggleScanner() {
+        if (this.isScanning) {
+            this.stopScanner();
+        } else {
+            this.startScanner();
+        }
+    }
+
+    startScanner() {
+        this.el.reader.classList.add('active');
+        this.el.scanBtn.textContent = "Stop Scan";
+        this.isScanning = true;
+
+        this.scanner = new Html5Qrcode("reader");
+        
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        this.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
+            // Success callback
+            this.el.peerInput.value = decodedText;
+            this.stopScanner();
+            showToast("ID Scanned");
+        }, (errorMessage) => {
+            // Parse error, ignore to avoid console spam
+        }).catch(err => {
+            console.error(err);
+            showToast("Camera access failed");
+            this.stopScanner();
+        });
+    }
+
+    stopScanner() {
+        if (this.scanner) {
+            this.scanner.stop().then(() => {
+                this.scanner.clear();
+                this.el.reader.classList.remove('active');
+                this.el.scanBtn.textContent = "Scan QR";
+                this.isScanning = false;
+                this.scanner = null;
+            }).catch(err => console.error("Failed to stop scanner", err));
+        }
     }
 
     generateQR(text) {
@@ -529,5 +596,6 @@ window.onbeforeunload = function() {
 </script>
 </body>
 </html>
+
 
 
