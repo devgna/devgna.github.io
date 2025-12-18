@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OPTILINK v1.1 // ROBUST TRANSPORT</title>
+    <title>OPTILINK v1.2 // ROBUST TRANSPORT</title>
     
     <!-- External Libraries (CDNs) -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -202,21 +202,42 @@
             border: 2px solid var(--term-cyan);
             background: #000;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         video {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            opacity: 0.7;
+            object-fit: contain; /* Changed from cover to contain for scanning accuracy */
+            opacity: 0.8;
         }
+
+        /* Scanning Reticle */
+        #scan-target {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 5;
+            transition: border-color 0.1s;
+        }
+        #scan-target.active { border-color: var(--term-cyan); box-shadow: 0 0 20px var(--term-cyan), 0 0 0 2000px rgba(0,0,0,0.5); }
+        #scan-target::before, #scan-target::after {
+            content: ''; position: absolute; width: 20px; height: 20px;
+            border-color: var(--term-cyan); border-style: solid;
+        }
+        #scan-target::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+        #scan-target::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
 
         #visualizer-overlay {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
             display: grid;
-            /* Grid cols set via JS based on aspect */
             gap: 1px;
             pointer-events: none;
             mix-blend-mode: screen;
@@ -225,15 +246,15 @@
 
         .vis-cell { 
             background: rgba(0, 20, 20, 0.3); 
-            border: 1px solid rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.05);
         }
         .vis-cell.done { 
-            background: rgba(0, 255, 0, 0.4); 
+            background: rgba(0, 255, 0, 0.6); 
             border-color: var(--term-green);
             box-shadow: 0 0 5px var(--term-green);
         }
         .vis-cell.missing { 
-            background: rgba(255, 0, 60, 0.2); 
+            background: rgba(255, 0, 60, 0.3); 
             border-color: var(--term-red);
         }
         
@@ -333,13 +354,14 @@
             <!-- Screen 3: Receiver -->
             <div id="screen-receiver" class="screen">
                 <div id="scanner-container">
+                    <div id="scan-target"></div>
                     <video id="scan-video" playsinline></video>
                     <canvas id="scan-canvas" hidden></canvas>
                     <div id="visualizer-overlay"></div>
                 </div>
                 <div style="margin-top: 10px; text-align:center">
                     <div class="glow-cyan">OPTICAL SENSOR ACTIVE</div>
-                    <div style="font-size: 0.8rem; color: #666">ALIGN QR WITHIN FRAME</div>
+                    <div style="font-size: 0.8rem; color: #666">ALIGN QR INSIDE TARGET</div>
                 </div>
             </div>
 
@@ -390,7 +412,7 @@
         const CONFIG = {
             // FIX: Shortened prefix to minimize PeerJS broker issues
             APP_PREFIX: 'ol-v1-',
-            CHUNK_SIZE: 700,         
+            CHUNK_SIZE: 300,        // LOWERED from 700 for better scan reliability 
             QR_CORRECTION: 'L',      
             MIN_FPS: 5,
             MAX_FPS: 30,
@@ -501,6 +523,7 @@
             video: document.getElementById('scan-video'),
             canvas: document.getElementById('scan-canvas'),
             visualizer: document.getElementById('visualizer-overlay'),
+            scanTarget: document.getElementById('scan-target'),
             stats: {
                 state: document.getElementById('stat-state'),
                 speed: document.getElementById('stat-speed'),
@@ -870,14 +893,20 @@
                 ctx.drawImage(ui.video, 0, 0);
 
                 const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-                // Heavy operation, might want to run every other frame on low-end mobile
                 const code = jsQR(imageData.data, imageData.width, imageData.height, {
                     inversionAttempts: "dontInvert",
                 });
 
-                if (code && code.data && code.data !== state.lastFrameHash) {
-                    state.lastFrameHash = code.data; // Simple debounce
-                    processQrData(code.data);
+                if (code) {
+                    // Visual feedback whenever ANY code is detected
+                    ui.scanTarget.classList.add('active');
+                    setTimeout(() => ui.scanTarget.classList.remove('active'), 100);
+
+                    // Process if new or we want to retry
+                    if (code.data && code.data !== state.lastFrameHash) {
+                        state.lastFrameHash = code.data; 
+                        processQrData(code.data);
+                    }
                 }
             }
 
