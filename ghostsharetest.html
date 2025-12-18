@@ -262,14 +262,15 @@
  * AUDIO MODEM IMPLEMENTATION (19kHz FSK)
  * Specs: 19000Hz (0) / 19500Hz (1)
  * Packet: [0xAA HEADER] + [DATA] + [CHECKSUM]
+ * Revised for robustness: 60ms bit time, time-based decoding
  */
 class AudioModem {
     constructor() {
         this.ctx = null;
         this.FREQ_LOW = 19000;
         this.FREQ_HIGH = 19500;
-        this.BIT_TIME = 0.048; // 48ms per bit (~21 baud) - optimized for robustness
-        this.HEADER = 0xAA; // 10101010
+        this.BIT_TIME = 0.060; // 60ms per bit - slower but more robust
+        this.HEADER = 0xAA; 
         this.isBroadcasting = false;
         this.isListening = false;
         this.osc = null;
@@ -296,6 +297,7 @@ class AudioModem {
         let checksum = 0;
         bytes.forEach(b => checksum = (checksum + b) % 255);
         
+        // Add preamble (Header) to help wake up receiver AGC
         const packet = [this.HEADER, ...bytes, checksum];
         const bits = [];
         packet.forEach(byte => {
@@ -312,7 +314,6 @@ class AudioModem {
         const fade = 0.005;
 
         // 3. Schedule Frequencies
-        // Lead-in silence
         gain.gain.setValueAtTime(0, now);
         gain.gain.linearRampToValueAtTime(1, now + fade);
 
@@ -331,7 +332,6 @@ class AudioModem {
         
         this.osc = osc;
         
-        // Loop transmission if still holding button
         osc.onended = () => {
             this.isBroadcasting = false;
             if (this.shouldLoop) this.transmit(text);
@@ -363,7 +363,8 @@ class AudioModem {
 
         const source = ctx.createMediaStreamSource(stream);
         const analyzer = ctx.createAnalyser();
-        analyzer.fftSize = 2048; // Resolution ~23Hz per bin
+        analyzer.fftSize = 2048; 
+        analyzer.smoothingTimeConstant = 0; // Immediate response
         source.connect(analyzer);
 
         const buffer = new Float32Array(analyzer.frequencyBinCount);
@@ -371,9 +372,8 @@ class AudioModem {
 
         // Decoder State
         let bitBuffer = []; 
-        let lastBit = -1;
-        let sameBitCount = 0;
-        const SAMPLES_PER_BIT = 3; // Approx frames per bit duration
+        let currentSignal = null; // 0 or 1
+        let signalStartTime = 0;
         
         const process = () => {
             if (!this.isListening) {
@@ -383,39 +383,59 @@ class AudioModem {
 
             analyzer.getFloatFrequencyData(buffer);
 
-            // Simple Energy Detection
-            // 48000Hz / 2048 = 23.4Hz per bin
-            // 19000 / 23.4 = ~811
-            // 19500 / 23.4 = ~833
+            // Bins logic
             const binLow = Math.floor(this.FREQ_LOW / (ctx.sampleRate / analyzer.fftSize));
             const binHigh = Math.floor(this.FREQ_HIGH / (ctx.sampleRate / analyzer.fftSize));
             
             const p0 = buffer[binLow];
             const p1 = buffer[binHigh];
-            const threshold = -70; // dB
+            const threshold = -85; // Lowered threshold for sensitivity
 
-            let currentBit = -1;
-            if (p0 > threshold && p0 > p1 + 5) currentBit = 0;
-            else if (p1 > threshold && p1 > p0 + 5) currentBit = 1;
+            // Determine dominant frequency
+            let detected = null;
+            if (p0 > threshold && p0 > p1 + 3) detected = 0;
+            else if (p1 > threshold && p1 > p0 + 3) detected = 1;
 
-            // Voting / Debounce
-            if (currentBit !== -1) {
-                if (currentBit === lastBit) sameBitCount++;
-                else { lastBit = currentBit; sameBitCount = 0; }
-            }
+            const now = performance.now();
 
-            // Sample into bit stream if stable
-            if (sameBitCount > SAMPLES_PER_BIT) {
-                // Determine if we need to shift (simple edge detection logic simplified for stream)
-                // For this lightweight version, we just push stable bits but limit rate
-                // A robust PLL is too large, so we use a sliding window packet scanner
-                bitBuffer.push(currentBit);
-                sameBitCount = 0; // Reset to wait for next stable read
-                
-                // Keep buffer manageable size (Header + 12 chars + Sum = ~110 bits. Buffer 200)
-                if (bitBuffer.length > 200) bitBuffer.shift();
+            if (detected !== null) {
+                // Visual feedback check
+                const btn = document.getElementById('btn-listen');
+                if(btn) btn.style.opacity = (Math.floor(now / 100) % 2 === 0) ? '0.7' : '1';
 
-                this.scanBuffer(bitBuffer, onFound);
+                if (currentSignal === null) {
+                    // Start of a new signal block
+                    currentSignal = detected;
+                    signalStartTime = now;
+                } else if (detected !== currentSignal) {
+                    // Transition detected! Calculate how many bits passed
+                    const duration = now - signalStartTime;
+                    const bitCount = Math.round(duration / (this.BIT_TIME * 1000));
+                    
+                    if (bitCount > 0) {
+                        for(let k=0; k<bitCount; k++) bitBuffer.push(currentSignal);
+                        // Manage buffer size
+                        if (bitBuffer.length > 200) bitBuffer = bitBuffer.slice(-200);
+                        this.scanBuffer(bitBuffer, onFound);
+                    }
+
+                    currentSignal = detected;
+                    signalStartTime = now;
+                }
+            } else {
+                // Silence - if we were tracking a signal, flush it
+                if (currentSignal !== null) {
+                    const duration = now - signalStartTime;
+                    const bitCount = Math.round(duration / (this.BIT_TIME * 1000));
+                    if (bitCount > 0) {
+                        for(let k=0; k<bitCount; k++) bitBuffer.push(currentSignal);
+                        if (bitBuffer.length > 200) bitBuffer = bitBuffer.slice(-200);
+                        this.scanBuffer(bitBuffer, onFound);
+                    }
+                    currentSignal = null;
+                }
+                const btn = document.getElementById('btn-listen');
+                if(btn) btn.style.opacity = '1';
             }
 
             requestAnimationFrame(process);
@@ -425,30 +445,29 @@ class AudioModem {
 
     scanBuffer(bits, callback) {
         // Look for Header (0xAA = 10101010)
-        // We scan from the end backwards or reconstruct bytes
-        // Simple approach: Convert last N bits to bytes and check structure
-        
         if (bits.length < 100) return;
 
-        // Try to frame from every possible start position in the buffer
+        // Try to frame from every possible start position
         for (let i = 0; i < bits.length - 80; i++) {
             // Check Header
             let header = 0;
             for(let b=0; b<8; b++) header = (header << 1) | bits[i+b];
             
             if (header === this.HEADER) {
-                // Header found, try decode next 13 bytes (12 ID + 1 Sum)
                 const bytes = [];
                 let ptr = i + 8;
+                let failed = false;
                 
+                // Read 13 bytes (12 ID + 1 Sum)
                 for (let c=0; c<13; c++) {
                     let val = 0;
                     for (let b=0; b<8; b++) {
-                        if (ptr >= bits.length) return;
+                        if (ptr >= bits.length) { failed = true; break; }
                         val = (val << 1) | bits[ptr++];
                     }
                     bytes.push(val);
                 }
+                if (failed) continue;
 
                 // Verify Checksum
                 const receivedSum = bytes.pop();
@@ -458,7 +477,6 @@ class AudioModem {
 
                 if (calcSum === receivedSum) {
                     const id = new TextDecoder().decode(new Uint8Array(payload));
-                    // Basic sanity check for PeerID format
                     if (id.match(/^[A-Z0-9]{12}$/)) {
                         this.stopListen();
                         callback(id);
@@ -471,6 +489,12 @@ class AudioModem {
 
     stopListen() {
         this.isListening = false;
+        const btn = document.getElementById('btn-listen');
+        if(btn) {
+             btn.style.opacity = '1';
+             btn.classList.remove('listening');
+             btn.innerText = "👂 Listen";
+        }
     }
 }
 
