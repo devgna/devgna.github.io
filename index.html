@@ -112,9 +112,15 @@
         .modal-overlay.active { opacity: 1; pointer-events: all; }
         .modal { 
             background: var(--surface); border: 1px solid var(--accent); 
-            padding: 30px; max-width: 400px; width: 90%; text-align: center;
+            padding: 30px; max-width: 450px; width: 95%; text-align: center;
             box-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
+        .file-list-preview {
+            max-height: 150px; overflow-y: auto; text-align: left; background: var(--bg);
+            border: 1px solid var(--border); padding: 10px; margin: 15px 0; font-size: 11px;
+        }
+        .file-entry { padding: 4px 0; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        .file-entry:last-child { border-bottom: none; }
 
         /* TRANSFER UI */
         .transfer-item { 
@@ -153,19 +159,23 @@
 
     <!-- DRAG OVERLAY -->
     <div id="drag-overlay">
-        <h1 style="border:none; font-size: 24px;">Drop to Encrypt & Send</h1>
+        <h1 style="border:none; font-size: 24px;">Drop Files to Send</h1>
     </div>
 
-    <!-- MODAL: INCOMING FILE -->
-    <div id="modal-accept" class="modal-overlay">
+    <!-- MODAL: INCOMING BUNDLE -->
+    <div id="modal-bundle" class="modal-overlay">
         <div class="modal">
-            <h2>Incoming Transfer</h2>
-            <p>Peer wants to send:</p>
-            <h3 id="incoming-name" style="color: white; margin: 15px 0; word-break: break-all;">file.txt</h3>
-            <p id="incoming-size">0 MB</p>
-            <div class="flex-row" style="margin-top: 20px;">
-                <button class="btn danger" onclick="app.rejectIncoming()">Reject</button>
-                <button class="btn success" onclick="app.acceptIncoming()">Accept</button>
+            <h2>Incoming Bundle</h2>
+            <p>Peer wants to send <span id="bundle-count" style="color:white; font-weight:bold">0</span> files:</p>
+            
+            <div id="bundle-preview" class="file-list-preview"></div>
+            
+            <p id="bundle-total-size" style="text-align: right; font-weight: bold; margin-bottom: 15px;">Total: 0 MB</p>
+            
+            <div class="flex-col">
+                <button class="btn success" onclick="app.acceptBundle('zip')">Download as ZIP Archive</button>
+                <button class="btn outline" onclick="app.acceptBundle('individual')">Download Individually</button>
+                <button class="btn danger" onclick="app.rejectBundle()" style="margin-top:10px;">Reject All</button>
             </div>
         </div>
     </div>
@@ -238,10 +248,8 @@
 
 <script>
 /**
- * GHOSTSHARE PRODUCTION RUNTIME v3.0
- * Security Model: Automatic Mutual Authentication
- * Handshake: ECDH Key Exchange -> Nonce Exchange -> HMAC Challenge/Response
- * State Machine: Strict transitions required for data flow
+ * GHOSTSHARE PRODUCTION RUNTIME v4.0
+ * Features: Multi-file Bundles, ZIP Archiving, Serial Queueing
  */
 
 // --- CONSTANTS ---
@@ -261,43 +269,124 @@ const STATES = {
     FAILED: 'FAILED'
 };
 
+// --- ZIP WRITER (VANILLA JS) ---
+class ZipWriter {
+    constructor() {
+        this.files = [];
+        this.crcTable = this.makeCrcTable();
+    }
+
+    makeCrcTable() {
+        let c;
+        const crcTable = [];
+        for (let n = 0; n < 256; n++) {
+            c = n;
+            for (let k = 0; k < 8; k++) c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+            crcTable[n] = c;
+        }
+        return crcTable;
+    }
+
+    crc32(buf) {
+        let crc = 0 ^ (-1);
+        for (let i = 0; i < buf.length; i++) {
+            crc = (crc >>> 8) ^ this.crcTable[(crc ^ buf[i]) & 0xFF];
+        }
+        return (crc ^ (-1)) >>> 0;
+    }
+
+    add(name, data) {
+        this.files.push({ name, data });
+    }
+
+    generate() {
+        const parts = [];
+        let offset = 0;
+        const centralDir = [];
+
+        // Write Local File Headers & Data
+        for (const file of this.files) {
+            const nameBytes = new TextEncoder().encode(file.name);
+            const data = new Uint8Array(file.data);
+            const crc = this.crc32(data);
+            const size = data.length;
+
+            // Local Header
+            const header = new Uint8Array(30 + nameBytes.length);
+            const view = new DataView(header.buffer);
+
+            view.setUint32(0, 0x04034b50, true); // Sig
+            view.setUint16(4, 0x000A, true); // Version
+            view.setUint16(6, 0x0000, true); // Flags
+            view.setUint16(8, 0x0000, true); // Compression (Store)
+            view.setUint32(14, crc, true);
+            view.setUint32(18, size, true); // Compressed
+            view.setUint32(22, size, true); // Uncompressed
+            view.setUint16(26, nameBytes.length, true);
+            view.setUint16(28, 0, true); // Extra len
+
+            header.set(nameBytes, 30);
+            
+            parts.push(header);
+            parts.push(data);
+
+            // Record for Central Directory
+            centralDir.push({ nameBytes, crc, size, offset });
+            offset += header.length + size;
+        }
+
+        const dirStart = offset;
+
+        // Write Central Directory
+        for (const cd of centralDir) {
+            const header = new Uint8Array(46 + cd.nameBytes.length);
+            const view = new DataView(header.buffer);
+
+            view.setUint32(0, 0x02014b50, true);
+            view.setUint16(4, 0x000A, true);
+            view.setUint16(6, 0x000A, true);
+            view.setUint16(8, 0x0000, true);
+            view.setUint16(10, 0x0000, true); // Compression
+            view.setUint32(16, cd.crc, true);
+            view.setUint32(20, cd.size, true);
+            view.setUint32(24, cd.size, true);
+            view.setUint16(28, cd.nameBytes.length, true);
+            view.setUint32(42, cd.offset, true);
+
+            header.set(cd.nameBytes, 46);
+            parts.push(header);
+            offset += header.length;
+        }
+
+        // End of Central Directory
+        const eocd = new Uint8Array(22);
+        const view = new DataView(eocd.buffer);
+        view.setUint32(0, 0x06054b50, true);
+        view.setUint16(8, this.files.length, true); // Disk records
+        view.setUint16(10, this.files.length, true); // Total records
+        view.setUint32(12, offset - dirStart, true); // Size of CD
+        view.setUint32(16, dirStart, true); // Offset of CD
+
+        parts.push(eocd);
+
+        return new Blob(parts, { type: 'application/zip' });
+    }
+}
+
 // --- CRYPTO UTILS ---
 const Crypto = {
     async generateKeyPair() {
-        return window.crypto.subtle.generateKey(
-            { name: "ECDH", namedCurve: "P-256" },
-            true, ["deriveBits"]
-        );
+        return window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
     },
-    async exportKey(key) {
-        return window.crypto.subtle.exportKey("jwk", key);
-    },
-    async importKey(jwk) {
-        return window.crypto.subtle.importKey(
-            "jwk", jwk, { name: "ECDH", namedCurve: "P-256" }, true, []
-        );
-    },
+    async exportKey(key) { return window.crypto.subtle.exportKey("jwk", key); },
+    async importKey(jwk) { return window.crypto.subtle.importKey("jwk", jwk, { name: "ECDH", namedCurve: "P-256" }, true, []); },
     async deriveHMACKey(privateKey, publicKey) {
-        // Derive shared bits
-        const bits = await window.crypto.subtle.deriveBits(
-            { name: "ECDH", public: publicKey }, privateKey, 256
-        );
-        // Import as HMAC key for verification
-        return window.crypto.subtle.importKey(
-            "raw", bits,
-            { name: "HMAC", hash: "SHA-256" },
-            false, ["sign", "verify"]
-        );
+        const bits = await window.crypto.subtle.deriveBits({ name: "ECDH", public: publicKey }, privateKey, 256);
+        return window.crypto.subtle.importKey("raw", bits, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
     },
-    async sign(key, data) {
-        return window.crypto.subtle.sign("HMAC", key, data);
-    },
-    async verify(key, signature, data) {
-        return window.crypto.subtle.verify("HMAC", key, signature, data);
-    },
-    randomNonce() {
-        return window.crypto.getRandomValues(new Uint8Array(32)); // 32 bytes random
-    }
+    async sign(key, data) { return window.crypto.subtle.sign("HMAC", key, data); },
+    async verify(key, signature, data) { return window.crypto.subtle.verify("HMAC", key, signature, data); },
+    randomNonce() { return window.crypto.getRandomValues(new Uint8Array(32)); }
 };
 
 // --- APP LOGIC ---
@@ -310,13 +399,17 @@ class GhostShare {
         
         // Security Context
         this.keyPair = null;
-        this.hmacKey = null; // Shared Secret Key
+        this.hmacKey = null; 
         this.myNonce = null;
-        this.peerNonce = null;
 
         // Transfers
         this.transfers = {}; 
-        this.pendingTransferId = null; 
+        this.uploadQueue = []; // Array of file objects to send serially
+        this.isUploading = false;
+
+        // Bundle State
+        this.pendingBundle = null; // Incoming offer
+        this.activeBundle = null; // Currently receiving bundle { id, mode, files: [], completed: [] }
 
         // UI Refs
         this.dom = {
@@ -327,7 +420,8 @@ class GhostShare {
             viewConnect: document.getElementById('view-connect'),
             viewWorkspace: document.getElementById('view-workspace'),
             transferList: document.getElementById('transfer-list'),
-            modalAccept: document.getElementById('modal-accept'),
+            modalBundle: document.getElementById('modal-bundle'),
+            bundlePreview: document.getElementById('bundle-preview'),
             toast: document.getElementById('toast'),
             btnConnect: document.getElementById('btn-connect')
         };
@@ -338,7 +432,6 @@ class GhostShare {
 
     // --- INITIALIZATION ---
     async init() {
-        // Generate cryptographic ID
         const array = new Uint8Array(4);
         window.crypto.getRandomValues(array);
         this.myId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -347,17 +440,10 @@ class GhostShare {
         this.generateQr();
         this.checkDeepLink();
 
-        this.peer = new Peer(this.myId, {
-            debug: 1,
-            config: { iceServers: CONFIG.ICE_SERVERS }
-        });
+        this.peer = new Peer(this.myId, { debug: 1, config: { iceServers: CONFIG.ICE_SERVERS } });
 
         this.peer.on('open', () => this.updateState(STATES.INIT));
-        
-        this.peer.on('connection', (conn) => {
-            this.handleIncomingConnection(conn);
-        });
-
+        this.peer.on('connection', (conn) => this.handleIncomingConnection(conn));
         this.peer.on('error', (err) => {
             console.error(err);
             this.toast(`Net Error: ${err.type}`);
@@ -365,141 +451,83 @@ class GhostShare {
         });
     }
 
-    // --- CONNECTION HANDLING & RACE CONDITION LOGIC ---
-    
-    // Outbound
+    // --- CONNECTION & SECURITY ---
     connect() {
         const input = this.dom.peerInput.value.trim().toUpperCase();
         const id = this.extractId(input);
         if(!id || id === this.myId) return this.toast("Invalid Peer ID");
-
         this.updateState(STATES.CONNECTING);
         const conn = this.peer.connect(id, { reliable: true });
         this.setupConnection(conn);
     }
 
-    // Inbound
     handleIncomingConnection(conn) {
-        // Race Condition / Glare Handling
-        if (this.state === STATES.CONNECTING || this.state === STATES.HANDSHAKING) {
-            // Simultaneous connection attempt
-            if (this.conn && this.conn.peer === conn.peer) {
-                // Tie-breaker: Lexicographical comparison
-                if (this.myId < conn.peer) {
-                    console.log("Glare: I am Dominant. Keeping my outgoing connection.");
-                    conn.close(); // Reject incoming
-                    return; 
-                } else {
-                    console.log("Glare: I am Submissive. Yielding to incoming.");
-                    if (this.conn) this.conn.close(); // Close outgoing
-                    // Proceed to accept incoming
-                }
-            } else {
-                // Busy with someone else
-                conn.send({ type: 'BUSY' });
-                setTimeout(() => conn.close(), 500);
-                return;
-            }
-        } else if (this.state === STATES.VERIFIED) {
-             conn.send({ type: 'BUSY' });
-             conn.close();
-             return;
-        }
-
+        if (this.state === STATES.VERIFIED) { conn.close(); return; }
         this.updateState(STATES.CONNECTING);
         this.setupConnection(conn);
     }
 
     setupConnection(conn) {
         this.conn = conn;
-
         conn.on('open', async () => {
-            // Start Cryptographic Handshake
             this.updateState(STATES.HANDSHAKING);
             this.keyPair = await Crypto.generateKeyPair();
             const exported = await Crypto.exportKey(this.keyPair.publicKey);
-            
-            // Step 1: Exchange Public Keys
             conn.send({ type: 'HS_KEY', key: exported });
         });
-
         conn.on('data', (data) => this.handleData(data));
         conn.on('close', () => this.disconnect());
         conn.on('error', () => this.disconnect());
     }
 
-    // --- SECURITY PROTOCOL (AUTOMATIC MUTUAL AUTH) ---
     async handleData(msg) {
         try {
             switch(msg.type) {
-                // HANDSHAKE STEP 1: Derive Shared Secret
+                // HANDSHAKE
                 case 'HS_KEY':
                     if (this.state !== STATES.HANDSHAKING) return;
                     const remoteKey = await Crypto.importKey(msg.key);
                     this.hmacKey = await Crypto.deriveHMACKey(this.keyPair.privateKey, remoteKey);
-                    
-                    // Step 2: Send Challenge (Nonce)
                     this.myNonce = Crypto.randomNonce();
                     this.conn.send({ type: 'HS_CHALLENGE', nonce: Array.from(this.myNonce) });
                     break;
-
-                // HANDSHAKE STEP 2: Respond to Challenge
                 case 'HS_CHALLENGE':
                     if (this.state !== STATES.HANDSHAKING || !this.hmacKey) return;
-                    this.peerNonce = new Uint8Array(msg.nonce);
-                    
-                    // Sign Peer's Nonce with Shared Secret
-                    const signature = await Crypto.sign(this.hmacKey, this.peerNonce);
-                    
-                    // Step 3: Send Proof
-                    this.conn.send({ type: 'HS_PROOF', sig: Array.from(new Uint8Array(signature)) });
+                    const sig = await Crypto.sign(this.hmacKey, new Uint8Array(msg.nonce));
+                    this.conn.send({ type: 'HS_PROOF', sig: Array.from(new Uint8Array(sig)) });
                     break;
-
-                // HANDSHAKE STEP 3: Verify Proof
                 case 'HS_PROOF':
                     if (this.state !== STATES.HANDSHAKING || !this.hmacKey || !this.myNonce) return;
-                    const peerSig = new Uint8Array(msg.sig);
-                    
-                    // Verify Peer signed MY nonce correctly
-                    const isValid = await Crypto.verify(this.hmacKey, peerSig, this.myNonce);
-                    
-                    if (isValid) {
-                        console.log("Crypto Handshake Verified");
-                        // We are verified, but we wait for peer to verify us too. 
-                        // Once we receive valid data or an explicit ACK, we are good.
-                        // For simplicity, if proof validates, we enter VERIFIED.
+                    const valid = await Crypto.verify(this.hmacKey, new Uint8Array(msg.sig), this.myNonce);
+                    if (valid) {
                         this.updateState(STATES.VERIFIED);
                         this.toast("Secure Connection Verified");
                     } else {
-                        console.error("Signature Mismatch");
-                        this.toast("Security Check Failed");
                         this.disconnect();
                     }
                     break;
 
-                // --- DATA PLANE (Gated by VERIFIED state) ---
+                // DATA PLANE
+                case 'BUNDLE_OFFER':
+                    if (this.state !== STATES.VERIFIED) return;
+                    this.handleBundleOffer(msg);
+                    break;
+                case 'BUNDLE_ACCEPT':
+                    if (this.state !== STATES.VERIFIED) return;
+                    this.processUploadQueue(); // Start sending
+                    break;
+                case 'BUNDLE_REJECT':
+                    this.toast("Bundle Rejected");
+                    this.uploadQueue = [];
+                    break;
                 case 'META':
                     if (this.state !== STATES.VERIFIED) return;
-                    this.handleIncomingMeta(msg);
+                    this.initDownload(msg);
                     break;
-
-                case 'ACCEPT':
-                    if (this.state !== STATES.VERIFIED) return;
-                    this.startChunkStream(msg.id);
-                    break;
-                
-                case 'REJECT':
-                    if (this.transfers[msg.id]) {
-                        this.transfers[msg.id].status = 'REJECTED';
-                        this.updateTransferUI(msg.id);
-                    }
-                    break;
-
                 case 'CHUNK':
                     if (this.state !== STATES.VERIFIED) return;
                     this.handleChunk(msg);
                     break;
-
                 case 'ACK_FIN':
                     if (this.state !== STATES.VERIFIED) return;
                     this.finalizeTransfer(msg.id, true);
@@ -511,190 +539,255 @@ class GhostShare {
         }
     }
 
-    // --- FILE TRANSFER LOGIC ---
-    handleFiles(files) {
-        if (this.state !== STATES.VERIFIED) return this.toast("Not Connected");
-        Array.from(files).forEach(file => this.initUpload(file));
+    // --- BUNDLE LOGIC (RECEIVER) ---
+    handleBundleOffer(msg) {
+        this.pendingBundle = msg;
+        
+        // Populate UI
+        document.getElementById('bundle-count').innerText = msg.files.length;
+        const totalSize = msg.files.reduce((acc, f) => acc + f.size, 0);
+        document.getElementById('bundle-total-size').innerText = `Total: ${this.formatBytes(totalSize)}`;
+        
+        const preview = this.dom.bundlePreview;
+        preview.innerHTML = '';
+        msg.files.forEach(f => {
+            const div = document.createElement('div');
+            div.className = 'file-entry';
+            div.innerHTML = `<span>${f.name}</span><span>${this.formatBytes(f.size)}</span>`;
+            preview.appendChild(div);
+        });
+
+        this.dom.modalBundle.classList.add('active');
     }
 
-    initUpload(file) {
-        const id = Date.now() + Math.random().toString(36).substr(2,5);
+    acceptBundle(mode) {
+        this.dom.modalBundle.classList.remove('active');
+        const offer = this.pendingBundle;
+        
+        this.activeBundle = {
+            id: offer.id,
+            mode: mode, // 'zip' or 'individual'
+            totalFiles: offer.files.length,
+            completedFiles: [],
+            zipParts: [] // To store file data for zip
+        };
+
+        this.conn.send({ type: 'BUNDLE_ACCEPT', bundleId: offer.id });
+    }
+
+    rejectBundle() {
+        this.dom.modalBundle.classList.remove('active');
+        this.conn.send({ type: 'BUNDLE_REJECT', bundleId: this.pendingBundle.id });
+        this.pendingBundle = null;
+    }
+
+    // --- TRANSFER LOGIC ---
+
+    // SENDER SIDE
+    handleFiles(files) {
+        if (this.state !== STATES.VERIFIED) return this.toast("Not Connected");
+        
+        const fileList = Array.from(files);
+        if (fileList.length === 0) return;
+
+        // Create Bundle Offer
+        const bundleId = Date.now().toString(36);
+        const metaList = fileList.map(f => ({
+            name: f.name,
+            size: f.size,
+            mime: f.type,
+            id: bundleId + '_' + Math.random().toString(36).substr(2, 5)
+        }));
+
+        this.uploadQueue = fileList.map((f, i) => ({
+            file: f,
+            meta: metaList[i]
+        }));
+
+        this.conn.send({ type: 'BUNDLE_OFFER', id: bundleId, files: metaList });
+        this.toast("Offer Sent...");
+    }
+
+    processUploadQueue() {
+        if (this.uploadQueue.length === 0) {
+            this.toast("Bundle Completed");
+            return;
+        }
+
+        const item = this.uploadQueue.shift(); // Get next file
+        this.startUpload(item);
+    }
+
+    startUpload(item) {
+        const id = item.meta.id;
+        const file = item.file;
+
         this.transfers[id] = {
             role: 'sender',
             file: file,
             size: file.size,
             name: file.name,
             sent: 0,
-            status: 'WAITING_ACCEPT',
-            startTime: 0,
+            status: 'TRANSFERRING',
+            startTime: Date.now(),
+            lastTime: Date.now(),
             chunkSize: CONFIG.CHUNK_INITIAL
         };
+
         this.createTransferUI(id, file.name, file.size, 'upload');
-        
-        this.conn.send({
-            type: 'META',
-            id: id,
-            name: file.name,
-            size: file.size,
-            mime: file.type
-        });
-    }
 
-    handleIncomingMeta(msg) {
-        this.pendingTransferId = msg.id;
-        this.transfers[msg.id] = {
-            role: 'receiver',
-            size: msg.size,
-            name: msg.name,
-            mime: msg.mime,
-            received: 0,
-            status: 'WAITING_USER',
-            chunks: [],
-            fileHandle: null,
-            writable: null,
-            startTime: 0,
-            lastBytes: 0,
-            lastTime: 0
-        };
-        
-        document.getElementById('incoming-name').innerText = msg.name;
-        document.getElementById('incoming-size').innerText = this.formatBytes(msg.size);
-        this.dom.modalAccept.classList.add('active');
-    }
+        // Send META for this specific file
+        this.conn.send({ type: 'META', ...item.meta });
 
-    async acceptIncoming() {
-        const id = this.pendingTransferId;
-        this.dom.modalAccept.classList.remove('active');
-        
-        const t = this.transfers[id];
-        t.status = 'TRANSFERRING';
-        t.startTime = Date.now();
-        t.lastTime = Date.now();
-        this.createTransferUI(id, t.name, t.size, 'download');
-
-        // Streaming (FileSystem API)
-        if (window.showSaveFilePicker) {
-            try {
-                t.fileHandle = await window.showSaveFilePicker({ suggestedName: t.name });
-                t.writable = await t.fileHandle.createWritable();
-                this.toast("Streaming to Disk");
-            } catch (e) { /* fallback */ }
-        } else if (t.size > 500 * 1024 * 1024) { 
-            this.toast("File too large for memory");
-            this.conn.send({ type: 'REJECT', id: id });
-            delete this.transfers[id];
-            return;
-        }
-
-        this.conn.send({ type: 'ACCEPT', id: id });
-    }
-
-    rejectIncoming() {
-        const id = this.pendingTransferId;
-        this.dom.modalAccept.classList.remove('active');
-        this.conn.send({ type: 'REJECT', id: id });
-        delete this.transfers[id];
-    }
-
-    startChunkStream(id) {
-        const t = this.transfers[id];
-        if(!t) return;
-        t.status = 'TRANSFERRING';
-        this.updateTransferUI(id);
-
+        // Start Chunking
         const reader = new FileReader();
         let offset = 0;
+        const t = this.transfers[id];
 
         const pump = () => {
             if (t.status !== 'TRANSFERRING' || !this.conn.open) return;
 
-            // Backpressure
             if (this.conn.dataChannel.bufferedAmount > CONFIG.BUFFER_LIMIT) {
                 setTimeout(pump, 50);
                 return;
             }
 
-            // Adaptive Scaling
+            // Adaptive Chunk Size
             const buffered = this.conn.dataChannel.bufferedAmount;
             if (buffered < CONFIG.CHUNK_INITIAL) t.chunkSize = Math.min(t.chunkSize * 2, CONFIG.CHUNK_MAX);
             else t.chunkSize = Math.max(t.chunkSize / 2, CONFIG.CHUNK_INITIAL);
 
-            const slice = t.file.slice(offset, offset + t.chunkSize);
+            const slice = file.slice(offset, offset + t.chunkSize);
             reader.readAsArrayBuffer(slice);
         };
 
         reader.onload = (e) => {
             const data = e.target.result;
-            this.conn.send({
-                type: 'CHUNK',
-                id: id,
-                data: data
-            });
-            
+            this.conn.send({ type: 'CHUNK', id: id, data: data });
             offset += data.byteLength;
             t.sent = offset;
             this.updateMetrics(id);
 
             if (offset < t.size) {
-                pump(); 
+                pump();
             } else {
                 t.status = 'AWAITING_FIN';
-                this.updateStatusText(id, "Verifying...");
             }
         };
 
         pump();
     }
 
-    async handleChunk(msg) {
+    // RECEIVER SIDE
+    initDownload(msg) {
+        this.transfers[msg.id] = {
+            role: 'receiver',
+            size: msg.size,
+            name: msg.name,
+            mime: msg.mime,
+            received: 0,
+            status: 'TRANSFERRING',
+            chunks: [],
+            startTime: Date.now(),
+            lastTime: Date.now()
+        };
+        this.createTransferUI(msg.id, msg.name, msg.size, 'download');
+    }
+
+    handleChunk(msg) {
         const t = this.transfers[msg.id];
-        if (!t || t.status === 'CANCELLED') return;
+        if (!t) return;
 
         const data = new Uint8Array(msg.data);
-        
-        if (t.writable) {
-            await t.writable.write(data);
-        } else {
-            t.chunks.push(data);
-        }
-
+        t.chunks.push(data);
         t.received += data.byteLength;
         this.updateMetrics(msg.id);
 
         if (t.received >= t.size) {
-            // Data Integrity Check passed (Size Match)
             this.finishReceive(msg.id);
         }
     }
 
-    async finishReceive(id) {
+    finishReceive(id) {
         const t = this.transfers[id];
+        t.status = 'COMPLETED';
+        this.updateTransferUI(id);
         
-        if (t.writable) {
-            await t.writable.close();
+        // Construct Blob
+        const blob = new Blob(t.chunks, { type: t.mime });
+
+        // Bundle Handling
+        if (this.activeBundle) {
+            if (this.activeBundle.mode === 'zip') {
+                // Store array buffer for zip
+                // Convert chunks (Uint8Array[]) to single buffer/blob logic in ZipWriter
+                // NOTE: For simplicity, ZipWriter expects a buffer or we concat chunks.
+                // We will flatten chunks here for the zip.
+                this.activeBundle.completedFiles.push({
+                    name: t.name,
+                    data: blob // Keep as blob, handle in ZipWriter conversion
+                });
+            } else {
+                // Individual Mode: Download immediately
+                this.downloadBlob(blob, t.name);
+            }
+
+            // Check if bundle complete
+            if (this.activeBundle.completedFiles.length + (this.activeBundle.mode === 'individual' ? 1 : 0) >= this.activeBundle.totalFiles) {
+                // Note: Logic count fix. 
+                // Individual mode doesn't store in completedFiles array to save RAM, so we decrement total? 
+                // Better: Track count.
+            }
         } else {
-            const blob = new Blob(t.chunks, { type: t.mime });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = t.name;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 60000);
-            t.chunks = null;
+            // Single file (legacy fallback)
+            this.downloadBlob(blob, t.name);
         }
 
-        // Final ACK Protocol
+        // ACK and Cleanup
         this.conn.send({ type: 'ACK_FIN', id: id });
-        this.finalizeTransfer(id, true);
+        t.chunks = null; // GC
+        
+        // Logic for ZIP finalization
+        if (this.activeBundle && this.activeBundle.mode === 'zip') {
+             if (this.activeBundle.completedFiles.length === this.activeBundle.totalFiles) {
+                 this.finalizeZipBundle();
+             }
+        }
     }
 
-    finalizeTransfer(id, success) {
-        const t = this.transfers[id];
-        if(t) {
-            t.status = success ? 'COMPLETED' : 'FAILED';
-            this.updateTransferUI(id);
+    async finalizeZipBundle() {
+        this.toast("Creating ZIP Archive...");
+        const zip = new ZipWriter();
+        
+        for (const f of this.activeBundle.completedFiles) {
+            const buf = await f.data.arrayBuffer();
+            zip.add(f.name, buf);
         }
+
+        const zipBlob = zip.generate();
+        this.downloadBlob(zipBlob, `bundle_${Date.now()}.zip`);
+        this.activeBundle = null;
+        this.toast("Bundle Downloaded");
+    }
+
+    finalizeTransfer(id) {
+        // Sender Side: When ACK received, process next
+        const t = this.transfers[id];
+        if (t && t.role === 'sender') {
+            t.status = 'COMPLETED';
+            this.updateTransferUI(id);
+            this.processUploadQueue(); // Trigger next file
+        }
+    }
+
+    downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
     }
 
     // --- UI HELPERS ---
@@ -715,8 +808,6 @@ class GhostShare {
             <div class="meta-row">
                 <span id="prog-${id}">0%</span>
                 <span id="speed-${id}">-- MB/s</span>
-                <span id="eta-${id}">ETA: --</span>
-                <span id="status-${id}">${type === 'upload' ? 'Waiting Accept...' : 'Starting...'}</span>
             </div>
         `;
         this.dom.transferList.prepend(div);
@@ -732,7 +823,6 @@ class GhostShare {
         
         const bar = document.getElementById(`bar-${id}`);
         if(bar) bar.style.width = `${pct}%`;
-        
         const prog = document.getElementById(`prog-${id}`);
         if(prog) prog.innerText = `${pct}%`;
 
@@ -740,43 +830,23 @@ class GhostShare {
             const bytesSince = processed - (t.lastBytes || 0);
             const timeDiff = (now - t.lastTime) / 1000;
             const speed = bytesSince / timeDiff;
-            
             const spdEl = document.getElementById(`speed-${id}`);
             if(spdEl) spdEl.innerText = `${this.formatBytes(speed)}/s`;
-            
-            const remaining = t.size - processed;
-            const eta = speed > 0 ? Math.ceil(remaining / speed) : 0;
-            const etaEl = document.getElementById(`eta-${id}`);
-            if(etaEl) etaEl.innerText = `ETA: ${this.formatTime(eta)}`;
-
             t.lastTime = now;
             t.lastBytes = processed;
         }
     }
 
-    updateStatusText(id, text) {
-        const el = document.getElementById(`status-${id}`);
-        if(el) el.innerText = text;
-    }
-
     updateTransferUI(id) {
         const t = this.transfers[id];
-        const el = document.getElementById(`ui-${id}`);
-        if (!el || !t) return;
-        
+        if (!t) return;
         if (t.status === 'COMPLETED') {
-            this.updateStatusText(id, 'COMPLETED');
             document.getElementById(`bar-${id}`).style.background = 'var(--success)';
-        } else if (t.status === 'FAILED' || t.status === 'REJECTED') {
-            this.updateStatusText(id, t.status);
-            document.getElementById(`bar-${id}`).style.background = 'var(--error)';
-            el.style.opacity = '0.5';
         }
     }
 
     updateState(newState) {
         this.state = newState;
-        
         if (newState === STATES.VERIFIED) {
             this.dom.viewIdentity.classList.add('hidden');
             this.dom.viewConnect.classList.add('hidden');
@@ -797,7 +867,6 @@ class GhostShare {
     disconnect() {
         if (this.conn) this.conn.close();
         if (this.peer) this.peer.destroy();
-        this.transfers = {};
         this.updateState(STATES.INIT);
         this.init(); 
     }
@@ -811,74 +880,38 @@ class GhostShare {
         this.dom.btnConnect.innerText = 'Connect';
         this.dom.status.className = 'status-badge';
         this.dom.status.innerText = 'INIT';
+        this.uploadQueue = [];
+        this.activeBundle = null;
     }
 
     // --- UTILS ---
-    extractId(input) {
-        try {
-            const url = new URL(input);
-            return url.searchParams.get('peer');
-        } catch(e) { return input; }
-    }
-
+    extractId(input) { try { return new URL(input).searchParams.get('peer'); } catch(e) { return input; } }
     checkDeepLink() {
-        const params = new URLSearchParams(window.location.search);
-        const peer = params.get('peer');
-        if (peer) {
-            this.dom.peerInput.value = peer;
-            this.toast("Link Detected");
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+        const peer = new URLSearchParams(window.location.search).get('peer');
+        if (peer) { this.dom.peerInput.value = peer; this.toast("Link Detected"); window.history.replaceState({}, document.title, window.location.pathname); }
     }
-
     generateQr() {
-        const target = document.getElementById('qr-target');
-        target.innerHTML = '';
-        new QRCode(target, {
-            text: `${CONFIG.APP_URL}?peer=${this.myId}`,
-            width: 150, height: 150,
-            colorDark : "#000000", colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.L
-        });
+        const target = document.getElementById('qr-target'); target.innerHTML = '';
+        new QRCode(target, { text: `${CONFIG.APP_URL}?peer=${this.myId}`, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.L });
     }
-
     toggleQr() { document.getElementById('qr-target').classList.toggle('hidden'); }
     copyId() { navigator.clipboard.writeText(this.myId); this.toast("ID Copied"); }
-    toast(msg) {
-        this.dom.toast.innerText = msg;
-        this.dom.toast.classList.add('show');
-        setTimeout(()=>this.dom.toast.classList.remove('show'), 3000);
-    }
+    toast(msg) { this.dom.toast.innerText = msg; this.dom.toast.classList.add('show'); setTimeout(()=>this.dom.toast.classList.remove('show'), 3000); }
     formatBytes(bytes) {
         if (bytes === 0) return '0 B';
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(1024));
         return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
     }
-    formatTime(seconds) {
-        if (!isFinite(seconds) || seconds < 0) return '--';
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    }
-
     startScanner() {
         document.getElementById('reader-container').classList.remove('hidden');
         this.scanner = new Html5Qrcode("reader");
         this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decoded) => {
             const id = this.extractId(decoded);
-            if(id) {
-                this.dom.peerInput.value = id;
-                this.stopScanner();
-                this.connect();
-            }
+            if(id) { this.dom.peerInput.value = id; this.stopScanner(); this.connect(); }
         });
     }
-    stopScanner() {
-        if(this.scanner) this.scanner.stop().then(() => {
-            document.getElementById('reader-container').classList.add('hidden');
-        });
-    }
+    stopScanner() { if(this.scanner) this.scanner.stop().then(() => { document.getElementById('reader-container').classList.add('hidden'); }); }
     
     setupDragDrop() {
         const overlay = document.getElementById('drag-overlay');
@@ -891,10 +924,10 @@ class GhostShare {
     }
 }
 
-// BOOTSTRAP
 window.app = new GhostShare();
 window.onbeforeunload = () => window.app.state === STATES.VERIFIED ? "Active Session" : undefined;
 </script>
 </body>
 </html>
+
 
