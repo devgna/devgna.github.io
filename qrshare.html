@@ -723,6 +723,7 @@
             state.startTime = Date.now();
             let lastFrameTime = 0;
             let currentSeqToSend = 0;
+            let retransmitOffset = 0; // Carousel pointer
 
             function loop(timestamp) {
                 if (state.current !== STATES.TRANSMITTING) {
@@ -740,6 +741,9 @@
                     let packetData = null;
                     let seq = -1;
 
+                    // Ensure we don't try to send packets already ACKed
+                    currentSeqToSend = Math.max(currentSeqToSend, state.windowBase);
+
                     // 1. Priority: NACK Queue
                     if (state.priorityQueue.length > 0) {
                         seq = state.priorityQueue.shift();
@@ -753,14 +757,20 @@
                         currentSeqToSend++;
                         ui.qrWrapper.style.borderColor = 'var(--term-cyan)';
                     }
-                    // 3. Window Full or Done? Loop unacked logic or wait
+                    // 3. Window Full? Cycle through unacked packets (Carousel Mode)
                     else if (state.windowBase < state.totalChunks) {
-                         // Window full, maybe resend oldest unacked if timeout?
-                         // For now, we wait for ACKs or NACKs.
-                         // Optional: Resend windowBase periodically to unstick
-                         if (Math.random() > 0.95) { // Occasional probe
-                             seq = state.windowBase;
+                         // The window is full, meaning we have unacked packets holding us back.
+                         // Instead of waiting or random probing, we cycle through the current window.
+                         // This ensures the receiver gets multiple chances at the data.
+                         
+                         const windowLimit = Math.min(state.windowBase + state.windowSize, state.totalChunks);
+                         const range = windowLimit - state.windowBase;
+                         
+                         if (range > 0) {
+                             retransmitOffset = (retransmitOffset + 1) % range;
+                             seq = state.windowBase + retransmitOffset;
                              packetData = state.chunks[seq];
+                             ui.qrWrapper.style.borderColor = 'var(--term-amber)'; // Color for cycling
                          }
                     } else {
                         // All chunks sent, send FIN via QR too? No, Control Plane handles FIN.
@@ -806,9 +816,9 @@
 
         function handleAck(seq) {
             // Adaptive Window (TCP Reno-ish)
-            if (seq > state.windowBase) {
+            // Fix: Allow moving if seq is same as windowBase (ACKing the blocker)
+            if (seq >= state.windowBase) {
                 // Good cumulative ACK
-                const jumped = seq - state.windowBase;
                 state.windowBase = seq + 1;
                 state.windowSize = Math.min(state.windowSize + 1, CONFIG.MAX_WINDOW);
                 state.fps = Math.min(state.fps + 0.5, CONFIG.MAX_FPS);
