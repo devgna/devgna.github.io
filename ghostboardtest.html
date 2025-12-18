@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GHOSTBOARD | Ephemeral P2P Whiteboard</title>
+    
+    <!-- Dependencies (CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        :root {
+            --bg: #050505;
+            --surface: #111111;
+            --border: #333333;
+            --fg: #e0e0e0;
+            --dim: #888888;
+            --accent: #ffffff;
+            --success: #4caf50;
+            --error: #f44336;
+            --warning: #ff9800;
+            --font-stack: 'SF Mono', 'Segoe UI Mono', 'Roboto Mono', Menlo, monospace;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* RESET & BASE */
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-stack);
+            font-size: 13px;
+            line-height: 1.5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+            overscroll-behavior: none;
+        }
+
+        /* UTILS */
+        .container { max-width: 680px; margin: 0 auto; width: 100%; padding: 15px; flex: 1; display: flex; flex-direction: column; position: relative; z-index: 10; pointer-events: none; }
+        .container > * { pointer-events: auto; }
+        .flex-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .flex-col { display: flex; flex-direction: column; gap: 10px; }
+        .center { text-align: center; justify-content: center; }
+        .hidden { display: none !important; }
+        .scroll-y { overflow-y: auto; flex: 1; }
+        
+        /* TYPOGRAPHY */
+        h1 { font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; color: var(--accent); }
+        h2 { font-size: 13px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        p { color: var(--dim); margin-bottom: 10px; }
+        .mono-stat { font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
+
+        /* COMPONENTS */
+        .card {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background: var(--fg);
+            color: var(--bg);
+            border: 1px solid var(--fg);
+            padding: 12px;
+            font-family: var(--font-stack);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+        .btn:disabled { background: var(--border); border-color: var(--border); color: var(--dim); cursor: not-allowed; opacity: 0.7; }
+        .btn.outline { background: transparent; color: var(--fg); }
+        .btn.outline:hover { background: rgba(255,255,255,0.05); }
+        .btn.danger { border-color: var(--error); color: var(--error); background: transparent; }
+        .btn.danger:hover { background: rgba(244, 67, 54, 0.1); }
+        .btn.success { border-color: var(--success); background: var(--success); color: white; }
+        .btn.active { background: var(--accent); color: var(--bg); }
+
+        /* PULSING ANIMATION FOR LISTENER */
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); border-color: var(--success); color: var(--success); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); border-color: var(--success); color: var(--success); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); border-color: var(--success); color: var(--success); }
+        }
+        .btn.listening { animation: pulse-border 1.5s infinite; background: rgba(76, 175, 80, 0.1); }
+
+        input[type="text"] {
+            width: 100%; background: #000; border: 1px solid var(--border); color: var(--accent);
+            padding: 15px; font-family: var(--font-stack); font-size: 16px; text-align: center;
+            letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; border-radius: 2px;
+        }
+        input[type="text"]:focus { border-color: var(--accent); }
+
+        /* STATUS BADGE */
+        .status-badge { 
+            padding: 4px 8px; font-size: 10px; text-transform: uppercase; border-radius: 2px; font-weight: 700; letter-spacing: 0.5px;
+            background: var(--border); color: var(--dim);
+        }
+        .status-badge.secure { background: rgba(76, 175, 80, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .status-badge.error { background: rgba(244, 67, 54, 0.2); color: var(--error); border: 1px solid var(--error); }
+        .status-badge.warn { background: rgba(255, 152, 0, 0.2); color: var(--warning); border: 1px solid var(--warning); }
+        .status-badge.handshake { background: rgba(33, 150, 243, 0.2); color: #2196F3; border: 1px solid #2196F3; }
+
+        /* QR & SCANNER */
+        #qr-target { background: white; padding: 10px; display: inline-block; margin: 15px auto; border-radius: 4px; }
+        #reader { width: 100%; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--accent); color: var(--bg); padding: 12px 24px; 
+            font-weight: 700; opacity: 0; transition: opacity 0.3s; z-index: 3000;
+            pointer-events: none; border-radius: 2px; text-transform: uppercase; font-size: 11px;
+        }
+        .toast.show { opacity: 1; }
+
+        /* WHITEBOARD SPECIFIC */
+        #canvas-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; touch-action: none; cursor: crosshair;
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        #toolbar {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 8px; border-radius: 4px; display: flex; gap: 8px;
+            z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .tool-btn {
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid transparent; border-radius: 2px; cursor: pointer;
+            color: var(--dim); background: transparent; font-size: 16px;
+        }
+        .tool-btn:hover { background: rgba(255,255,255,0.05); color: var(--fg); }
+        .tool-btn.active { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+        
+        #disconnect-btn {
+            position: fixed; top: 15px; right: 15px; z-index: 100;
+            width: auto; padding: 8px 12px; font-size: 10px;
+        }
+
+        /* Remote Cursors */
+        .cursor {
+            position: fixed; width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid #ff00ff; pointer-events: none; z-index: 50;
+            transform: translate(-50%, -50%); transition: opacity 0.2s;
+        }
+        .cursor-label {
+            position: absolute; top: 14px; left: 0; background: #ff00ff; color: #000;
+            font-size: 9px; padding: 2px 4px; border-radius: 2px; white-space: nowrap; font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- CANVAS -->
+    <canvas id="canvas-layer"></canvas>
+
+    <!-- BOARD UI (Hidden by default) -->
+    <div id="board-ui" class="hidden">
+        <button id="disconnect-btn" class="btn danger" onclick="app.disconnect()">DISCONNECT</button>
+        
+        <div id="toolbar">
+            <button class="tool-btn active" onclick="app.board.setTool('pen')" title="Pen">✎</button>
+            <button class="tool-btn" onclick="app.board.setTool('eraser')" title="Eraser">⌫</button>
+            <button class="tool-btn" onclick="app.board.setTool('pan')" title="Pan">✋</button>
+            <div style="width:1px; background:var(--border); margin:0 4px;"></div>
+            <button class="tool-btn" onclick="app.board.clearBoard()" title="Clear Board">🗑</button>
+        </div>
+    </div>
+
+    <!-- PAIRING CONTAINER -->
+    <div id="pairing-ui" class="container">
+        <!-- HEADER -->
+        <header class="flex-row" style="background: var(--bg); padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid var(--border); pointer-events: auto;">
+            <div class="flex-col" style="gap:2px;">
+                <span style="font-weight:700; letter-spacing:1px; color:white;">GHOSTBOARD</span>
+                <span style="font-size:10px; color:var(--dim);">EPHEMERAL P2P CANVAS</span>
+            </div>
+            <div id="status-badge" class="status-badge">INIT</div>
+        </header>
+
+        <!-- VIEW: IDENTITY -->
+        <div id="view-identity" class="card center fade-in">
+            <h2>Session Identity</h2>
+            <div id="my-id" style="font-size: 32px; font-weight: 700; letter-spacing: 4px; margin: 15px 0; color: var(--accent);">...</div>
+            <p style="font-size: 11px;">Identity rotates on disconnect</p>
+            
+            <div id="qr-target" class="hidden"></div>
+            
+            <div class="flex-row" style="margin-top: 15px;">
+                <button class="btn outline" onclick="app.copyId()">Copy ID</button>
+                <button class="btn outline" onmousedown="app.startBroadcast()" onmouseup="app.stopBroadcast()" ontouchstart="app.startBroadcast()" ontouchend="app.stopBroadcast()">🔊 Hold to Air-Drop ID</button>
+                <button class="btn outline" onclick="app.toggleQr()">Show QR</button>
+            </div>
+        </div>
+
+        <!-- VIEW: CONNECT -->
+        <div id="view-connect" class="card fade-in">
+            <h2>Establish Tunnel</h2>
+            
+            <div id="reader-container" class="hidden">
+                <div id="reader"></div>
+                <button class="btn outline" onclick="app.stopScanner()" style="margin-bottom: 10px;">Cancel Camera</button>
+            </div>
+
+            <input type="text" id="peer-id-input" placeholder="ENTER PEER ID" maxlength="12" autocomplete="off">
+            <div class="flex-row">
+                <button class="btn" id="btn-connect" onclick="app.connect()">Connect</button>
+                <button class="btn outline" id="btn-listen" onclick="app.toggleListen()">👂 Listen</button>
+                <button class="btn outline" onclick="app.startScanner()" style="width: auto;">📷</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast">Alert</div>
+
+<script>
+/**
+ * AUDIO MODEM IMPLEMENTATION (19kHz FSK) - Reused from GhostShare
+ * Specs: 19000Hz (0) / 19500Hz (1)
+ * Packet: [0xAA HEADER] + [DATA] + [CHECKSUM]
+ */
+class AudioModem {
+    constructor() {
+        this.ctx = null;
+        this.FREQ_LOW = 19000;
+        this.FREQ_HIGH = 19500;
+        this.BIT_TIME = 0.040; 
+        this.HEADER = 0xAA; 
+        this.isBroadcasting = false;
+        this.isListening = false;
+        this.osc = null;
+    }
+
+    async initCtx() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
+        return this.ctx;
+    }
+
+    async transmit(text) {
+        if (this.isBroadcasting) return;
+        this.isBroadcasting = true;
+        const ctx = await this.initCtx();
+
+        const bytes = new TextEncoder().encode(text);
+        let checksum = 0;
+        bytes.forEach(b => checksum = (checksum + b) % 255);
+        
+        const packet = [this.HEADER, ...bytes, checksum];
+        const bits = [];
+        packet.forEach(byte => {
+            for (let i = 7; i >= 0; i--) bits.push((byte >> i) & 1);
+        });
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        const now = ctx.currentTime;
+        const fade = 0.001;
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(1, now + fade);
+
+        bits.forEach((bit, i) => {
+            const time = now + (i * this.BIT_TIME);
+            osc.frequency.setValueAtTime(bit ? this.FREQ_HIGH : this.FREQ_LOW, time);
+        });
+
+        const endTime = now + (bits.length * this.BIT_TIME);
+        gain.gain.setValueAtTime(1, endTime - fade);
+        gain.gain.linearRampToValueAtTime(0, endTime);
+        
+        osc.start(now);
+        osc.stop(endTime);
+        this.osc = osc;
+        
+        osc.onended = () => {
+            this.isBroadcasting = false;
+            if (this.shouldLoop) this.transmit(text);
+        };
+    }
+
+    startLoop(text) {
+        this.shouldLoop = true;
+        this.transmit(text);
+    }
+
+    stopLoop() {
+        this.shouldLoop = false;
+        if(this.osc) {
+            try { this.osc.stop(); } catch(e){}
+            this.isBroadcasting = false;
+        }
+    }
+
+    async listen(onFound) {
+        if (this.isListening) return;
+        const ctx = await this.initCtx();
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        });
+
+        const source = ctx.createMediaStreamSource(stream);
+        const analyzer = ctx.createAnalyser();
+        analyzer.fftSize = 2048; 
+        source.connect(analyzer);
+
+        const buffer = new Float32Array(analyzer.frequencyBinCount);
+        this.isListening = true;
+        let bitBuffer = []; 
+        let currentSignal = null; 
+        let signalStartTime = 0;
+        
+        const process = () => {
+            if (!this.isListening) {
+                stream.getTracks().forEach(t => t.stop());
+                return;
+            }
+            analyzer.getFloatFrequencyData(buffer);
+            const binLow = Math.floor(this.FREQ_LOW / (ctx.sampleRate / analyzer.fftSize));
+            const binHigh = Math.floor(this.FREQ_HIGH / (ctx.sampleRate / analyzer.fftSize));
+            
+            const p0 = buffer[binLow];
+            const p1 = buffer[binHigh];
+            const diff = p1 - p0;
+            const maxVal = Math.max(p0, p1);
+            
+            let detected = null;
+            if (maxVal > -90) {
+                if (diff > 5) detected = 1;
+                else if (diff < -5) detected = 0;
+            }
+
+            const now = performance.now();
+            const btn = document.getElementById('btn-listen');
+            if(btn) btn.style.opacity = (detected !== null && (Math.floor(now / 100) % 2 === 0)) ? '0.7' : '1';
+
+            if (detected !== null) {
+                if (currentSignal === null) {
+                    currentSignal = detected;
+                    signalStartTime = now;
+                } else if (detected !== currentSignal) {
+                    const duration = now - signalStartTime;
+                    const bitCount = Math.round((duration + 10) / (this.BIT_TIME * 1000));
+                    if (bitCount > 0) {
+                        for(let k=0; k<bitCount; k++) bitBuffer.push(currentSignal);
+                        if (bitBuffer.length > 200) bitBuffer = bitBuffer.slice(-200);
+                        this.scanBuffer(bitBuffer, onFound);
+                    }
+                    currentSignal = detected;
+                    signalStartTime = now;
+                }
+            } else if (currentSignal !== null) {
+                const duration = now - signalStartTime;
+                const bitCount = Math.round((duration + 10) / (this.BIT_TIME * 1000));
+                if (bitCount > 0) {
+                    for(let k=0; k<bitCount; k++) bitBuffer.push(currentSignal);
+                    if (bitBuffer.length > 200) bitBuffer = bitBuffer.slice(-200);
+                    this.scanBuffer(bitBuffer, onFound);
+                }
+                currentSignal = null;
+            }
+            requestAnimationFrame(process);
+        };
+        process();
+    }
+
+    scanBuffer(bits, callback) {
+        if (bits.length < 50) return;
+        for (let i = 0; i < bits.length - 40; i++) {
+            let header = 0;
+            for(let b=0; b<8; b++) header = (header << 1) | bits[i+b];
+            if (header === this.HEADER) {
+                const bytes = [];
+                let ptr = i + 8;
+                let failed = false;
+                for (let c=0; c<9; c++) {
+                    let val = 0;
+                    for (let b=0; b<8; b++) {
+                        if (ptr >= bits.length) { failed = true; break; }
+                        val = (val << 1) | bits[ptr++];
+                    }
+                    bytes.push(val);
+                }
+                if (failed) continue;
+                const receivedSum = bytes.pop();
+                const payload = bytes;
+                let calcSum = 0;
+                payload.forEach(b => calcSum = (calcSum + b) % 255);
+                if (calcSum === receivedSum) {
+                    const id = new TextDecoder().decode(new Uint8Array(payload));
+                    if (id.match(/^[A-Z0-9]+$/)) {
+                        this.stopListen();
+                        callback(id);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    stopListen() {
+        this.isListening = false;
+        const btn = document.getElementById('btn-listen');
+        if(btn) {
+             btn.style.opacity = '1';
+             btn.classList.remove('listening');
+             btn.innerText = "👂 Listen";
+        }
+    }
+}
+
+// --- CONFIG & UTILS ---
+const CONFIG = {
+    ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }],
+    APP_URL: window.location.href.split('?')[0]
+};
+
+const STATES = {
+    INIT: 'INIT',
+    CONNECTING: 'CONNECTING',
+    HANDSHAKING: 'HANDSHAKING',
+    VERIFIED: 'VERIFIED',
+    FAILED: 'FAILED'
+};
+
+const Crypto = {
+    async generateKeyPair() {
+        return window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+    },
+    async exportKey(key) { return window.crypto.subtle.exportKey("jwk", key); },
+    async importKey(jwk) { return window.crypto.subtle.importKey("jwk", jwk, { name: "ECDH", namedCurve: "P-256" }, true, []); },
+    async deriveHMACKey(privateKey, publicKey) {
+        const bits = await window.crypto.subtle.deriveBits({ name: "ECDH", public: publicKey }, privateKey, 256);
+        return window.crypto.subtle.importKey("raw", bits, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+    },
+    async sign(key, data) { return window.crypto.subtle.sign("HMAC", key, data); },
+    async verify(key, signature, data) { return window.crypto.subtle.verify("HMAC", key, signature, data); },
+    randomNonce() { return window.crypto.getRandomValues(new Uint8Array(32)); }
+};
+
+/**
+ * INFINITE CANVAS WHITEBOARD ENGINE
+ */
+class Whiteboard {
+    constructor(canvas, networkCb) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d', { alpha: false });
+        this.network = networkCb;
+        
+        // State
+        this.camera = { x: 0, y: 0, z: 1 };
+        this.tool = 'pen';
+        this.strokes = []; // { id, points, color, width }
+        this.currentStroke = null;
+        this.remoteCursors = new Map(); // peerId -> {x, y, lastSeen}
+
+        // Pointer State
+        this.isDown = false;
+        this.isPanning = false;
+        this.lastPoint = { x: 0, y: 0 };
+        this.pointers = new Map(); // For multi-touch
+
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.setupEvents();
+        this.animate();
+    }
+
+    resize() {
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
+        this.ctx.scale(dpr, dpr);
+        this.drawFrame();
+    }
+
+    setupEvents() {
+        // Prevent default touch actions (scrolling)
+        this.canvas.addEventListener('contextmenu', e => e.preventDefault());
+        this.canvas.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
+        
+        // Pointer Events
+        this.canvas.addEventListener('pointerdown', this.handleDown.bind(this));
+        this.canvas.addEventListener('pointermove', this.handleMove.bind(this));
+        this.canvas.addEventListener('pointerup', this.handleUp.bind(this));
+        this.canvas.addEventListener('pointercancel', this.handleUp.bind(this));
+    }
+
+    // Coordinate Transforms
+    toWorld(sx, sy) {
+        return {
+            x: (sx - this.camera.x) / this.camera.z,
+            y: (sy - this.camera.y) / this.camera.z
+        };
+    }
+    
+    toScreen(wx, wy) {
+        return {
+            x: wx * this.camera.z + this.camera.x,
+            y: wy * this.camera.z + this.camera.y
+        };
+    }
+
+    // Logic
+    handleDown(e) {
+        e.preventDefault();
+        this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        this.canvas.setPointerCapture(e.pointerId);
+
+        // Multi-touch Pan/Zoom
+        if (this.pointers.size === 2) {
+            this.isPanning = true;
+            this.isDown = false; // Cancel drawing if 2 fingers
+            this.startPinchDist = this.getPinchDist();
+            this.startPinchCenter = this.getPinchCenter();
+            this.startCamera = { ...this.camera };
+            return;
+        }
+
+        if (this.tool === 'pan' || e.button === 1 || e.button === 2) {
+            this.isPanning = true;
+            this.lastPoint = { x: e.clientX, y: e.clientY };
+            return;
+        }
+
+        const pt = this.toWorld(e.clientX, e.clientY);
+        this.isDown = true;
+        this.currentStroke = {
+            id: crypto.randomUUID(),
+            points: [{ x: pt.x, y: pt.y, p: e.pressure || 0.5 }],
+            color: this.tool === 'eraser' ? '#050505' : '#e0e0e0', // Eraser matches BG
+            width: this.tool === 'eraser' ? 20 : (this.tool === 'pen' ? 2 : 5),
+            isEraser: this.tool === 'eraser'
+        };
+        
+        // Send Start
+        this.network({ 
+            type: 'STROKE_START', 
+            id: this.currentStroke.id, 
+            color: this.currentStroke.color,
+            width: this.currentStroke.width,
+            p: this.currentStroke.points[0]
+        });
+    }
+
+    handleMove(e) {
+        e.preventDefault();
+        this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        // Broadcast Cursor (throttled logic handled by network/browser loop natural rate)
+        const worldPt = this.toWorld(e.clientX, e.clientY);
+        // Only send cursor if verified and moved enough
+        if(Math.random() > 0.7) { // Simple throttle
+            this.network({ type: 'CURSOR', x: worldPt.x, y: worldPt.y });
+        }
+
+        if (this.isPanning && this.pointers.size === 2) {
+            const dist = this.getPinchDist();
+            const center = this.getPinchCenter();
+            const scale = dist / this.startPinchDist;
+            
+            // Zoom around center
+            const newZ = Math.max(0.1, Math.min(5, this.startCamera.z * scale));
+            const zoomFactor = newZ / this.startCamera.z;
+            
+            this.camera.z = newZ;
+            this.camera.x = center.x - (center.x - this.startCamera.x) * zoomFactor;
+            this.camera.y = center.y - (center.y - this.startCamera.y) * zoomFactor;
+            return;
+        }
+
+        if (this.isPanning) {
+            const dx = e.clientX - this.lastPoint.x;
+            const dy = e.clientY - this.lastPoint.y;
+            this.camera.x += dx;
+            this.camera.y += dy;
+            this.lastPoint = { x: e.clientX, y: e.clientY };
+            return;
+        }
+
+        if (this.isDown && this.currentStroke) {
+            const pt = { x: worldPt.x, y: worldPt.y, p: e.pressure || 0.5 };
+            this.currentStroke.points.push(pt);
+            // Send Update
+            this.network({ type: 'STROKE_POINT', id: this.currentStroke.id, pt: pt });
+        }
+    }
+
+    handleUp(e) {
+        e.preventDefault();
+        this.pointers.delete(e.pointerId);
+        
+        if (this.pointers.size < 2) this.isPanning = false;
+
+        if (this.isDown && this.currentStroke) {
+            this.strokes.push(this.currentStroke);
+            this.network({ type: 'STROKE_END', id: this.currentStroke.id });
+            this.currentStroke = null;
+        }
+        this.isDown = false;
+    }
+
+    handleWheel(e) {
+        e.preventDefault();
+        if (e.ctrlKey) {
+            // Zoom
+            const zoomIntensity = 0.1;
+            const delta = -Math.sign(e.deltaY) * zoomIntensity;
+            const newZ = Math.max(0.1, Math.min(5, this.camera.z * (1 + delta)));
+            
+            // Zoom towards mouse
+            const wx = (e.clientX - this.camera.x) / this.camera.z;
+            const wy = (e.clientY - this.camera.y) / this.camera.z;
+            
+            this.camera.x -= wx * (newZ - this.camera.z);
+            this.camera.y -= wy * (newZ - this.camera.z);
+            this.camera.z = newZ;
+        } else {
+            // Pan
+            this.camera.x -= e.deltaX;
+            this.camera.y -= e.deltaY;
+        }
+    }
+
+    // Helpers for Multitouch
+    getPinchDist() {
+        const pts = Array.from(this.pointers.values());
+        return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    }
+    getPinchCenter() {
+        const pts = Array.from(this.pointers.values());
+        return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    }
+
+    setTool(tool) {
+        this.tool = tool;
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.tool-btn[onclick*="${tool}"]`).classList.add('active');
+    }
+
+    clearBoard() {
+        this.strokes = [];
+        this.currentStroke = null;
+        this.network({ type: 'CLEAR' });
+    }
+
+    // Remote Actions
+    handleRemoteOp(op) {
+        if (op.type === 'STROKE_START') {
+            this.remoteStrokes = this.remoteStrokes || {};
+            this.remoteStrokes[op.id] = { points: [op.p], color: op.color, width: op.width };
+        } else if (op.type === 'STROKE_POINT') {
+            if (this.remoteStrokes && this.remoteStrokes[op.id]) {
+                this.remoteStrokes[op.id].points.push(op.pt);
+            }
+        } else if (op.type === 'STROKE_END') {
+            if (this.remoteStrokes && this.remoteStrokes[op.id]) {
+                this.strokes.push(this.remoteStrokes[op.id]);
+                delete this.remoteStrokes[op.id];
+            }
+        } else if (op.type === 'CURSOR') {
+            this.remoteCursors.set('peer', { x: op.x, y: op.y, lastSeen: Date.now() });
+        } else if (op.type === 'CLEAR') {
+            this.strokes = [];
+            this.remoteStrokes = {};
+        }
+    }
+
+    // Rendering
+    animate() {
+        requestAnimationFrame(this.animate.bind(this));
+        this.drawFrame();
+    }
+
+    drawFrame() {
+        // Clear Screen
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.fillStyle = '#050505';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw Background Grid (World Space)
+        this.ctx.setTransform(this.camera.z, 0, 0, this.camera.z, this.camera.x, this.camera.y);
+        
+        // Draw Completed Strokes
+        this.strokes.forEach(s => this.drawStroke(s));
+        
+        // Draw Remote Strokes
+        if (this.remoteStrokes) {
+            Object.values(this.remoteStrokes).forEach(s => this.drawStroke(s));
+        }
+
+        // Draw Current Stroke
+        if (this.currentStroke) this.drawStroke(this.currentStroke);
+
+        // Draw Remote Cursors
+        this.drawCursors();
+    }
+
+    drawStroke(s) {
+        if (s.points.length < 2) return;
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = s.color;
+        this.ctx.lineWidth = s.width / this.camera.z; // Constant screen width attempt, or allow zoom scale? 
+        // Actually for whiteboard, lines usually scale with zoom.
+        this.ctx.lineWidth = s.width; 
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        
+        // Simple quadratic bezier smoothing
+        this.ctx.moveTo(s.points[0].x, s.points[0].y);
+        for (let i = 1; i < s.points.length - 1; i++) {
+            const xc = (s.points[i].x + s.points[i + 1].x) / 2;
+            const yc = (s.points[i].y + s.points[i + 1].y) / 2;
+            this.ctx.quadraticCurveTo(s.points[i].x, s.points[i].y, xc, yc);
+        }
+        this.ctx.lineTo(s.points[s.points.length - 1].x, s.points[s.points.length - 1].y);
+        this.ctx.stroke();
+    }
+
+    drawCursors() {
+        const now = Date.now();
+        this.remoteCursors.forEach((c, id) => {
+            if (now - c.lastSeen > 2000) return; // Fade out
+            
+            // Draw Cursor
+            this.ctx.fillStyle = '#ff00ff';
+            this.ctx.beginPath();
+            this.ctx.arc(c.x, c.y, 5 / this.camera.z, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+    }
+}
+
+/**
+ * MAIN APP
+ */
+class GhostBoard {
+    constructor() {
+        this.state = STATES.INIT;
+        this.peer = null;
+        this.conn = null;
+        this.myId = null;
+        
+        this.audio = new AudioModem();
+        this.keyPair = null;
+        this.hmacKey = null; 
+        this.myNonce = null;
+
+        // UI Refs
+        this.dom = {
+            status: document.getElementById('status-badge'),
+            myId: document.getElementById('my-id'),
+            peerInput: document.getElementById('peer-id-input'),
+            viewIdentity: document.getElementById('view-identity'),
+            viewConnect: document.getElementById('view-connect'),
+            pairingUi: document.getElementById('pairing-ui'),
+            boardUi: document.getElementById('board-ui'),
+            toast: document.getElementById('toast'),
+            btnConnect: document.getElementById('btn-connect'),
+            btnListen: document.getElementById('btn-listen')
+        };
+
+        this.init();
+    }
+
+    // --- PAIRING & ID ---
+    async init() {
+        const array = new Uint8Array(4);
+        window.crypto.getRandomValues(array);
+        this.myId = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+        
+        this.dom.myId.innerText = this.myId;
+        this.generateQr();
+        this.checkDeepLink();
+
+        this.peer = new Peer(this.myId, { debug: 1, config: { iceServers: CONFIG.ICE_SERVERS } });
+        this.peer.on('open', () => this.updateState(STATES.INIT));
+        this.peer.on('connection', (conn) => this.handleIncomingConnection(conn));
+        this.peer.on('error', (err) => {
+            this.toast(`Net Error: ${err.type}`);
+            if(err.type === 'peer-unavailable') this.resetUI();
+        });
+
+        // Initialize Whiteboard but keep hidden
+        this.board = new Whiteboard(document.getElementById('canvas-layer'), (op) => this.sendOp(op));
+    }
+
+    // --- AUDIO ---
+    startBroadcast() {
+        if(!this.myId) return;
+        this.audio.startLoop(this.myId);
+        this.toast("Broadcasting ID via Audio...");
+    }
+    stopBroadcast() { this.audio.stopLoop(); }
+    toggleListen() {
+        if (this.audio.isListening) {
+            this.audio.stopListen();
+            this.dom.btnListen.innerText = "👂 Listen";
+            this.dom.btnListen.classList.remove('listening');
+        } else {
+            this.dom.btnListen.innerText = "Scanning...";
+            this.dom.btnListen.classList.add('listening');
+            this.audio.listen((id) => {
+                this.dom.peerInput.value = id;
+                this.toggleListen(); 
+                this.toast("Peer Found via Audio!");
+            }).catch(e => {
+                this.toast("Mic Error: " + e.message);
+                this.toggleListen();
+            });
+        }
+    }
+
+    // --- CONNECTION ---
+    connect() {
+        const input = this.dom.peerInput.value.trim().toUpperCase();
+        const id = this.extractId(input);
+        if(!id || id === this.myId) return this.toast("Invalid Peer ID");
+        this.updateState(STATES.CONNECTING);
+        const conn = this.peer.connect(id, { reliable: true });
+        this.setupConnection(conn);
+    }
+
+    handleIncomingConnection(conn) {
+        if (this.state === STATES.VERIFIED) { conn.close(); return; }
+        this.updateState(STATES.CONNECTING);
+        this.setupConnection(conn);
+    }
+
+    setupConnection(conn) {
+        this.conn = conn;
+        conn.on('open', async () => {
+            this.updateState(STATES.HANDSHAKING);
+            this.keyPair = await Crypto.generateKeyPair();
+            const exported = await Crypto.exportKey(this.keyPair.publicKey);
+            conn.send({ type: 'HS_KEY', key: exported });
+        });
+        conn.on('data', (data) => this.handleData(data));
+        conn.on('close', () => this.disconnect());
+        conn.on('error', () => this.disconnect());
+    }
+
+    async handleData(msg) {
+        try {
+            switch(msg.type) {
+                // HANDSHAKE
+                case 'HS_KEY':
+                    if (this.state !== STATES.HANDSHAKING) return;
+                    const remoteKey = await Crypto.importKey(msg.key);
+                    this.hmacKey = await Crypto.deriveHMACKey(this.keyPair.privateKey, remoteKey);
+                    this.myNonce = Crypto.randomNonce();
+                    this.conn.send({ type: 'HS_CHALLENGE', nonce: Array.from(this.myNonce) });
+                    break;
+                case 'HS_CHALLENGE':
+                    if (this.state !== STATES.HANDSHAKING || !this.hmacKey) return;
+                    const sig = await Crypto.sign(this.hmacKey, new Uint8Array(msg.nonce));
+                    this.conn.send({ type: 'HS_PROOF', sig: Array.from(new Uint8Array(sig)) });
+                    break;
+                case 'HS_PROOF':
+                    if (this.state !== STATES.HANDSHAKING || !this.hmacKey || !this.myNonce) return;
+                    const valid = await Crypto.verify(this.hmacKey, new Uint8Array(msg.sig), this.myNonce);
+                    if (valid) {
+                        this.updateState(STATES.VERIFIED);
+                        this.toast("Secure Connection Verified");
+                    } else {
+                        this.disconnect();
+                    }
+                    break;
+
+                // WHITEBOARD OPS
+                case 'WB_OP':
+                    if (this.state === STATES.VERIFIED) {
+                        this.board.handleRemoteOp(msg.payload);
+                    }
+                    break;
+            }
+        } catch (e) {
+            console.error(e);
+            this.disconnect();
+        }
+    }
+
+    sendOp(op) {
+        if (this.state === STATES.VERIFIED && this.conn) {
+            this.conn.send({ type: 'WB_OP', payload: op });
+        }
+    }
+
+    // --- UI STATES ---
+    updateState(newState) {
+        this.state = newState;
+        if (newState === STATES.VERIFIED) {
+            this.dom.pairingUi.classList.add('hidden');
+            this.dom.boardUi.classList.remove('hidden');
+            this.dom.status.className = 'status-badge secure';
+            this.dom.status.innerText = 'SECURE';
+        } else if (newState === STATES.HANDSHAKING) {
+            this.dom.status.className = 'status-badge handshake';
+            this.dom.status.innerText = 'VERIFYING...';
+        } else if (newState === STATES.INIT) {
+            this.resetUI();
+        } else {
+            this.dom.status.className = 'status-badge warn';
+            this.dom.status.innerText = newState;
+        }
+    }
+
+    disconnect() {
+        if (this.conn) this.conn.close();
+        if (this.peer) this.peer.destroy();
+        this.board.clearBoard(); // DESTROY DATA
+        this.updateState(STATES.INIT);
+        this.init(); 
+    }
+
+    resetUI() {
+        this.dom.pairingUi.classList.remove('hidden');
+        this.dom.boardUi.classList.add('hidden');
+        this.dom.peerInput.value = '';
+        this.dom.btnConnect.innerText = 'Connect';
+        this.dom.btnListen.innerText = "👂 Listen";
+        this.dom.btnListen.classList.remove('listening');
+        if(this.audio) this.audio.stopListen();
+        this.dom.status.className = 'status-badge';
+        this.dom.status.innerText = 'INIT';
+    }
+
+    // --- HELPERS ---
+    extractId(input) { try { return new URL(input).searchParams.get('peer'); } catch(e) { return input; } }
+    checkDeepLink() {
+        const peer = new URLSearchParams(window.location.search).get('peer');
+        if (peer) { this.dom.peerInput.value = peer; this.toast("Link Detected"); window.history.replaceState({}, document.title, window.location.pathname); }
+    }
+    generateQr() {
+        const target = document.getElementById('qr-target'); target.innerHTML = '';
+        new QRCode(target, { text: `${CONFIG.APP_URL}?peer=${this.myId}`, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.L });
+    }
+    toggleQr() { document.getElementById('qr-target').classList.toggle('hidden'); }
+    copyId() { navigator.clipboard.writeText(this.myId); this.toast("ID Copied"); }
+    toast(msg) { this.dom.toast.innerText = msg; this.dom.toast.classList.add('show'); setTimeout(()=>this.dom.toast.classList.remove('show'), 3000); }
+    startScanner() {
+        document.getElementById('reader-container').classList.remove('hidden');
+        this.scanner = new Html5Qrcode("reader");
+        this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decoded) => {
+            const id = this.extractId(decoded);
+            if(id) { this.dom.peerInput.value = id; this.stopScanner(); this.connect(); }
+        });
+    }
+    stopScanner() { if(this.scanner) this.scanner.stop().then(() => { document.getElementById('reader-container').classList.add('hidden'); }); }
+}
+
+// Start App
+window.app = new GhostBoard();
+</script>
+</body>
+</html>
