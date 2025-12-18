@@ -182,12 +182,12 @@
         <div id="view-identity" class="card center fade-in">
             <h2>Your Identity</h2>
             <div id="my-id" class="my-id">...</div>
-            <p>Share this ID to receive files.</p>
+            <p>Scan to connect instantly</p>
             
             <div id="qr-target" class="hidden"></div>
 
             <div class="flex-row" style="margin-top: 15px;">
-                <button class="btn outline" onclick="app.copyId()">Copy</button>
+                <button class="btn outline" onclick="app.copyId()">Copy ID</button>
                 <button class="btn outline" onclick="app.toggleQr()">QR Code</button>
             </div>
         </div>
@@ -256,7 +256,8 @@
         const CONFIG = {
             CHUNK_SIZE: 16 * 1024, // 16KB (Safe for all browsers)
             BUFFER_THRESHOLD: 1024 * 1024, // 1MB Backpressure limit
-            ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }] // Public Google STUN
+            ICE_SERVERS: [{ urls: 'stun:stun.l.google.com:19302' }], // Public Google STUN
+            APP_URL: 'https://devgna.github.io/' // For QR Links
         };
 
         class GhostShare {
@@ -264,6 +265,7 @@
                 this.peer = null;
                 this.conn = null;
                 this.myId = null;
+                this.pendingConnectId = null; // Store ID from URL if present
                 this.transfers = {}; // Map<id, TransferObject>
                 this.scanner = null;
 
@@ -290,12 +292,26 @@
             // --- INITIALIZATION ---
 
             init() {
-                // Generate short ID
+                // 1. Generate short ID
                 this.myId = Math.random().toString(36).substring(2, 8).toUpperCase();
                 this.dom.myId.innerText = this.myId;
-                this.generateQr(this.myId);
+                
+                // 2. Generate Universal QR Code (URL Format)
+                this.generateQr(`${CONFIG.APP_URL}?peer=${this.myId}`);
 
-                // Init PeerJS
+                // 3. Check for inbound URL deep link (QR Scan via Camera)
+                const urlParams = new URLSearchParams(window.location.search);
+                const peerParam = urlParams.get('peer');
+                
+                if (peerParam) {
+                    const validId = this.extractPeerId(peerParam); // Basic cleanup
+                    if (validId) {
+                        this.pendingConnectId = validId;
+                        this.notify("Connecting via QR link...");
+                    }
+                }
+
+                // 4. Init PeerJS
                 this.peer = new Peer(this.myId, {
                     debug: 1,
                     config: { iceServers: CONFIG.ICE_SERVERS }
@@ -303,6 +319,19 @@
 
                 this.peer.on('open', (id) => {
                     this.setStatus('Ready', 'active');
+                    
+                    // Handle Pending Auto-Connect
+                    if (this.pendingConnectId) {
+                        if (this.pendingConnectId === this.myId) {
+                            this.notify("Cannot connect to yourself");
+                            this.cleanUrl(); // Remove param
+                        } else {
+                            this.dom.peerInput.value = this.pendingConnectId;
+                            this.connect();
+                            this.cleanUrl(); // Clean URL after initiating
+                        }
+                        this.pendingConnectId = null;
+                    }
                 });
 
                 this.peer.on('connection', (conn) => {
@@ -322,12 +351,55 @@
                 });
             }
 
+            // --- QR & URL HELPERS ---
+
+            // Extracts valid Peer ID from raw string or URL
+            extractPeerId(input) {
+                if (!input) return null;
+                let id = null;
+
+                // Attempt to parse as URL first
+                try {
+                    const url = new URL(input);
+                    // Handle query param format ?peer=ID
+                    const param = url.searchParams.get('peer');
+                    if (param) id = param;
+                } catch (e) {
+                    // Not a URL, treat as raw ID
+                    id = input;
+                }
+
+                if (!id) return null;
+
+                // Clean and Validate
+                id = id.trim().toUpperCase();
+                
+                // Allow alphanumeric only, length check to avoid garbage
+                if (/^[A-Z0-9]{4,12}$/.test(id)) {
+                    return id;
+                }
+                return null;
+            }
+
+            cleanUrl() {
+                if (window.history.replaceState) {
+                    const clean = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                    window.history.replaceState({path: clean}, '', clean);
+                }
+            }
+
             // --- CONNECTION HANDLING ---
 
             connect() {
-                const peerId = this.dom.peerInput.value.trim().toUpperCase();
-                if (!peerId) return this.notify("Please enter a Peer ID");
+                // Extract from input using the same robust logic (handles user pasting URL)
+                const rawInput = this.dom.peerInput.value;
+                const peerId = this.extractPeerId(rawInput);
+
+                if (!peerId) return this.notify("Invalid Peer ID");
                 if (peerId === this.myId) return this.notify("Cannot connect to yourself");
+
+                // Update UI to show the parsed ID if they pasted a URL
+                this.dom.peerInput.value = peerId;
 
                 this.dom.btnConnect.disabled = true;
                 this.dom.btnConnect.innerText = "Connecting...";
@@ -633,10 +705,16 @@
                 this.scanner = new Html5Qrcode("reader");
                 this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
                     (decoded) => {
-                        this.dom.peerInput.value = decoded;
-                        this.stopScanner();
-                        this.notify("QR Scanned");
-                        this.connect();
+                        // Use robust extractor for in-app scan
+                        const id = this.extractPeerId(decoded);
+                        if (id) {
+                            this.dom.peerInput.value = id;
+                            this.stopScanner();
+                            this.notify("QR Detected. Connecting...");
+                            this.connect();
+                        } else {
+                            this.notify("Invalid QR Code");
+                        }
                     }
                 ).catch(err => this.notify("Camera access denied"));
             }
